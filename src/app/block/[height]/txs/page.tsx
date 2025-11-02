@@ -5,12 +5,25 @@ import { Footer } from "@/components/footer"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { CheckCircle2, Clock, AlertCircle, ChevronLeft, ChevronRight, ArrowLeft } from "lucide-react"
-import { getProvider } from "@/lib/data"
 import { formatDistanceToNow } from "@/lib/utils"
 import { notFound } from "next/navigation"
 
 // Disable prerendering so network calls are executed at request time
 export const dynamic = "force-dynamic"
+
+// ✅ Define Transaction interface
+interface Transaction {
+  hash: string
+  status: 'success' | 'pending' | 'failed'
+  timestamp?: string | number
+  size?: number
+}
+
+interface Block {
+  height: number
+  hash: string
+  timestamp: number
+}
 
 interface PageProps {
   params: Promise<{
@@ -21,33 +34,47 @@ interface PageProps {
   }>
 }
 
+// Helper function to get base URL
+function getBaseUrl() {
+  if (typeof window !== 'undefined') return ''
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`
+  return `http://localhost:${process.env.PORT ?? 3000}`
+}
+
 export default async function BlockTransactionsPage({ params, searchParams }: PageProps) {
   const resolvedParams = await params
   const resolvedSearchParams = await searchParams
-  const provider = getProvider()
-  const cursor = resolvedSearchParams?.cursor
+  const cursor = resolvedSearchParams.cursor || '0'
 
-  // First, verify the block exists
-  const block = await provider.getBlockByHashOrHeight(resolvedParams.height)
+  const baseUrl = getBaseUrl()
 
-  // If block doesn't exist, show 404
-  if (!block) {
+  // Fetch block
+  const blockResponse = await fetch(`${baseUrl}/api/blocks/${resolvedParams.height}`, { cache: 'no-store' })
+  if (!blockResponse.ok) {
     notFound()
   }
+  const { block }: { block: Block } = await blockResponse.json()
 
-  // Fetch transactions for this block with pagination
-  const { items: transactions, nextCursor } = await provider.getBlockTransactions(resolvedParams.height, cursor)
+  // Fetch transactions
+  let transactions: Transaction[] = []
+  let nextCursor: string | null = null
+  const txResponse = await fetch(`${baseUrl}/api/blocks/${resolvedParams.height}/transactions?limit=20&offset=${cursor}`, { cache: 'no-store' })
+  if (txResponse.ok) {
+    const txData: { transactions: Transaction[], nextCursor?: string } = await txResponse.json()
+    transactions = txData.transactions
+    nextCursor = txData.nextCursor || null
+  }
 
   // Pagination helpers
   const pageSize = 20
-  const current = cursor ? parseInt(cursor, 10) : 0
-  const prevCursor = current - pageSize
+  const current = parseInt(cursor, 10)
+  const prevCursorCalc = current - pageSize
   const prevHref =
-    prevCursor > 0
-      ? `/block/${block.height}/transactions?cursor=${prevCursor}`
-      : `/block/${block.height}/transactions`
+    prevCursorCalc > 0
+      ? `/block/${block.height}/txs?cursor=${prevCursorCalc}`
+      : `/block/${block.height}/txs`
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: Transaction['status']) => {
     switch (status) {
       case "success":
         return (
@@ -93,7 +120,7 @@ export default async function BlockTransactionsPage({ params, searchParams }: Pa
               </h1>
               <p className="text-muted-foreground text-lg">
                 Showing {transactions.length} transaction{transactions.length !== 1 ? "s" : ""}
-                {cursor ? ` (page after ${cursor})` : ""}
+                {cursor !== '0' ? ` (page after ${cursor})` : ""}
               </p>
             </div>
             <div className="flex gap-2">
@@ -121,7 +148,7 @@ export default async function BlockTransactionsPage({ params, searchParams }: Pa
                     </tr>
                   </thead>
                   <tbody>
-                    {transactions.map((tx, index) => (
+                    {transactions.map((tx: Transaction, index: number) => (
                       <tr
                         key={`${tx.hash}-${index}`}
                         className="border-b border-border/50 hover:bg-accent/5 transition-colors"
@@ -137,7 +164,7 @@ export default async function BlockTransactionsPage({ params, searchParams }: Pa
                         <td className="p-4">{getStatusBadge(tx.status)}</td>
                         <td className="p-4">
                           <span className="text-sm text-muted-foreground">
-                            {tx.timestamp ? `${formatDistanceToNow(new Date(tx.timestamp))} ago` : "N/A"}
+                            {tx.timestamp ? `${formatDistanceToNow(new Date(Number(tx.timestamp)))} ago` : "N/A"}
                           </span>
                         </td>
                         <td className="p-4">
@@ -173,7 +200,7 @@ export default async function BlockTransactionsPage({ params, searchParams }: Pa
             <div>
               {nextCursor && (
                 <Link
-                  href={`/block/${block.height}/transactions?cursor=${nextCursor}`}
+                  href={`/block/${block.height}/txs?cursor=${nextCursor}`}
                   className="px-4 py-2 bg-gradient-to-r from-blue-600/50 to-purple-600/50 hover:from-blue-600/70 hover:to-purple-600/70 border border-blue-500/30 text-foreground rounded-md transition-colors inline-flex items-center gap-2"
                 >
                   Next

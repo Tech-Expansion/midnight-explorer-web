@@ -1,30 +1,27 @@
-import { getProvider } from '@/lib/data'
-import { NextResponse } from 'next/server'
+import { NextResponse } from 'next/server';
+import { pool } from '@/lib/db';
 
-// Disable caching
-export const dynamic = 'force-dynamic'
-export const revalidate = 0
+function bufferToHex(buffer: Buffer): string {
+  return '0x' + buffer.toString('hex');
+}
 
 export async function GET() {
-  try {
-    const provider = getProvider()
-    const blocks = await provider.getLatestBlocks(20)
-    
-    return NextResponse.json(
-      { blocks },
-      {
-        headers: {
-          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0',
-        },
-      }
-    )
-  } catch (error) {
-    console.error('Error fetching blocks:', error)
-    return NextResponse.json(
-      { error: 'Failed to fetch blocks', blocks: [] },
-      { status: 500 }
-    )
-  }
+  const limit = 10;
+  const { rows } = await pool.query('SELECT * FROM blocks ORDER BY height DESC LIMIT $1', [limit]);
+
+  const blocksPromises = rows.map(async (block) => {
+    const countRes = await pool.query('SELECT COUNT(*) FROM transactions WHERE block_id = $1', [block.height]);
+    const txCount = parseInt(countRes.rows[0].count);
+
+    return {
+      height: parseInt(block.height),
+      hash: bufferToHex(block.hash),
+      timestamp: parseInt(block.timestamp),
+      txCount,
+    };
+  });
+
+  const blocks = await Promise.all(blocksPromises);
+
+  return NextResponse.json({ blocks });
 }

@@ -14,30 +14,56 @@ import {
   Clock,
   AlertCircle,
 } from "lucide-react"
-import { getProvider } from "@/lib/data"
 import { formatDistanceToNow } from "@/lib/utils"
 
 // Disable prerendering so network calls are executed at request time
 export const dynamic = "force-dynamic"
 
+// ✅ Define Transaction interface
+interface Transaction {
+  id: string
+  hash: string
+  status: 'success' | 'pending' | 'failed'
+  blockHeight?: number
+  protocolVersion: number
+  timestamp?: string | number
+  size?: number
+}
+
+interface ApiResponse {
+  items: Transaction[]
+  nextCursor?: string
+}
+
 interface PageProps {
   searchParams: Promise<{ cursor?: string }>
 }
 
+// Helper function to get base URL
+function getBaseUrl() {
+  if (typeof window !== 'undefined') return '' // Browser should use relative path
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}` // Vercel deployment
+  return `http://localhost:${process.env.PORT ?? 3000}` // Local development
+}
+
 export default async function TransactionsPage({ searchParams }: PageProps) {
-  const provider = getProvider()
-  const cursor = (await searchParams)?.cursor
+  const resolvedSearchParams = await searchParams
+  const cursor = resolvedSearchParams?.cursor
 
-  // Fetch transactions with pagination
-  const { items: transactions, nextCursor } = await provider.getTransactionsPage(cursor)
+  const baseUrl = getBaseUrl()
 
-  // Pagination helpers
-  const pageSize = 20
-  const current = cursor ? parseInt(cursor, 10) : 0
-  const prevCursor = current - pageSize
-  const prevHref = prevCursor > 0 ? `/transactions?cursor=${prevCursor}` : "/transactions"
+  // Fetch transactions from API
+  const url = cursor ? `${baseUrl}/api/transactions?cursor=${cursor}` : `${baseUrl}/api/transactions`
+  const res = await fetch(url, { cache: 'no-store' })
+  if (!res.ok) throw new Error('Failed to fetch transactions')
+  
+  const { items: transactions, nextCursor }: ApiResponse = await res.json()
 
-  const getStatusBadge = (status: string) => {
+  // Pagination helpers - use transaction IDs instead of offsets
+  const prevCursor = transactions.length > 0 ? transactions[0].id : null
+  const hasPrev = cursor !== null && cursor !== undefined
+
+  const getStatusBadge = (status: Transaction['status']) => {
     switch (status) {
       case "success":
         return (
@@ -89,7 +115,7 @@ export default async function TransactionsPage({ searchParams }: PageProps) {
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search by transaction hash or address..."
+                  placeholder="Search by transaction hash..."
                   className="pl-10 bg-background/50 border-border"
                 />
               </div>
@@ -108,19 +134,20 @@ export default async function TransactionsPage({ searchParams }: PageProps) {
                     <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Txn Hash</th>
                     <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Status</th>
                     <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Block</th>
+                    <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Protocol</th>
                     <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Age</th>
                     <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Size</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {transactions.map((tx, index) => (
-                    <tr key={`${tx.hash}-${index}`} className="border-b border-border/50 hover:bg-accent/5 transition-colors">
+                  {transactions.map((tx: Transaction) => (
+                    <tr key={tx.id} className="border-b border-border/50 hover:bg-accent/5 transition-colors">
                       <td className="p-4">
                         <Link
                           href={`/tx/${tx.hash}`}
                           className="text-blue-400 hover:text-blue-300 transition-colors font-mono text-sm"
                         >
-                          {tx.hash}
+                          {tx.hash.slice(0, 16)}...{tx.hash.slice(-16)}
                         </Link>
                       </td>
                       <td className="p-4">{getStatusBadge(tx.status)}</td>
@@ -137,8 +164,13 @@ export default async function TransactionsPage({ searchParams }: PageProps) {
                         )}
                       </td>
                       <td className="p-4">
+                        <span className="text-sm text-muted-foreground font-mono">
+                          v{tx.protocolVersion}
+                        </span>
+                      </td>
+                      <td className="p-4">
                         <span className="text-sm text-muted-foreground">
-                          {tx.timestamp ? `${formatDistanceToNow(new Date(tx.timestamp))} ago` : "N/A"}
+                          {tx.timestamp ? `${formatDistanceToNow(new Date(parseInt(String(tx.timestamp))))} ago` : "N/A"}
                         </span>
                       </td>
                       <td className="p-4">
@@ -156,9 +188,9 @@ export default async function TransactionsPage({ searchParams }: PageProps) {
           {/* Pagination */}
           <div className="flex justify-between items-center mt-4 pb-8">
             <div>
-              {current > 0 && (
+              {hasPrev && (
                 <Link
-                  href={prevHref}
+                  href="/transactions"
                   className="px-4 py-2 bg-card/50 hover:bg-card/70 border border-border text-foreground rounded-md transition-colors inline-flex items-center gap-2"
                 >
                   <ChevronLeft className="h-4 w-4" />

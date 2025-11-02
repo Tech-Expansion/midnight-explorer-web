@@ -6,11 +6,11 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight, ArrowLeft, Clock, CheckCircle2, AlertCircle } from "lucide-react"
 import Link from "next/link"
-import { getProvider } from "@/lib/data"
 import { formatDistanceToNow } from "@/lib/utils"
 import { notFound, redirect } from "next/navigation"
 import { CopyButton } from "@/components/ui/copy-button"
 import { Transaction } from "@/lib/types"
+
 interface PageProps {
   params: Promise<{ height: string }>
 }
@@ -18,39 +18,70 @@ interface PageProps {
 // Disable prerendering so network calls are executed at request time
 export const dynamic = "force-dynamic"
 
+// Helper function to get base URL
+function getBaseUrl() {
+  if (typeof window !== 'undefined') return '' // Browser should use relative path
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}` // Vercel deployment
+  return `http://localhost:${process.env.PORT ?? 3000}` // Local development
+}
+
 export default async function BlockPage({ params }: PageProps) {
-  // Await params để resolve giá trị
-  const resolvedParams = await params
-  const provider = getProvider()
+  // AWAIT params first
+  const { height } = await params;
+  console.log('Fetching block with height/hash:', height);
+
+  const baseUrl = getBaseUrl();
 
   try {
-    // Fetch block details
-    const block = await provider.getBlockByHashOrHeight(resolvedParams.height)
+    // Fetch block details from API
+    const blockResponse = await fetch(`${baseUrl}/api/blocks/${height}`, {
+      cache: 'no-store'
+    })
+    console.log('Block API response status:', blockResponse.status, blockResponse.ok);
 
-    // Handle not found - try transaction fallback
-    if (!block) {
-      try {
-        const tx = await provider.getTransactionByHash(resolvedParams.height)
-        if (tx) {
-          redirect(`/tx/${resolvedParams.height}`)
+    if (!blockResponse.ok) {
+      if (blockResponse.status === 404) {
+        // Try transaction fallback 
+        try {
+          const txResponse = await fetch(`${baseUrl}/api/transactions/${height}`, {
+            cache: 'no-store'
+          })
+          if (txResponse.ok) {
+            redirect(`/tx/${height}`)
+          }
+        } catch (error) {
+          notFound()
         }
-      } catch (error) {
         notFound()
       }
+      throw new Error('Failed to fetch block')
+    }
+
+    const data = await blockResponse.json()
+    console.log('Block data received:', data);
+    
+    if (!data.block) {
+      console.error('No block data in response');
       notFound()
     }
 
+    const { block } = data
     const blockHeight = block.height
 
-    // Fetch first 20 transactions for preview
+    // Fetch transactions for preview
     let transactions: Transaction[] = []
     let hasMoreTransactions = false
     
     if (block.txCount > 0) {
       try {
-        const txResult = await provider.getBlockTransactions(resolvedParams.height, undefined)
-        transactions = txResult.items.slice(0, 20)
-        hasMoreTransactions = block.txCount > 20
+        const txResponse = await fetch(`${baseUrl}/api/blocks/${height}/transactions?limit=20`, {
+          cache: 'no-store'
+        })
+        if (txResponse.ok) {
+          const txData = await txResponse.json()
+          transactions = txData.transactions || []
+          hasMoreTransactions = block.txCount > 20
+        }
       } catch (error) {
         console.error('Error fetching transactions:', error)
       }
@@ -200,13 +231,12 @@ export default async function BlockPage({ params }: PageProps) {
                       Transactions ({transactions.length}{hasMoreTransactions ? ` of ${block.txCount}` : ''})
                     </h2>
                     
-                      <Link
-                        href={`/block/${block.height}/txs`}
-                        className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
-                      >
-                        View All →
-                      </Link>
-                    
+                    <Link
+                      href={`/block/${block.height}/txs`}
+                      className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
+                    >
+                      View All →
+                    </Link>
                   </div>
                   
                   {transactions.length > 0 ? (
@@ -269,9 +299,11 @@ export default async function BlockPage({ params }: PageProps) {
     
     // Try transaction fallback
     try {
-      const tx = await provider.getTransactionByHash(resolvedParams.height)
-      if (tx) {
-        redirect(`/tx/${resolvedParams.height}`)
+      const txResponse = await fetch(`${baseUrl}/api/transactions/${height}`, {
+        cache: 'no-store'
+      })
+      if (txResponse.ok) {
+        redirect(`/tx/${height}`)
       }
     } catch (txError) {
       notFound()

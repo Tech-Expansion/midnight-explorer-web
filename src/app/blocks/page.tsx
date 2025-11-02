@@ -7,11 +7,23 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Search, ChevronLeft, ChevronRight, Box, Clock } from "lucide-react"
 import Link from "next/link"
-import { getProvider } from "@/lib/data"
 import { formatDistanceToNow } from "@/lib/utils"
 
 // Disable prerendering so network calls are done at request time
 export const dynamic = "force-dynamic"
+
+// ✅ Define Block interface
+interface Block {
+  hash: string
+  height: number
+  timestamp: number | string
+  txCount: number
+}
+
+interface ApiResponse {
+  items: Block[]
+  nextCursor?: string
+}
 
 interface PageProps {
   searchParams: Promise<{
@@ -19,19 +31,33 @@ interface PageProps {
   }>
 }
 
+// Helper function to get base URL
+function getBaseUrl() {
+  if (typeof window !== 'undefined') return '' // Browser should use relative path
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}` // Vercel deployment
+  return `http://localhost:${process.env.PORT ?? 3000}` // Local development
+}
+
 export default async function BlocksPage({ searchParams }: PageProps) {
   const resolvedSearchParams = await searchParams
-  const provider = getProvider()
   const cursor = resolvedSearchParams?.cursor
 
-  // Fetch blocks with pagination (exactly 20 blocks per page)
-  const { items: blocks, nextCursor } = await provider.getBlocksPage(cursor)
+  const baseUrl = getBaseUrl()
+
+  // Fetch blocks from API
+  const url = cursor ? `${baseUrl}/api/blocks?cursor=${cursor}` : `${baseUrl}/api/blocks`
+  const res = await fetch(url, { cache: 'no-store' })
+  if (!res.ok) throw new Error('Failed to fetch blocks')
+  
+  const { items: blocks, nextCursor }: ApiResponse = await res.json()
 
   // Pagination helpers
-  const pageSize = 20
-  const current = cursor ? parseInt(cursor, 10) : 0
-  const prevCursor = current - pageSize
-  const prevHref = prevCursor >= 0 ? `/blocks?cursor=${prevCursor}` : "/blocks"
+  const limit = 20
+  let prevHref = ''
+  if (cursor && blocks.length > 0) {
+    const prevCursor = blocks[0].height + limit + 1
+    prevHref = `/blocks?cursor=${prevCursor}`
+  }
 
   return (
     <div className="min-h-screen bg-background relative">
@@ -79,7 +105,7 @@ export default async function BlocksPage({ searchParams }: PageProps) {
                   </tr>
                 </thead>
                 <tbody>
-                  {blocks.map((block) => (
+                  {blocks.map((block: Block) => (
                     <tr key={block.hash} className="border-b border-border/50 hover:bg-accent/5 transition-colors">
                       <td className="p-4">
                         <div className="space-y-1">
@@ -98,7 +124,7 @@ export default async function BlocksPage({ searchParams }: PageProps) {
                       <td className="p-4">
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
                           <Clock className="h-4 w-4" />
-                          {formatDistanceToNow(new Date(block.timestamp))} ago
+                          {formatDistanceToNow(new Date(Number(block.timestamp)))} ago
                         </div>
                       </td>
                       <td className="p-4">
@@ -116,7 +142,7 @@ export default async function BlocksPage({ searchParams }: PageProps) {
           {/* Pagination */}
           <div className="flex justify-between items-center mt-4 pb-8">
             <div>
-              {current > 0 && (
+              {cursor && (
                 <Link
                   href={prevHref}
                   className="px-4 py-2 bg-card/50 hover:bg-card/70 border border-border text-foreground rounded-md transition-colors inline-flex items-center gap-2"

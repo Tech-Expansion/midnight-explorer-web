@@ -1,26 +1,96 @@
 'use client'
 
-import { useMemo, useRef, useLayoutEffect } from 'react'
+import { useState, useEffect, useMemo, useRef, useLayoutEffect } from 'react'
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Activity, ArrowRight } from "lucide-react"
 import Link from "next/link"
 import { formatDistanceToNow } from '@/lib/utils'
 
+interface BufferData {
+  type: 'Buffer'
+  data: number[]
+}
+
+interface RawTransaction {
+  id?: string
+  hash: string | BufferData
+  status?: string
+  apply_stage?: string
+  blockHeight?: number
+  blockId?: string
+  timestamp?: string | number
+  protocolVersion?: string | number
+  size?: string | number
+}
+
 interface Transaction {
+  id: string
   hash: string
   status: string
   blockHeight?: number
-  timestamp?: string
+  blockId?: string
+  timestamp?: number
+  protocolVersion?: number
+  size?: number
 }
 
-interface RecentTransactionsProps {
-  txs: Transaction[]
-}
-
-export function RecentTransactions({ txs }: RecentTransactionsProps) {
+export function RecentTransactions() {
+  const [txs, setTxs] = useState<Transaction[]>([])
+  const [loading, setLoading] = useState(true)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const prevScrollTopRef = useRef(0)
+
+  useEffect(() => {
+    const fetchTransactions = async () => {
+      try {
+        const res = await fetch('/api/transactions/recent', { cache: 'no-store' })
+        if (res.ok) {
+          const data: RawTransaction[] = await res.json()
+          // ✅ Normalize hash to string with 0x prefix
+          const normalizedData: Transaction[] = data.map((tx) => {
+            let hashStr: string = ''
+            
+            if (typeof tx.hash === 'string') {
+              hashStr = tx.hash.startsWith('0x') ? tx.hash : `0x${tx.hash}`
+            } else if (tx.hash && typeof tx.hash === 'object' && 'data' in tx.hash && Array.isArray((tx.hash as BufferData).data)) {
+              hashStr = '0x' + Buffer.from((tx.hash as BufferData).data).toString('hex')
+            }
+
+            // ✅ Normalize status to known values
+            let statusStr = String(tx.status || tx.apply_stage || '').toLowerCase()
+            if (statusStr.includes('fail')) statusStr = 'failed'
+            else if (statusStr.includes('succ')) statusStr = 'success'
+            else if (statusStr.includes('pend')) statusStr = 'pending'
+            else statusStr = statusStr || 'pending'
+
+            return {
+              id: tx.id || '',
+              hash: hashStr,
+              status: statusStr,
+              blockHeight: tx.blockHeight,
+              blockId: tx.blockId,
+              timestamp: tx.timestamp ? Number(tx.timestamp) : undefined,
+              protocolVersion: tx.protocolVersion ? Number(tx.protocolVersion) : undefined,
+              size: tx.size ? Number(tx.size) : undefined,
+            }
+          })
+          setTxs(normalizedData)
+        }
+      } catch (error) {
+        console.error('Error fetching recent transactions:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchTransactions()
+
+    // Poll every 10 seconds for new transactions
+    const interval = setInterval(fetchTransactions, 10000)
+
+    return () => clearInterval(interval)
+  }, [])
 
   useLayoutEffect(() => {
     if (scrollContainerRef.current) {
@@ -31,55 +101,71 @@ export function RecentTransactions({ txs }: RecentTransactionsProps) {
   const transactionsContent = useMemo(() => {
     prevScrollTopRef.current = scrollContainerRef.current?.scrollTop || 0
 
-    return txs.map((tx, index) => (
-      <Link
-        key={`${tx.hash}-${index}`}
-        href={`/tx/${tx.hash}`}
-        className="block p-4 rounded-lg bg-secondary/50 hover:bg-secondary transition-colors min-h-[100px] will-change-transform"
-      >
-        <div className="space-y-2">
-          <div className="flex items-center justify-between gap-2">
-            <p className="text-sm font-mono text-primary hover:text-primary/80 truncate flex-1">
-              {tx.hash}
-            </p>
-            <Badge
-              variant={tx.status === "success" ? "default" : tx.status === "failed" ? "destructive" : "secondary"}
-              className={
-                tx.status === "success"
-                  ? "bg-green-500/20 text-green-500 border-green-500/30"
-                  : tx.status === "failed"
-                    ? "bg-red-500/20 text-red-500 border-red-500/30"
-                    : "bg-yellow-500/20 text-yellow-500 border-yellow-500/30"
-              }
-            >
-              {tx.status}
-            </Badge>
-          </div>
+    return txs.map((tx, index) => {
+      let txHash = tx.hash || ''
+      if (!txHash.startsWith('0x')) {
+        txHash = `0x${txHash}`
+      }
 
-          <div className="flex items-center justify-between gap-2 text-xs">
-            {tx.blockHeight ? (
-              <Link
-                href={`/block/${tx.blockHeight}`}
-                className="text-muted-foreground hover:text-foreground transition-colors"
-                onClick={(e) => e.stopPropagation()}
+      return (
+        <Link
+          key={`${txHash}-${index}`}
+          href={`/tx/${txHash}`}
+          className="block p-4 rounded-lg bg-secondary/50 hover:bg-secondary transition-colors min-h-[100px] will-change-transform"
+        >
+          <div className="space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-sm font-mono text-primary hover:text-primary/80 truncate flex-1">
+                {txHash}
+              </p>
+              <Badge
+                variant={tx.status === "success" ? "default" : tx.status === "failed" ? "destructive" : "secondary"}
+                className={
+                  tx.status === "success"
+                    ? "bg-green-500/20 text-green-500 border-green-500/30"
+                    : tx.status === "failed"
+                      ? "bg-red-500/20 text-red-500 border-red-500/30"
+                      : "bg-yellow-500/20 text-yellow-500 border-yellow-500/30"
+                }
               >
-                Block #{tx.blockHeight}
-              </Link>
-            ) : (
-              <span className="text-muted-foreground">Pending</span>
-            )}
-            {tx.timestamp && (
-              <span className="text-muted-foreground">
-                {formatDistanceToNow(new Date(tx.timestamp))} ago
-              </span>
+                {tx.status}
+              </Badge>
+            </div>
+
+            <div className="flex items-center justify-between gap-2 text-xs">
+              {tx.blockHeight ? (
+                <Link
+                  href={`/block/${tx.blockHeight}`}
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  Block #{tx.blockHeight}
+                </Link>
+              ) : (
+                <span className="text-muted-foreground">Pending</span>
+              )}
+              {tx.timestamp && (
+                <span className="text-muted-foreground">
+                  {formatDistanceToNow(new Date(tx.timestamp))} ago
+                </span>
+              )}
+            </div>
+
+            {tx.protocolVersion && (
+              <div className="flex items-center justify-between gap-2 text-xs">
+                <span className="text-muted-foreground">Protocol v{tx.protocolVersion}</span>
+                {tx.size && (
+                  <span className="text-muted-foreground">{tx.size} B</span>
+                )}
+              </div>
             )}
           </div>
-        </div>
-      </Link>
-    ))
+        </Link>
+      )
+    })
   }, [txs])
 
-  if (txs.length === 0) {
+  if (loading || txs.length === 0) {
     return (
       <Card className="p-6 bg-card h-[680px] w-full flex flex-col" style={{ contain: 'strict' }}>
         <div className="flex items-center justify-between mb-4">
@@ -108,7 +194,7 @@ export function RecentTransactions({ txs }: RecentTransactionsProps) {
         </div>
         <Link
           href="/transactions"
-          className="text-sm text-white-400 hover:text-blue-300 transition-colors flex items-center gap-1"
+          className="text-sm text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1"
         >
           View All
           <ArrowRight className="h-4 w-4" />

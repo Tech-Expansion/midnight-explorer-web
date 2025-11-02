@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge"
 import { CopyButton } from "@/components/ui/copy-button"
 import { CheckCircle2, Clock, AlertCircle, ArrowLeft } from "lucide-react"
 import Link from "next/link"
-import { getProvider } from "@/lib/data"
 import { formatDistanceToNow } from "@/lib/utils"
 import { notFound } from "next/navigation"
 
@@ -14,21 +13,31 @@ interface PageProps {
   params: Promise<{ hash: string }>
 }
 
-// Disable prerendering so network calls are done at request time
 export const dynamic = "force-dynamic"
 
+function getBaseUrl() {
+  if (typeof window !== 'undefined') return ''
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`
+  return `http://localhost:${process.env.PORT ?? 3000}`
+}
+
 export default async function TransactionPage({ params }: PageProps) {
-  // Await params để resolve giá trị
   const resolvedParams = await params
-  const provider = getProvider()
+  const baseUrl = getBaseUrl()
 
-  // Fetch transaction details
-  const transaction = await provider.getTransactionByHash(resolvedParams.hash)
+  const res = await fetch(`${baseUrl}/api/transactions/${resolvedParams.hash}`, { 
+    cache: 'no-store' 
+  })
 
-  // Handle not found
-  if (!transaction) {
-    notFound()
+  if (!res.ok) {
+    if (res.status === 404) {
+      notFound()
+    }
+    throw new Error('Failed to fetch transaction')
   }
+
+  const transaction = await res.json()
+  console.log('Fetched transaction:', transaction)
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -139,12 +148,83 @@ export default async function TransactionPage({ params }: PageProps) {
                   </div>
                 </div>
 
-                <div>
-                  <p className="text-sm text-muted-foreground mb-2">Size</p>
-                  <p className="text-lg font-mono">{transaction.size ? `${transaction.size} bytes` : "N/A"}</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-4 border-b border-border">
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-2">Protocol Version</p>
+                    <p className="text-lg font-mono">v{transaction.protocolVersion}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-2">Size</p>
+                    <p className="text-lg font-mono">{transaction.size ? `${transaction.size} bytes` : "N/A"}</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-2">Start Index</p>
+                    <p className="text-lg font-mono">{transaction.startIndex}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-2">End Index</p>
+                    <p className="text-lg font-mono">{transaction.endIndex}</p>
+                  </div>
                 </div>
               </div>
             </Card>
+
+            {/* Raw Transaction Data - ✅ CẬP NHẬT */}
+            {transaction.raw && (
+              <Card className="p-6 bg-card/50 border-border">
+                <h2 className="text-xl font-semibold mb-4 text-purple-400">Raw Transaction Data</h2>
+                <div className="space-y-3">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0 bg-background/50 rounded-lg p-4 max-h-[200px] overflow-y-auto custom-scrollbar">
+                      <p className="text-xs font-mono break-all text-muted-foreground leading-relaxed">
+                        {transaction.raw}
+                      </p>
+                    </div>
+                    <CopyButton text={transaction.raw} className="border-border flex-shrink-0" />
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span>Size: {transaction.raw.length} characters ({Math.ceil((transaction.raw.length - 2) / 2)} bytes)</span>
+                    <span className="text-muted-foreground/70">Scroll to view full data →</span>
+                  </div>
+                </div>
+              </Card>
+            )}
+
+            {/* Merkle Tree Root */}
+            {transaction.merkleTreeRoot && (
+              <Card className="p-6 bg-card/50 border-border">
+                <h2 className="text-xl font-semibold mb-4 text-purple-400">Merkle Tree Root</h2>
+                <div className="flex items-start justify-between gap-4">
+                  <p className="text-sm font-mono break-all text-muted-foreground flex-1">
+                    {transaction.merkleTreeRoot}
+                  </p>
+                  <CopyButton text={transaction.merkleTreeRoot} className="border-border flex-shrink-0" />
+                </div>
+              </Card>
+            )}
+
+            {/* Identifiers */}
+            {transaction.identifiers && transaction.identifiers.length > 0 && (
+              <Card className="p-6 bg-card/50 border-border">
+                <h2 className="text-xl font-semibold mb-4 text-purple-400">Identifiers</h2>
+                <div className="space-y-3">
+                  {transaction.identifiers.map((identifier: string, index: number) => (
+                    <div key={index} className="flex items-start justify-between gap-4 p-3 bg-background/50 rounded-lg">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs text-muted-foreground mb-1">Identifier #{index + 1}</p>
+                        <p className="text-sm font-mono break-all text-foreground">
+                          {identifier}
+                        </p>
+                      </div>
+                      <CopyButton text={identifier} className="border-border flex-shrink-0" />
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            )}
 
             {/* Additional Info */}
             <Card className="p-6 bg-card/50 border-border">
@@ -161,17 +241,20 @@ export default async function TransactionPage({ params }: PageProps) {
                   </span>
                 </div>
                 <div className="flex items-center justify-between py-2 border-b border-border/50">
+                  <span className="text-muted-foreground">Block ID</span>
+                  <span className="font-mono text-xs">{transaction.blockId || "N/A"}</span>
+                </div>
+                <div className="flex items-center justify-between py-2 border-b border-border/50">
+                  <span className="text-muted-foreground">Protocol Version</span>
+                  <span className="font-mono">v{transaction.protocolVersion}</span>
+                </div>
+                <div className="flex items-center justify-between py-2 border-b border-border/50">
                   <span className="text-muted-foreground">Transaction Size</span>
                   <span className="font-mono">{transaction.size ? `${transaction.size} B` : "N/A"}</span>
                 </div>
                 <div className="flex items-center justify-between py-2">
-                  <span className="text-muted-foreground">Transaction Hash</span>
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono text-xs text-blue-400 break-all max-w-md text-right">
-                      {transaction.hash}
-                    </span>
-                    <CopyButton text={transaction.hash} className="border-border flex-shrink-0" />
-                  </div>
+                  <span className="text-muted-foreground">Transaction ID</span>
+                  <span className="font-mono text-xs">{transaction.id}</span>
                 </div>
               </div>
             </Card>
