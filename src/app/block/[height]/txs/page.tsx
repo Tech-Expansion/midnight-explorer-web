@@ -34,21 +34,14 @@ interface PageProps {
   }>
 }
 
-// Helper function to get base URL
-function getBaseUrl() {
-
-  return `http://localhost:3002`
-}
 
 export default async function BlockTransactionsPage({ params, searchParams }: PageProps) {
   const resolvedParams = await params
   const resolvedSearchParams = await searchParams
   const cursor = resolvedSearchParams.cursor || '0'
 
-  const baseUrl = getBaseUrl()
-
   // Fetch block
-  const blockResponse = await fetch(`${baseUrl}/blocks/${resolvedParams.height}`, { cache: 'no-store' })
+  const blockResponse = await fetch(`https://preview-service.midnightexplorer.com/blocks/${resolvedParams.height}`, { cache: 'no-store', headers: { 'x-api-key': process.env.NEXT_PUBLIC_API_KEY || '' } })
   if (!blockResponse.ok) {
     notFound()
   }
@@ -57,7 +50,7 @@ export default async function BlockTransactionsPage({ params, searchParams }: Pa
   // Fetch transactions
   let transactions: Transaction[] = []
   let nextCursor: string | null = null
-  const txResponse = await fetch(`${baseUrl}/blocks/${resolvedParams.height}/transactions?limit=20&offset=${cursor}`, { cache: 'no-store' })
+  const txResponse = await fetch(`https://preview-service.midnightexplorer.com/blocks/${resolvedParams.height}/transactions?limit=20&offset=${cursor}`, { cache: 'no-store', headers: { 'x-api-key': process.env.NEXT_PUBLIC_API_KEY || '' } })
   if (txResponse.ok) {
     const txData: { transactions: Transaction[], nextCursor?: string } = await txResponse.json()
     transactions = txData.transactions

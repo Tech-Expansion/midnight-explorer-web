@@ -39,20 +39,17 @@ interface PageProps {
   searchParams: Promise<{ cursor?: string }>
 }
 
-// Helper function to get base URL
-function getBaseUrl() {
-  return `http://localhost:3002` // Local development
-}
 
 export default async function TransactionsPage({ searchParams }: PageProps) {
   const resolvedSearchParams = await searchParams
   const cursor = resolvedSearchParams?.cursor
-
-  const baseUrl = getBaseUrl()
-
   // Fetch transactions from API
-  const url = cursor ? `${baseUrl}/transactions?cursor=${cursor}` : `${baseUrl}/transactions`
-  const res = await fetch(url, { cache: 'no-store' })
+  const url = cursor ? `https://preview-service.midnightexplorer.com/transactions?cursor=${cursor}` : `https://preview-service.midnightexplorer.com/transactions`
+  const res = await fetch(url, {
+    headers: {
+      'x-api-key': process.env.NEXT_PUBLIC_API_KEY || ''
+    }
+  })
   if (!res.ok) throw new Error('Failed to fetch transactions')
   
   const { items: transactions, nextCursor }: ApiResponse = await res.json()

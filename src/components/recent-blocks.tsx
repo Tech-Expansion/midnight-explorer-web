@@ -17,13 +17,9 @@ interface Block {
 interface RecentBlocksProps {
   blocks: Block[]
 }
-function getBaseUrl(){
-  return 'http://localhost:3002'
-}
 export function RecentBlocks({ blocks }: RecentBlocksProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const prevScrollTopRef = useRef(0) // Lưu scroll trước update
-  const baseUrl = getBaseUrl()
   // Restore scroll đồng bộ trước paint
   useLayoutEffect(() => {
     if (scrollContainerRef.current) {

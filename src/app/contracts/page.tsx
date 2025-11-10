@@ -29,24 +29,22 @@ interface PageProps {
   }>
 }
 
-function getBaseUrl() {
-  return `http://localhost:3002` 
-}
 
 export default async function ContractsPage({ searchParams }: PageProps) {
   const resolvedSearchParams = await searchParams
   const cursor = resolvedSearchParams?.cursor
-
-  const baseUrl = getBaseUrl()
-
   // Fetch contracts from API
-  const url = cursor 
-    ? `${baseUrl}/contract/?cursor=${cursor}` 
-    : `${baseUrl}/contract/`
+  const url = cursor
+    ? `https://preview-service.midnightexplorer.com/contract/?cursor=${cursor}`
+    : `https://preview-service.midnightexplorer.com/contract/`
 
-  const res = await fetch(url, { cache: 'no-store' })
-  if (!res.ok) throw new Error('Failed to fetch contracts') 
-  
+  const res = await fetch(url, {
+    headers: {
+      'x-api-key': process.env.NEXT_PUBLIC_API_KEY || ''
+    }
+  })
+  if (!res.ok) throw new Error('Failed to fetch contracts')
+
   const { items: contracts, nextCursor }: ApiResponse = await res.json()
 
   // ✅ NEW: Fetch transaction hashes for all contracts
@@ -54,8 +52,12 @@ export default async function ContractsPage({ searchParams }: PageProps) {
     contracts.map(async (contract: Contract): Promise<Contract> => {
       try {
         const txRes = await fetch(
-          `${baseUrl}/transactions/id/${contract.transactionId}`,
-          { cache: 'no-store' }
+          `https://preview-service.midnightexplorer.com/transactions/id/${contract.transactionId}`,
+          {
+            headers: {
+              'x-api-key': process.env.NEXT_PUBLIC_API_KEY || ''
+            }
+          }
         )
         if (txRes.ok) {
           const txData = await txRes.json()
@@ -134,8 +136,8 @@ export default async function ContractsPage({ searchParams }: PageProps) {
                 </thead>
                 <tbody>
                   {contractsWithHashes.map((contract: Contract) => (
-                    <tr 
-                      key={contract.id} 
+                    <tr
+                      key={contract.id}
                       className="border-b border-border/50 hover:bg-accent/5 transition-colors"
                     >
                       <td className="p-4">
@@ -147,7 +149,7 @@ export default async function ContractsPage({ searchParams }: PageProps) {
                         </Link>
                       </td>
                       <td className="p-4">
-                        <Badge 
+                        <Badge
                           variant="outline"
                           className={
                             contract.variant === 'Deploy'
@@ -175,8 +177,8 @@ export default async function ContractsPage({ searchParams }: PageProps) {
                       </td>
                       <td className="p-4">
                         <Link href={`/contracts/${contract.address}`}>
-                          <Button 
-                            size="sm" 
+                          <Button
+                            size="sm"
                             variant="outline"
                             className="border-border hover:bg-accent/50"
                           >

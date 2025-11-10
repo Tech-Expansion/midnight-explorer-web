@@ -23,7 +23,11 @@ export function NetworkCharts() {
   useEffect(() => {
     const fetchTransactionData = async () => {
       try {
-        const res = await fetch("http://localhost:3002/network/stats")
+        const res = await fetch('https://preview-service.midnightexplorer.com/network/stats', {
+        headers: {
+          'x-api-key': process.env.NEXT_PUBLIC_API_KEY || ''
+        }
+      })
         if (!res.ok) throw new Error("Failed to fetch transaction stats")
 
         const stats = await res.json()

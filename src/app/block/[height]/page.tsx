@@ -19,22 +19,19 @@ interface PageProps {
 // Disable prerendering so network calls are executed at request time
 export const dynamic = "force-dynamic"  
 
-// Helper function to get base URL
-function getBaseUrl() {
-  return `http://localhost:3002` // Local development
-}
 
 export default async function BlockPage({ params }: PageProps) {
   // AWAIT params first
   const { height } = await params;
   console.log('Fetching block with height/hash:', height);
 
-  const baseUrl = getBaseUrl();
-
   try {
     // Fetch block details from API
-    const blockResponse = await fetch(`${baseUrl}/blocks/${height}`, {
-      cache: 'no-store'
+    const blockResponse = await fetch(`https://preview-service.midnightexplorer.com/blocks/${height}`, {
+      cache: 'no-store',
+      headers: {
+        'x-api-key': process.env.NEXT_PUBLIC_API_KEY || ''
+      }
     })
    // console.log('Block API response status:', blockResponse.status, blockResponse.ok);
 
@@ -42,8 +39,11 @@ export default async function BlockPage({ params }: PageProps) {
       if (blockResponse.status === 404) {
         // Try transaction fallback 
         try {
-          const txResponse = await fetch(`${baseUrl}/transactions/${height}`, {
-            cache: 'no-store'
+          const txResponse = await fetch(`https://preview-service.midnightexplorer.com/transactions/${height}`, {
+            cache: 'no-store',
+            headers: {
+              'x-api-key': process.env.NEXT_PUBLIC_API_KEY || ''
+            }
           })
           if (txResponse.ok) {
             redirect(`/tx/${height}`)
@@ -73,8 +73,11 @@ export default async function BlockPage({ params }: PageProps) {
     
     if (block.txCount > 0) {
       try {
-        const txResponse = await fetch(`${baseUrl}/blocks/${height}/transactions?limit=20`, {
-          cache: 'no-store'
+        const txResponse = await fetch(`https://preview-service.midnightexplorer.com/blocks/${height}/transactions?limit=20`, {
+          cache: 'no-store',
+          headers: {
+            'x-api-key': process.env.NEXT_PUBLIC_API_KEY || ''
+          }
         })
         if (txResponse.ok) {
           const txData = await txResponse.json()
@@ -298,8 +301,11 @@ export default async function BlockPage({ params }: PageProps) {
     
     // Try transaction fallback
     try {
-      const txResponse = await fetch(`${baseUrl}/transactions/${height}`, {
-        cache: 'no-store'
+      const txResponse = await fetch(`https://preview-service.midnightexplorer.com/transactions/${height}`, {
+        cache: 'no-store',
+        headers: {
+          'x-api-key': process.env.NEXT_PUBLIC_API_KEY || ''
+        }
       })
       if (txResponse.ok) {
         redirect(`/tx/${height}`)

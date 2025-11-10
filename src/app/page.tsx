@@ -35,10 +35,11 @@ function HomePageContent() {
   const { data: blocksData } = useQuery({
     queryKey: ['recent-blocks'],
     queryFn: async () => {
-      const res = await fetch('http://localhost:3002/blocks/recent', {
-        cache: 'no-store',
-        next: { revalidate: 0 }
-      })
+      const res = await fetch('https://preview-service.midnightexplorer.com/blocks/recent', {
+      headers: {
+        'x-api-key': process.env.NEXT_PUBLIC_API_KEY || ''
+      }
+    })
       if (!res.ok) throw new Error('Failed to fetch blocks')
       const data = await res.json()
       return data.blocks || []
