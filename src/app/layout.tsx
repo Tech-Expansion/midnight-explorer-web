@@ -27,7 +27,7 @@ export const metadata: Metadata = {
     siteName: 'Midnight Explorer',
     images: [
       {
-        url: '/og-image.png', // Đặt ảnh này trong thư mục /public
+        url: '/og-image.jpg',
         width: 1200,
         height: 630,
       },
@@ -39,7 +39,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Midnight Explorer',
     description: 'An explorer for the Midnight network.',
-    images: ['/og-image.png'], // Đặt ảnh này trong thư mục /public
+    images: ['/og-image.jpg'],
   },
 };
 
