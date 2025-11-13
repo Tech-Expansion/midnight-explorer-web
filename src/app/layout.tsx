@@ -27,9 +27,10 @@ export const metadata: Metadata = {
     siteName: 'Midnight Explorer',
     images: [
       {
-        url: '/og-image.jpg',
+        url: 'https://www.midnightexplorer.com/og-image.jpg',
         width: 1200,
         height: 630,
+        alt: 'Midnight Explorer - Blockchain Explorer',
       },
     ],
     locale: 'en_US',
@@ -39,7 +40,10 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Midnight Explorer',
     description: 'An explorer for the Midnight network.',
-    images: ['/og-image.jpg'],
+    images: {
+      url: 'https://www.midnightexplorer.com/og-image.jpg',
+      alt: 'Midnight Explorer - Blockchain Explorer',
+    },
   },
 };
 
