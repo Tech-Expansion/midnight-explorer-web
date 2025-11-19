@@ -9,8 +9,26 @@
  * const transactions = await transactionAPI.getRecentTransactions()
  */
 
-// Always use relative API routes - works for both client and server
-export const API_BASE_URL = '/api'
+/**
+ * Get the base URL for API calls
+ * For server-side rendering, we need to construct the full URL
+ * For client-side, we can use relative URLs
+ */
+function getApiBaseUrl(): string {
+  // Server-side: construct URL based on Vercel URL or localhost
+  if (typeof window === 'undefined') {
+    // On Vercel
+    if (process.env.VERCEL_URL) {
+      return `https://${process.env.VERCEL_URL}/api`
+    }
+    // Local development
+    return `http://localhost:${process.env.PORT || 3000}/api`
+  }
+  // Client-side: use relative URL
+  return '/api'
+}
+
+export const API_BASE_URL = getApiBaseUrl()
 
 /**
  * Returns the standard API headers for Midnight Explorer API requests
@@ -37,8 +55,10 @@ export function getApiFetchConfig(): RequestInit {
  * Generic API fetch wrapper with consistent error handling
  */
 async function apiFetch<T>(endpoint: string, options?: RequestInit): Promise<T> {
-  const url = `${API_BASE_URL}${endpoint}`
+  const baseUrl = getApiBaseUrl()
+  const url = `${baseUrl}${endpoint}`
   const config: RequestInit = {
+    cache: 'no-store',
     ...options,
     headers: {
       ...getApiHeaders(),
@@ -126,13 +146,13 @@ export const contractAPI = {
    * Get a contract by address
    */
   getContract: <T = unknown>(address: string) =>
-    apiFetch<T>(`/contract/${address}`),
+    apiFetch<T>(`/contracts/${address}`),
 
   /**
    * Get contracts with pagination
    */
   getContracts: <T = unknown>(cursor?: string) =>
-    apiFetch<T>(`/contract/${cursor ? `?cursor=${cursor}` : ''}`)
+    apiFetch<T>(`/contracts${cursor ? `?cursor=${cursor}` : ''}`)
 }
 
 /**

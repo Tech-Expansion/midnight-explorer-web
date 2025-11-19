@@ -6,5 +6,5 @@ export async function GET(
   { params }: { params: Promise<{ address: string }> }
 ) {
   const { address } = await params
-  return proxyToExternalAPI(request, `/contracts/${address}`)
+  return proxyToExternalAPI(request, `/contract/${address}`)
 }
