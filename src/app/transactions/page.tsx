@@ -2,48 +2,61 @@ import Link from "next/link"
 import { Header } from "@/components/header"
 import { Starfield } from "@/components/starfield"
 import { Footer } from "@/components/footer"
+import { SearchBarPage } from "@/components/search-bar-page"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
 import {
-  Search,
   ChevronLeft,
   ChevronRight,
   CheckCircle2,
   Clock,
   AlertCircle,
 } from "lucide-react"
-import { getProvider } from "@/lib/data"
 import { formatDistanceToNow } from "@/lib/utils"
+import { transactionAPI } from "@/lib/api"
 
 // Disable prerendering so network calls are executed at request time
 export const dynamic = "force-dynamic"
+
+// ✅ Define Transaction interface
+interface Transaction {
+  id: string
+  hash: string
+  status: 'success' | 'pending' | 'failed'
+  blockHeight?: number
+  protocolVersion: number
+  timestamp?: string | number
+  size?: number
+}
+
+interface ApiResponse {
+  items: Transaction[]
+  nextCursor?: string
+}
 
 interface PageProps {
   searchParams: Promise<{ cursor?: string }>
 }
 
+
 export default async function TransactionsPage({ searchParams }: PageProps) {
-  const provider = getProvider()
-  const cursor = (await searchParams)?.cursor
+  const resolvedSearchParams = await searchParams
+  const cursor = resolvedSearchParams?.cursor
+  
+  // Fetch transactions from API
+  const { items: transactions, nextCursor }: ApiResponse = await transactionAPI.getTransactions(cursor)
 
-  // Fetch transactions with pagination
-  const { items: transactions, nextCursor } = await provider.getTransactionsPage(cursor)
+  // Pagination helpers - use transaction IDs instead of offsets
+  const prevCursor = transactions.length > 0 ? transactions[0].id : null
+  const hasPrev = cursor !== null && cursor !== undefined
 
-  // Pagination helpers
-  const pageSize = 20
-  const current = cursor ? parseInt(cursor, 10) : 0
-  const prevCursor = current - pageSize
-  const prevHref = prevCursor > 0 ? `/transactions?cursor=${prevCursor}` : "/transactions"
-
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: Transaction['status']) => {
     switch (status) {
       case "success":
         return (
           <Badge className="bg-green-500/10 text-green-400 border-green-500/20 hover:bg-green-500/20">
             <CheckCircle2 className="h-3 w-3 mr-1" />
-            Success
+            Success 
           </Badge>
         )
       case "pending":
@@ -74,30 +87,17 @@ export default async function TransactionsPage({ searchParams }: PageProps) {
       <div className="relative z-10">
         <Header />
 
-        <main className="container mx-auto px-4 py-8 space-y-6">
+        <main className="container mx-auto px-4 py-8 space-y-4">
           {/* Header */}
           <div className="space-y-2">
             <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
               Transactions
             </h1>
-            <p className="text-muted-foreground text-lg">Track all transactions on the Midnight Cardano network</p>
+            <p className="text-muted-foreground text-lg">Track all transactions on the Midnight network</p>
           </div>
 
           {/* Search */}
-          <Card className="bg-card/50 border-border p-4">
-            <div className="flex gap-2">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search by transaction hash or address..."
-                  className="pl-10 bg-background/50 border-border"
-                />
-              </div>
-              <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
-                Search
-              </Button>
-            </div>
-          </Card>
+          <SearchBarPage searchType="transaction" />
 
           {/* Transactions Table */}
           <Card className="bg-card/50 border-border">
@@ -108,19 +108,20 @@ export default async function TransactionsPage({ searchParams }: PageProps) {
                     <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Txn Hash</th>
                     <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Status</th>
                     <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Block</th>
+                    <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Protocol</th>
                     <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Age</th>
                     <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Size</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {transactions.map((tx, index) => (
-                    <tr key={`${tx.hash}-${index}`} className="border-b border-border/50 hover:bg-accent/5 transition-colors">
+                  {transactions.map((tx: Transaction) => (
+                    <tr key={tx.id} className="border-b border-border/50 hover:bg-accent/5 transition-colors">
                       <td className="p-4">
                         <Link
                           href={`/tx/${tx.hash}`}
                           className="text-blue-400 hover:text-blue-300 transition-colors font-mono text-sm"
                         >
-                          {tx.hash}
+                          0x{tx.hash}
                         </Link>
                       </td>
                       <td className="p-4">{getStatusBadge(tx.status)}</td>
@@ -137,8 +138,13 @@ export default async function TransactionsPage({ searchParams }: PageProps) {
                         )}
                       </td>
                       <td className="p-4">
+                        <span className="text-sm text-muted-foreground font-mono">
+                          v{tx.protocolVersion}
+                        </span>
+                      </td>
+                      <td className="p-4">
                         <span className="text-sm text-muted-foreground">
-                          {tx.timestamp ? `${formatDistanceToNow(new Date(tx.timestamp))} ago` : "N/A"}
+                          {tx.timestamp ? `${formatDistanceToNow(new Date(parseInt(String(tx.timestamp))))} ago` : "N/A"}
                         </span>
                       </td>
                       <td className="p-4">
@@ -156,9 +162,9 @@ export default async function TransactionsPage({ searchParams }: PageProps) {
           {/* Pagination */}
           <div className="flex justify-between items-center mt-4 pb-8">
             <div>
-              {current > 0 && (
+              {hasPrev && (
                 <Link
-                  href={prevHref}
+                  href="/transactions"
                   className="px-4 py-2 bg-card/50 hover:bg-card/70 border border-border text-foreground rounded-md transition-colors inline-flex items-center gap-2"
                 >
                   <ChevronLeft className="h-4 w-4" />

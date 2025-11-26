@@ -7,12 +7,46 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useRouter } from "next/navigation"
+import { Card } from "@/components/ui/card"
 
-export function SearchBar() {
-  const [searchType, setSearchType] = useState("all")
+interface SearchBarProps {
+  searchType?: "all" | "transaction" | "block" | "address" | "contract"
+}
+
+export function SearchBarPage({ searchType = "all" }: SearchBarProps) {
+  const [selectedType, setSelectedType] = useState<typeof searchType>(searchType)
   const [searchQuery, setSearchQuery] = useState("")
   const [isSearching, setIsSearching] = useState(false)
   const router = useRouter()
+
+  // Determine available search types based on current page
+  const getAvailableTypes = () => {
+    if (searchType === "all") {
+      return [
+        { value: "all", label: "All" },
+        { value: "transaction", label: "Transaction" },
+        { value: "block", label: "Block" },
+        { value: "contract", label: "Contract" }
+      ]
+    }
+    // Show only current type for specific pages
+    return [{ value: searchType, label: searchType.charAt(0).toUpperCase() + searchType.slice(1) }]
+  }
+
+  const getPlaceholder = () => {
+    switch (searchType) {
+      case "block":
+        return "Search by block height or hash..."
+      case "transaction":
+        return "Search by transaction hash..."
+      case "address":
+        return "Search by address..."
+      case "contract":
+        return "Search by contract address..."
+      default:
+        return "Search by Hash / Height / Contract Address"
+    }
+  }
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -23,32 +57,38 @@ export function SearchBar() {
 
     try {
       // If user selected Transaction
-      if (searchType === "transaction") {
+      if (selectedType === "transaction") {
         await verifyAndNavigate(cleanQuery, 'tx')
         return
       }
 
       // If user selected Block
-      if (searchType === "block") {
+      if (selectedType === "block") {
         await verifyAndNavigate(cleanQuery, 'block')
         return
       }
 
+      // If user selected Address
+      if (selectedType === "address") {
+        router.push(`/address/${cleanQuery}`)
+        setIsSearching(false)
+        return
+      }
+
       // If user selected Contract
-      if (searchType === "contract") {
+      if (selectedType === "contract") {
         router.push(`/contracts/${cleanQuery}`)
         setIsSearching(false)
         return
       }
 
       // If "all" is selected, smart detection
-      if (searchType === "all") {
+      if (selectedType === "all") {
         // Check if it's a number (block height)
         if (/^\d+$/.test(cleanQuery)) {
           console.log('🔍 Detected block height:', cleanQuery)
           const result = await verifyHash(cleanQuery, 'block')
           if (result.found) {
-            // Use the height from result, not the query
             router.push(`/block/${result.value || cleanQuery}`)
             setIsSearching(false)
             return
@@ -83,7 +123,6 @@ export function SearchBar() {
           const blockResult = await verifyHash(cleanQuery, 'block')
           
           if (blockResult.found) {
-            // Navigate using height, not hash
             router.push(`/block/${blockResult.value}`)
             setIsSearching(false)
             return
@@ -115,15 +154,11 @@ export function SearchBar() {
     }
   }
 
-  const verifyHash = async (query: string, type: 'tx' | 'block' | 'contract'): Promise<{ found: boolean; type?: string; value?: string }> => {
+  const verifyHash = async (query: string, type: 'tx' | 'block'): Promise<{ found: boolean; type?: string; value?: string }> => {
     const timeoutMs = 15000
     
     try {
-      const endpoint = type === 'tx' 
-        ? '/api/transactions/verify' 
-        : type === 'contract'
-        ? '/api/contracts/verify'
-        : '/api/blocks/verify'
+      const endpoint = type === 'tx' ? '/api/transactions/verify' : '/api/blocks/verify'
       
       console.log(`🔍 Verifying ${type}:`, query)
       
@@ -132,9 +167,8 @@ export function SearchBar() {
         controller.abort()
       }, timeoutMs)
 
-      const queryParam = type === 'contract' ? 'address' : 'hash'
       const response = await fetch(
-        `${endpoint}?${queryParam}=${encodeURIComponent(query)}`,
+        `${endpoint}?hash=${encodeURIComponent(query)}`,
         { 
           signal: controller.signal,
           cache: 'no-store'
@@ -173,10 +207,8 @@ export function SearchBar() {
     
     if (result.found) {
       if (type === 'block' && result.value) {
-        // For blocks, use the height value returned from API
         router.push(`/block/${result.value}`)
       } else {
-        // For transactions, use the original query (hash)
         const path = type === 'tx' ? `/tx/${query}` : `/block/${query}`
         router.push(path)
       }
@@ -185,45 +217,46 @@ export function SearchBar() {
     }
     
     setIsSearching(false)
-    return result
   }
 
   return (
-    <div className="max-w-3xl mx-auto">
-      <form onSubmit={handleSearch}>
+    <form onSubmit={handleSearch}>
+      <Card className="bg-card/50 border-border p-4">
         <div className="flex flex-col sm:flex-row gap-2">
-          <Select value={searchType} onValueChange={setSearchType}>
-            <SelectTrigger className="w-full sm:w-[180px] bg-card border-border">
-              <SelectValue placeholder="Search type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All</SelectItem>
-              <SelectItem value="transaction">Transaction</SelectItem>
-              <SelectItem value="block">Block</SelectItem>
-              <SelectItem value="contract">Contract</SelectItem>
-            </SelectContent>
-          </Select>
+            {searchType === "all" && (
+              <Select value={selectedType} onValueChange={(val) => setSelectedType(val as typeof searchType)}>
+                <SelectTrigger className="w-full sm:w-[180px] bg-card border-border">
+                  <SelectValue placeholder="Search type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All</SelectItem>
+                  <SelectItem value="transaction">Transaction</SelectItem>
+                  <SelectItem value="block">Block</SelectItem>
+                  <SelectItem value="contract">Contract</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
 
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="text"
-              placeholder="Search by Hash / Height / Contract Address"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 bg-card border-border"
-            />
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder={getPlaceholder()}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 bg-background/50 border-border"
+              />
+            </div>
+
+            <Button 
+              type="submit" 
+              disabled={isSearching}
+              className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isSearching ? 'Searching...' : 'Search'}
+            </Button>
           </div>
-
-          <Button 
-            type="submit" 
-            disabled={isSearching}
-            className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isSearching ? 'Searching...' : 'Search'}
-          </Button>
-        </div>
+        </Card>
       </form>
-    </div>
   )
 }

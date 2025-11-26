@@ -1,11 +1,12 @@
 'use client'
 
-import { useMemo, useRef, useLayoutEffect } from 'react' // Thêm useLayoutEffect
+import { useMemo, useRef, useLayoutEffect } from 'react'
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { CopyButton } from "@/components/ui/copy-button"
 import { Blocks, ArrowRight } from "lucide-react"
 import Link from "next/link"
-import { formatDistanceToNow } from '@/lib/utils'
+import { formatDateTimeWithRelative } from '@/lib/utils'
 
 interface Block {
   height: number
@@ -17,11 +18,9 @@ interface Block {
 interface RecentBlocksProps {
   blocks: Block[]
 }
-
 export function RecentBlocks({ blocks }: RecentBlocksProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const prevScrollTopRef = useRef(0) // Lưu scroll trước update
-
   // Restore scroll đồng bộ trước paint
   useLayoutEffect(() => {
     if (scrollContainerRef.current) {
@@ -34,36 +33,39 @@ export function RecentBlocks({ blocks }: RecentBlocksProps) {
     prevScrollTopRef.current = scrollContainerRef.current?.scrollTop || 0
 
     return blocks.map((block) => (
-      <Link
+      <div
         key={block.height}
-        href={`/block/${block.height}`}
-        className="block"
+        className="block p-4 rounded-lg bg-secondary/50 hover:bg-secondary transition-colors min-h-[110px] will-change-transform group"
       >
-        <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer min-h-[120px] will-change-transform">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-2">
-                <Badge variant="outline" className="font-mono">
-                  #{block.height}
-                </Badge>
-                <span className="text-sm text-muted-foreground">
-                  {formatDistanceToNow(new Date(block.timestamp))} ago
-                </span>
-              </div>
+        <Link href={`/block/${block.height}`} className="block h-full">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="font-mono">
+                #{block.height}
+              </Badge>
+              <span className="text-sm text-muted-foreground">
+                {formatDateTimeWithRelative(new Date(block.timestamp))}
+              </span>
+            </div>
 
-              <p className="text-sm font-mono text-muted-foreground truncate">
+            <div className="flex items-center gap-2 group/hash">
+              <p className="text-sm font-mono text-muted-foreground truncate flex-1 select-all">
                 {block.hash}
               </p>
-
-              <div className="mt-2">
-                <span className="text-sm text-muted-foreground">
-                  Txns: {block.txCount}
-                </span>
+              <div 
+                onClick={(e) => e.preventDefault()}
+                className="opacity-50 group-hover/hash:opacity-100 transition-opacity"
+              >
+                <CopyButton text={block.hash} className="h-6 w-6" />
               </div>
             </div>
+
+            <div className="text-sm text-muted-foreground">
+              Txns: {block.txCount}
+            </div>
           </div>
-        </Card>
-      </Link>
+        </Link>
+      </div>
     ))
   }, [blocks])
 
@@ -74,12 +76,12 @@ export function RecentBlocks({ blocks }: RecentBlocksProps) {
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <Blocks className="h-5 w-5" />
-            <h2 className="text-xl font-semibold">Recent Blocks</h2>
+            <h3 className="text-lg font-semibold">Recent Blocks</h3>
           </div>
         </div>
         <div className="flex-1 overflow-y-auto space-y-3">
-          {[...Array(5)].map((_, i) => ( // Giả sử max 5 items, giữ fixed skeleton
-            <div key={i} className="p-4 rounded-lg bg-secondary/50 animate-pulse h-[120px]">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="p-4 rounded-lg bg-secondary/50 animate-pulse min-h-[110px]">
               <div className="h-full bg-muted rounded" />
             </div>
           ))}
@@ -93,11 +95,11 @@ export function RecentBlocks({ blocks }: RecentBlocksProps) {
       <div className="flex items-center justify-between mb-4 flex-shrink-0">
         <div className="flex items-center gap-2">
           <Blocks className="h-5 w-5" />
-          <h2 className="text-xl font-semibold">Recent Blocks</h2>
+          <h3 className="text-lg font-semibold">Recent Blocks</h3>
         </div>
         <Link
           href="/blocks"
-          className="flex items-center gap-1 text-sm text-white-400 hover:text-blue-300 transition-colors"
+          className="flex items-center gap-1 text-sm text-white hover:text-gray-300 transition-colors"
         >
           View All
           <ArrowRight className="h-4 w-4" />

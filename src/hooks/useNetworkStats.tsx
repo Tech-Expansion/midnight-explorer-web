@@ -16,6 +16,7 @@ interface Block {
 interface NetworkData {
   sidechainStatus: SideChainStatus | null
   latestBlock: Block | null
+  totalTransactions: number | null
   loading: boolean
   error: string | null
 }
@@ -24,6 +25,7 @@ export function useNetworkStats() {
   const [data, setData] = useState<NetworkData>({
     sidechainStatus: null,
     latestBlock: null,
+    totalTransactions: null,
     loading: true,
     error: null
   })
@@ -31,22 +33,25 @@ export function useNetworkStats() {
   useEffect(() => {
     async function fetchData() {
       try {
-        // Fetch cả 2 API song song
-        const [statusRes, blocksRes] = await Promise.all([
+        // ✅ Fetch 3 APIs in parallel
+        const [statusRes, blocksRes, txCountRes] = await Promise.all([
           fetch('/api/sidechainstatus'),
-          fetch('/api/blocks/recent')
+          fetch('/api/blocks/recent'),
+          fetch('/api/transactions/count')
         ])
 
-        if (!statusRes.ok || !blocksRes.ok) {
+        if (!statusRes.ok || !blocksRes.ok || !txCountRes.ok) {
           throw new Error('Failed to fetch data')
         }
 
         const statusData = await statusRes.json()
         const blocksData = await blocksRes.json()
+        const txCountData = await txCountRes.json()
 
         setData({
           sidechainStatus: statusData.sidechain,
           latestBlock: blocksData.blocks?.[0] || null,
+          totalTransactions: txCountData.count || null,
           loading: false,
           error: null
         })
@@ -60,7 +65,6 @@ export function useNetworkStats() {
       }
     }
 
-    // Fetch ngay lập tức
     fetchData()
 
     // Fetch mỗi 10 giây
@@ -70,4 +74,4 @@ export function useNetworkStats() {
   }, [])
 
   return data
-}
+} 

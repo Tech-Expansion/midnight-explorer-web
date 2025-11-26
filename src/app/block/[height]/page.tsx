@@ -1,3 +1,4 @@
+
 import { Header } from "@/components/header"
 import { Starfield } from "@/components/starfield"
 import { Footer } from "@/components/footer"
@@ -6,50 +7,46 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight, ArrowLeft, Clock, CheckCircle2, AlertCircle } from "lucide-react"
 import Link from "next/link"
-import { getProvider } from "@/lib/data"
 import { formatDistanceToNow } from "@/lib/utils"
+import { blockAPI, transactionAPI } from "@/lib/api"
 import { notFound, redirect } from "next/navigation"
 import { CopyButton } from "@/components/ui/copy-button"
 import { Transaction } from "@/lib/types"
+
 interface PageProps {
   params: Promise<{ height: string }>
 }
 
 // Disable prerendering so network calls are executed at request time
-export const dynamic = "force-dynamic"
+export const dynamic = "force-dynamic"  
+
 
 export default async function BlockPage({ params }: PageProps) {
-  // Await params để resolve giá trị
-  const resolvedParams = await params
-  const provider = getProvider()
+  // AWAIT params first
+  const { height } = await params;
+  console.log('Fetching block with height/hash:', height);
 
   try {
-    // Fetch block details
-    const block = await provider.getBlockByHashOrHeight(resolvedParams.height)
-
-    // Handle not found - try transaction fallback
-    if (!block) {
-      try {
-        const tx = await provider.getTransactionByHash(resolvedParams.height)
-        if (tx) {
-          redirect(`/tx/${resolvedParams.height}`)
-        }
-      } catch (error) {
-        notFound()
-      }
+    // Fetch block details from API
+    const data = await blockAPI.getBlock<{ block: { height: number; hash: string; timestamp: string | number; txCount: number } }>(height)
+    console.log('Block data received:', data);
+    
+    if (!data.block) {
+      console.error('No block data in response');
       notFound()
     }
 
+    const { block } = data
     const blockHeight = block.height
 
-    // Fetch first 20 transactions for preview
+    // Fetch transactions for preview
     let transactions: Transaction[] = []
     let hasMoreTransactions = false
     
     if (block.txCount > 0) {
       try {
-        const txResult = await provider.getBlockTransactions(resolvedParams.height, undefined)
-        transactions = txResult.items.slice(0, 20)
+        const txData = await blockAPI.getBlockTransactions<{ transactions: Transaction[] }>(height, { limit: 20 })
+        transactions = txData.transactions || []
         hasMoreTransactions = block.txCount > 20
       } catch (error) {
         console.error('Error fetching transactions:', error)
@@ -200,13 +197,12 @@ export default async function BlockPage({ params }: PageProps) {
                       Transactions ({transactions.length}{hasMoreTransactions ? ` of ${block.txCount}` : ''})
                     </h2>
                     
-                      <Link
-                        href={`/block/${block.height}/txs`}
-                        className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
-                      >
-                        View All →
-                      </Link>
-                    
+                    <Link
+                      href={`/block/${block.height}/txs`}
+                      className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
+                    >
+                      View All →
+                    </Link>
                   </div>
                   
                   {transactions.length > 0 ? (
@@ -269,14 +265,10 @@ export default async function BlockPage({ params }: PageProps) {
     
     // Try transaction fallback
     try {
-      const tx = await provider.getTransactionByHash(resolvedParams.height)
-      if (tx) {
-        redirect(`/tx/${resolvedParams.height}`)
-      }
-    } catch (txError) {
+      await transactionAPI.getTransaction(height)
+      redirect(`/tx/${height}`)
+    } catch (_txError) {
       notFound()
     }
-    
-    notFound()
   }
 }

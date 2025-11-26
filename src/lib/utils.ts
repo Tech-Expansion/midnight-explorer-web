@@ -61,3 +61,40 @@ export function formatDistanceToNow(date: Date): string {
   const diffYear = Math.floor(diffMonth / 12);
   return `${diffYear}y`;
 }
+  
+/**
+ * Formats a date to show either relative time for recent dates or full datetime for older dates
+ * Returns "a few seconds ago", "2 minutes ago" for recent times
+ * Returns "Nov 26, 2025 7:47:59 PM" format for older times
+ * 
+ * @param date The date to format
+ * @returns A formatted time string
+ */
+export function formatDateTimeWithRelative(date: Date): string {
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffSec = Math.floor(diffMs / 1000);
+  
+  // For very recent times (less than 1 hour), show relative time
+  if (diffSec < 3600) {
+    if (diffSec < 10) {
+      return 'a few seconds ago';
+    } else if (diffSec < 60) {
+      return `${diffSec} seconds ago`;
+    } else {
+      const minutes = Math.floor(diffSec / 60);
+      return minutes === 1 ? 'a minute ago' : `${minutes} minutes ago`;
+    }
+  }
+  
+  // For older times, show full date and time
+  return date.toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric', 
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: true
+  });
+}

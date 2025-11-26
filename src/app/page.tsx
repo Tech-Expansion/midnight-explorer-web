@@ -12,6 +12,7 @@ import { ValidatorStats } from "@/components/validator-stats"
 import { TokenStats } from "@/components/token-stats"
 import { NetworkHealth } from "@/components/network-health"
 import { Starfield } from "@/components/starfield"
+import { blockAPI } from "@/lib/api"
 
 interface Block {
   height: number
@@ -20,19 +21,12 @@ interface Block {
   txCount: number
 }
 
-interface Transaction {
-  hash: string
-  status: string
-  blockHeight?: number
-  timestamp?: string
-}
-
 // Tạo QueryClient global
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      refetchOnWindowFocus: false, // Tránh refetch khi tab active lại
-      staleTime: 15000, // Data "tươi" trong 5s, giảm update thừa
+      refetchOnWindowFocus: false,
+      staleTime: 15000,
     },
   },
 })
@@ -42,34 +36,13 @@ function HomePageContent() {
   const { data: blocksData } = useQuery({
     queryKey: ['recent-blocks'],
     queryFn: async () => {
-      const res = await fetch('/api/blocks/recent', {
-        cache: 'no-store',
-        next: { revalidate: 0 }
-      })
-      if (!res.ok) throw new Error('Failed to fetch blocks')
-      const data = await res.json()
+      const data = await blockAPI.getRecentBlocks<{ blocks: Block[] }>()
       return data.blocks || []
     },
-    refetchInterval: 30000, // Poll mỗi 30s ở background
-  })
-
-  // Query cho transactions
-  const { data: txsData } = useQuery({
-    queryKey: ['recent-txs'],
-    queryFn: async () => {
-      const res = await fetch('/api/transactions/recent', {
-        cache: 'no-store',
-        next: { revalidate: 0 }
-      })
-      if (!res.ok) throw new Error('Failed to fetch txs')
-      const data = await res.json()
-      return data.transactions || []
-    },
-    refetchInterval: 30000, // Poll mỗi 30s ở background
+    refetchInterval: 30000,
   })
 
   const blocks = blocksData || []
-  const txs = txsData || []
 
   return (
     <div className="min-h-screen bg-background relative">
@@ -94,24 +67,24 @@ function HomePageContent() {
 
           {/* Network Statistics */}
           <NetworkStats /> 
+          {/* Charts Section */}
+          <NetworkCharts /> 
 
           {/* Recent Activity Grid */}
           <div className="grid lg:grid-cols-2 gap-6">
             <RecentBlocks blocks={blocks} />
-            <RecentTransactions txs={txs} />
+            {/* ✅ FIXED: RecentTransactions doesn't need props - it fetches internally */}
+            <RecentTransactions />
           </div>
 
-          {/* Charts Section */}
-          <NetworkCharts /> 
-
           {/* Validator Statistics */}
-          <ValidatorStats /> 
+            {/* <ValidatorStats /> 
 
-          {/* Token Statistics */}
-          <TokenStats /> 
+            {/* Token Statistics */}
+           {/*} <TokenStats />  */}
 
-          {/* Network Health */}
-          <NetworkHealth /> 
+            {/* Network Health */}
+          {/*}  <NetworkHealth />  */}
         </main>
 
         <Footer />

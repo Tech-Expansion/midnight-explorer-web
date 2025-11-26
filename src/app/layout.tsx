@@ -7,6 +7,7 @@ import "./globals.css"
 import { Suspense } from "react"
 import { cn } from "@/lib/utils";
 import { GoogleAnalytics } from '@next/third-parties/google'
+import { LoadingFallback } from "@/components/loading-fallback"
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://www.midnightexplorer.com'),
@@ -27,7 +28,7 @@ export const metadata: Metadata = {
     siteName: 'Midnight Explorer',
     images: [
       {
-        url: '/og-image.png', // Đặt ảnh này trong thư mục /public
+        url: '/og-image.jpg',
         width: 1200,
         height: 630,
       },
@@ -39,7 +40,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Midnight Explorer',
     description: 'An explorer for the Midnight network.',
-    images: ['/og-image.png'], // Đặt ảnh này trong thư mục /public
+    images: ['/og-image.jpg'],
   },
 };
 
@@ -56,7 +57,7 @@ export default function RootLayout({
           `font-sans ${GeistSans.variable} ${GeistMono.variable} antialiased`
         )}
       >
-        <Suspense fallback={<div>Loading...</div>}>{children}</Suspense>
+        <Suspense fallback={<LoadingFallback />}>{children}</Suspense>
         <Analytics />
       </body>
       <GoogleAnalytics gaId="G-QT1M3GG0MM" />
