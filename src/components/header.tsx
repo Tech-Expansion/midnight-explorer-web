@@ -4,14 +4,6 @@ import Link from "next/link"
 import Image from "next/image"
 import { Menu, Sparkles } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import {
-  NavigationMenu,
-  NavigationMenuContent,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-  NavigationMenuTrigger,
-} from "@/components/ui/navigation-menu"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { NetworkToggle } from "@/components/network-toggle"
 
@@ -46,97 +38,31 @@ export function Header() {
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center flex-1 justify-center">
-            <NavigationMenu>
-              <NavigationMenuList>
-                <NavigationMenuItem>
-                  <NavigationMenuTrigger>Blockchain</NavigationMenuTrigger>
-                  <NavigationMenuContent>
-                    <ul className="grid w-[400px] gap-3 p-4">
-                      <li>
-                        <NavigationMenuLink asChild>
-                          <Link
-                            href="/blocks"
-                            className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-                          >
-                            <div className="text-sm font-medium leading-none">Blocks</div>
-                            <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                              View all blocks on the Midnight network
-                            </p>
-                          </Link>
-                        </NavigationMenuLink>
-                      </li>
-                      <li>
-                        <NavigationMenuLink asChild>
-                          <Link
-                            href="/transactions"
-                            className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-                          >
-                            <div className="text-sm font-medium leading-none">Transactions</div>
-                            <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                              Explore all transactions and their details
-                            </p>
-                          </Link>
-                        </NavigationMenuLink>
-                      </li>
-                      <li>
-                        <NavigationMenuLink asChild>
-                          <Link
-                            href="/contracts"
-                            className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-                          >
-                            <div className="text-sm font-medium leading-none">Contracts</div>
-                            <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                              Look up contract details
-                            </p>
-                          </Link>
-                        </NavigationMenuLink>
-                      </li>
-                    </ul>
-                  </NavigationMenuContent>
-                </NavigationMenuItem>
-
-                <NavigationMenuItem>
-                  <NavigationMenuTrigger>Analytics</NavigationMenuTrigger>
-                  <NavigationMenuContent>
-                    <ul className="grid w-[400px] gap-3 p-4">
-                      <li>
-                        <NavigationMenuLink asChild>
-                          <Link
-                            href="/"
-                            className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50"
-                          >
-                            <div className="text-sm font-medium leading-none">Network Charts</div>
-                            <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                              Visualize network metrics and trends
-                            </p>
-                          </Link>
-                        </NavigationMenuLink>
-                      </li>
-                      <li>
-                        <NavigationMenuLink asChild>
-                          <Link
-                            href="/"
-                            className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50"
-                          >
-                            <div className="text-sm font-medium leading-none">Statistics</div>
-                            <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                              Detailed network statistics and metrics
-                            </p>
-                          </Link>
-                        </NavigationMenuLink>
-                      </li>
-                    </ul>
-                  </NavigationMenuContent>
-                </NavigationMenuItem>
-
-                <NavigationMenuItem>
-                  <Link href="/" className="group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50">
-                    API
-                  </Link>
-                </NavigationMenuItem>
-              </NavigationMenuList>
-            </NavigationMenu>
+          <nav className="hidden md:flex items-center flex-1 justify-center gap-6">
+            <Link 
+              href="/blocks" 
+              className="text-sm font-medium transition-colors hover:text-primary"
+            >
+              Blocks
+            </Link>
+            <Link 
+              href="/transactions" 
+              className="text-sm font-medium transition-colors hover:text-primary"
+            >
+              Transactions
+            </Link>
+            <Link 
+              href="/contracts" 
+              className="text-sm font-medium transition-colors hover:text-primary"
+            >
+              Contracts
+            </Link>
+            <Link 
+              href="/" 
+              className="text-sm font-medium transition-colors hover:text-primary"
+            >
+              Pool
+            </Link>
           </nav>
 
           <div className="hidden md:block">
@@ -160,17 +86,11 @@ export function Header() {
                   <Link href="/transactions" className="text-lg font-medium hover:text-primary transition-colors">
                     Transactions
                   </Link>
-                  <Link href="/" className="text-lg font-medium hover:text-primary transition-colors">
-                    Addresses
+                  <Link href="/contracts" className="text-lg font-medium hover:text-primary transition-colors">
+                    Contracts
                   </Link>
                   <Link href="/" className="text-lg font-medium hover:text-primary transition-colors">
-                    Charts
-                  </Link>
-                  <Link href="/" className="text-lg font-medium hover:text-primary transition-colors">
-                    Statistics
-                  </Link>
-                  <Link href="/" className="text-lg font-medium hover:text-primary transition-colors">
-                    API
+                    Pool
                   </Link>
                 </nav>
               </SheetContent>

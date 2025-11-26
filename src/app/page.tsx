@@ -78,13 +78,13 @@ function HomePageContent() {
           </div>
 
           {/* Validator Statistics */}
-          <ValidatorStats /> 
+            {/* <ValidatorStats /> 
 
-          {/* Token Statistics */}
-          <TokenStats /> 
+            {/* Token Statistics */}
+           {/*} <TokenStats />  */}
 
-          {/* Network Health */}
-          <NetworkHealth /> 
+            {/* Network Health */}
+          {/*}  <NetworkHealth />  */}
         </main>
 
         <Footer />

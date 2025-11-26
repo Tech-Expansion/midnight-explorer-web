@@ -1,11 +1,10 @@
 import { Header } from "@/components/header"
 import { Starfield } from "@/components/starfield"
 import { Footer } from "@/components/footer"
+import { SearchBarPage } from "@/components/search-bar-page"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Search, ChevronLeft, ChevronRight, Box, Clock } from "lucide-react"
+import { ChevronLeft, ChevronRight, Box, Clock } from "lucide-react"
 import Link from "next/link"
 import { formatDistanceToNow } from "@/lib/utils"
 import { blockAPI } from "@/lib/api"
@@ -57,30 +56,17 @@ export default async function BlocksPage({ searchParams }: PageProps) {
       <div className="relative z-10">
         <Header />
 
-        <main className="container mx-auto px-4 py-8 space-y-6">
+        <main className="container mx-auto px-4 py-8 space-y-4">
           {/* Header */}
           <div className="space-y-2">
             <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
               Blocks
             </h1>
-            <p className="text-muted-foreground text-lg">Explore all blocks on the Midnight Cardano network</p>
+            <p className="text-muted-foreground text-lg">Explore all blocks on the Midnight network</p>
           </div>
 
           {/* Search */}
-          <Card className="bg-card/50 border-border p-4">
-            <div className="flex gap-2">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search by block height or hash..."
-                  className="pl-10 bg-background/50 border-border"
-                />
-              </div>
-              <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
-                Search
-              </Button>
-            </div>
-          </Card>
+          <SearchBarPage searchType="block" />
 
           {/* Blocks Table */}
           <Card className="bg-card/50 border-border">

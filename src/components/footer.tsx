@@ -77,7 +77,7 @@ export function Footer() {
               </div>
             </Link>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              The most comprehensive blockchain explorer for Midnight Cardano. Track transactions, blocks, and addresses
+              The most comprehensive blockchain explorer for Midnight Network. Track transactions, blocks, and addresses
               in real-time.
             </p>
             <div className="flex items-center gap-3">

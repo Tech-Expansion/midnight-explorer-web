@@ -1,6 +1,7 @@
 import { Header } from "@/components/header"
 import { Starfield } from "@/components/starfield"
 import { Footer } from "@/components/footer"
+import { SearchBarPage } from "@/components/search-bar-page"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -78,6 +79,9 @@ export default async function ContractsPage({ searchParams }: PageProps) {
               Explore deployed and called contracts on Midnight
             </p>
           </div>
+
+          {/* Search Bar */}
+          <SearchBarPage searchType="contract" />
 
           {/* Stats */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

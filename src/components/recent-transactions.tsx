@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, useRef, useLayoutEffect } from 'react'
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { CopyButton } from "@/components/ui/copy-button"
 import { Activity, ArrowRight } from "lucide-react"
 import Link from "next/link"
 import { formatDistanceToNow } from '@/lib/utils'
@@ -106,59 +107,66 @@ export function RecentTransactions() {
       }
 
       return (
-        <Link
+        <div
           key={`${txHash}-${index}`}
-          href={`/tx/${txHash}`}
-          className="block p-4 rounded-lg bg-secondary/50 hover:bg-secondary transition-colors min-h-[100px] will-change-transform"
+          className="block p-4 rounded-lg bg-secondary/50 hover:bg-secondary transition-colors min-h-[110px] will-change-transform group"
         >
-          <div className="space-y-2">
-            <div className="flex items-center justify-between gap-2">
-              <p className="text-sm font-mono text-primary hover:text-primary/80 truncate flex-1">
-                {txHash}
-              </p>
-              <Badge
-                variant={tx.status === "success" ? "default" : tx.status === "failed" ? "destructive" : "secondary"}
-                className={
-                  tx.status === "success"
-                    ? "bg-green-500/20 text-green-500 border-green-500/30"
-                    : tx.status === "failed"
-                      ? "bg-red-500/20 text-red-500 border-red-500/30"
-                      : "bg-yellow-500/20 text-yellow-500 border-yellow-500/30"
-                }
-              >
-                {tx.status}
-              </Badge>
-            </div>
-
-            <div className="flex items-center justify-between gap-2 text-xs">
-              {tx.blockHeight ? (
-                <Link
-                  href={`/block/${tx.blockHeight}`}
-                  className="text-muted-foreground hover:text-foreground transition-colors"
-                  onClick={(e) => e.stopPropagation()}
+          <Link href={`/tx/${txHash}`} className="block h-full">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  {tx.blockHeight ? (
+                    <Badge variant="outline" className="font-mono">
+                      #{tx.blockHeight}
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="font-mono">
+                      Pending
+                    </Badge>
+                  )}
+                  {tx.timestamp && (
+                    <span className="text-sm text-muted-foreground">
+                      {formatDistanceToNow(new Date(tx.timestamp))} ago
+                    </span>
+                  )}
+                </div>
+                <Badge
+                  variant={tx.status === "success" ? "default" : tx.status === "failed" ? "destructive" : "secondary"}
+                  className={
+                    tx.status === "success"
+                      ? "bg-green-500/20 text-green-500 border-green-500/30"
+                      : tx.status === "failed"
+                        ? "bg-red-500/20 text-red-500 border-red-500/30"
+                        : "bg-yellow-500/20 text-yellow-500 border-yellow-500/30"
+                  }
                 >
-                  Block #{tx.blockHeight}
-                </Link>
-              ) : (
-                <span className="text-muted-foreground">Pending</span>
-              )}
-              {tx.timestamp && (
-                <span className="text-muted-foreground">
-                  {formatDistanceToNow(new Date(tx.timestamp))} ago
-                </span>
-              )}
-            </div>
+                  {tx.status}
+                </Badge>
+              </div>
 
-            {tx.protocolVersion && (
-              <div className="flex items-center justify-between gap-2 text-xs">
-                <span className="text-muted-foreground">Protocol v{tx.protocolVersion}</span>
+              <div className="flex items-center gap-2 group/hash">
+                <p className="text-sm font-mono text-muted-foreground truncate flex-1 select-all">
+                  {txHash}
+                </p>
+                <div 
+                  onClick={(e) => e.preventDefault()}
+                  className="opacity-50 group-hover/hash:opacity-100 transition-opacity"
+                >
+                  <CopyButton text={txHash} className="h-6 w-6" />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between gap-2 text-sm text-muted-foreground">
+                {tx.protocolVersion && (
+                  <span>Protocol v{tx.protocolVersion}</span>
+                )}
                 {tx.size && (
-                  <span className="text-muted-foreground">{tx.size} B</span>
+                  <span>{tx.size} B</span>
                 )}
               </div>
-            )}
-          </div>
-        </Link>
+            </div>
+          </Link>
+        </div>
       )
     })
   }, [txs])
@@ -174,7 +182,7 @@ export function RecentTransactions() {
         </div>
         <div className="flex-1 overflow-y-auto space-y-3">
           {[...Array(5)].map((_, i) => (
-            <div key={i} className="p-4 rounded-lg bg-secondary/50 animate-pulse h-[100px]">
+            <div key={i} className="p-4 rounded-lg bg-secondary/50 animate-pulse min-h-[110px]">
               <div className="h-full bg-muted rounded" />
             </div>
           ))}
@@ -192,7 +200,7 @@ export function RecentTransactions() {
         </div>
         <Link
           href="/transactions"
-          className="text-sm text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1"
+          className="text-sm text-white hover:text-gray-300 transition-colors flex items-center gap-1"
         >
           View All
           <ArrowRight className="h-4 w-4" />
