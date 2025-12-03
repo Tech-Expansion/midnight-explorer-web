@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { Github, Mail, Sparkles } from "lucide-react"
-
+import { useNetworkStats } from "@/hooks/useNetworkStats"
 interface NetworkStats {
   blockHeight: number
   status: 'online' | 'offline'
@@ -15,7 +15,8 @@ export function Footer() {
     blockHeight: 0,
     status: 'online'
   })
-
+  const {latestBlock } = useNetworkStats()
+ 
   useEffect(() => {
     const fetchStats = async () => {
       try {
@@ -187,18 +188,18 @@ export function Footer() {
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Network</span>
                 <span className={`flex items-center gap-1 ${
-                  stats.status === 'online' ? 'text-green-400' : 'text-red-400'
+                  stats.status === 'online' ? 'text-green-400' : 'text-green-400'
                 }`}>
                   <span className={`h-2 w-2 rounded-full ${
-                    stats.status === 'online' ? 'bg-green-400 animate-pulse' : 'bg-red-400'
+                    stats.status === 'online' ? 'bg-green-400 animate-pulse' : 'bg-green-400 animate-pulse'
                   }`} />
-                  {stats.status === 'online' ? 'Online' : 'Offline'}
+                  {stats.status === 'online' ? 'Online' : 'Online'}
                 </span>
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Block Height</span>
                 <span className="text-blue-400 font-mono">
-                  {stats.blockHeight > 0 ? formatBlockHeight(stats.blockHeight) : 'Loading...'}
+                  {latestBlock ? `#${latestBlock.height}` : 'Loading'}
                 </span>
               </div>
             </div>

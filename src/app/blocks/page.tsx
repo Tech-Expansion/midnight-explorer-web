@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { ChevronLeft, ChevronRight, Box, Clock } from "lucide-react"
 import Link from "next/link"
-import { formatDistanceToNow } from "@/lib/utils"
+import { formatDateTime } from "@/lib/utils"
 import { blockAPI } from "@/lib/api"
 
 // Disable prerendering so network calls are done at request time
@@ -75,7 +75,7 @@ export default async function BlocksPage({ searchParams }: PageProps) {
                 <thead>
                   <tr className="border-b border-border">
                     <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Block</th>
-                    <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Age</th>
+                    <th className="text-center p-4 text-sm font-semibold text-muted-foreground"><span className="inline-block -translate-x-28">Age</span></th>
                     <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Txns</th>
                   </tr>
                 </thead>
@@ -99,7 +99,7 @@ export default async function BlocksPage({ searchParams }: PageProps) {
                       <td className="p-4">
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
                           <Clock className="h-4 w-4" />
-                          {formatDistanceToNow(new Date(Number(block.timestamp)))} ago
+                          {formatDateTime(new Date(Number(block.timestamp)))}
                         </div>
                       </td>
                       <td className="p-4">

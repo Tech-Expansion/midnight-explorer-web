@@ -3,15 +3,15 @@
 import { useRouter } from "next/navigation"
 
 interface ClickablePoolRowProps {
-  poolId: number
+  id: number  // Use id (database id) for navigation
   children: React.ReactNode
 }
 
-export function ClickablePoolRow({ poolId, children }: ClickablePoolRowProps) {
+export function ClickablePoolRow({ id, children }: ClickablePoolRowProps) {
   const router = useRouter()
   
   const handleClick = () => {
-    router.push(`/pool/${poolId}`)
+    router.push(`/pool/${id}`)
   }
 
   return (

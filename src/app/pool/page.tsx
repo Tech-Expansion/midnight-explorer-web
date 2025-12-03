@@ -41,9 +41,8 @@ interface Pool {
 }
 
 interface ApiResponse {
-  pools?: Pool[]  // For listing
-  data?: Pool[]   // Alternative structure
-  pagination?: {
+  data: Pool[]   // Backend always returns data array
+  pagination: {
     page: number
     pageSize: number
     totalCount: number
@@ -55,13 +54,15 @@ interface PageProps {
   searchParams: Promise<{
     page?: string
     pageSize?: string
+    q?: string  // Search query
   }>
 }
 
 export default async function PoolPage({ searchParams }: PageProps) {
   const resolvedSearchParams = await searchParams
   const page = resolvedSearchParams?.page || '1'
-  const pageSize = resolvedSearchParams?.pageSize || '20'   
+  const pageSize = resolvedSearchParams?.pageSize || '20'
+  const searchQuery = resolvedSearchParams?.q || ''
   
   let pools: Pool[] = []
   let pagination = {
@@ -74,10 +75,9 @@ export default async function PoolPage({ searchParams }: PageProps) {
 
   // Try to fetch pools from API, fall back to empty state if unavailable
   try {
-    const response: ApiResponse = await poolAPI.getPools<ApiResponse>(page, pageSize)
+    const response: ApiResponse = await poolAPI.getPools<ApiResponse>(page, pageSize, searchQuery)
     if (response) {
-      // Handle different response structures
-      const poolData = response.pools || response.data || []
+      const poolData = response.data || []
       if (Array.isArray(poolData)) {
         pools = poolData.filter(pool => pool && pool.json) // Filter out invalid pools
         pagination = response.pagination || pagination
@@ -92,6 +92,15 @@ export default async function PoolPage({ searchParams }: PageProps) {
   const prevPage = currentPage > 1 ? currentPage - 1 : null
   const nextPage = currentPage < pagination.totalPages ? currentPage + 1 : null
 
+  // Build query string for pagination links
+  const buildPaginationUrl = (targetPage: number) => {
+    const params = new URLSearchParams()
+    params.set('page', targetPage.toString())
+    params.set('pageSize', pageSize)
+    if (searchQuery) params.set('q', searchQuery)
+    return `/pool?${params.toString()}`
+  }
+
   return (
     <div className="min-h-screen bg-background relative">
       <div className="fixed inset-0 z-0">
@@ -105,36 +114,31 @@ export default async function PoolPage({ searchParams }: PageProps) {
           {/* Header */}
           <div className="space-y-2">
             <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-              Stake Pools
+              {searchQuery ? 'Pool Search Results' : 'Stake Pools'}
             </h1>
             <p className="text-muted-foreground text-lg">
-              Explore stake pools on the Midnight network
+              {searchQuery 
+                ? `Showing results for "${searchQuery}"` 
+                : 'Explore stake pools on the Midnight network'}
             </p>
           </div>
 
           {/* Search Bar */}
-    {/* <SearchBarPage searchType="all" />*/}
+          <SearchBarPage searchType="pool" />
 
-          {/* Error Message */}
-          {errorMessage && (
-            <Card className="p-6 bg-red-500/10 border-red-500/20">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-red-500/10">
-                  <Waves className="h-5 w-5 text-red-400" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-red-400">Pool Service Unavailable</h3>
-                  <p className="text-sm text-red-300 mt-1">
-                    Unable to connect to the pool service. Please check your environment configuration.
-                  </p>
-                  <details className="mt-2">
-                    <summary className="text-xs text-red-400 cursor-pointer">Technical Details</summary>
-                    <pre className="text-xs text-red-300 mt-1 whitespace-pre-wrap">{errorMessage}</pre>
-                  </details>
-                </div>
-              </div>
-            </Card>
+          {/* Clear Search Link */}
+          {searchQuery && (
+            <div className="flex items-center gap-2">
+              <Link 
+                href="/pool" 
+                className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
+              >
+                ← Clear search and show all pools
+              </Link>
+            </div>
           )}
+
+          {/* Note: Error handling is silent - shows empty state instead of error message for better UX */}
 
           {/* Stats */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -145,7 +149,9 @@ export default async function PoolPage({ searchParams }: PageProps) {
                 </div>
                 <div>
                   <p className="text-2xl font-bold font-mono">{pagination.totalCount}</p>
-                  <p className="text-xs text-muted-foreground">Total Pools</p>
+                  <p className="text-xs text-muted-foreground">
+                    {searchQuery ? 'Matching Pools' : 'Total Pools'}
+                  </p>
                 </div>
               </div>
             </Card>
@@ -181,7 +187,7 @@ export default async function PoolPage({ searchParams }: PageProps) {
                   <thead>
                     <tr className="border-b border-border">
                       <th className="text-left p-4 text-sm font-semibold text-muted-foreground">
-                        Pool ID
+                        ID
                       </th>
                       <th className="text-left p-4 text-sm font-semibold text-muted-foreground">
                         Ticker
@@ -196,10 +202,10 @@ export default async function PoolPage({ searchParams }: PageProps) {
                   </thead>
                   <tbody>
                     {pools.map((pool: Pool) => (
-                      <ClickablePoolRow key={pool.id} poolId={pool.poolId}>
+                      <ClickablePoolRow key={pool.id} id={pool.id}>
                         <td className="p-4">
                           <Badge variant="outline" className="font-mono group-hover:bg-blue-500/20">
-                            #{pool.poolId}
+                            #{pool.id}
                           </Badge>
                         </td>
                         <td className="p-4">
@@ -231,7 +237,7 @@ export default async function PoolPage({ searchParams }: PageProps) {
                 </table>
               </div>
             </Card>
-          ) : !errorMessage ? (
+          ) : (
             <Card className="p-12 bg-card/50 border-border text-center">
               <div className="space-y-4">
                 <div className="p-4 rounded-lg bg-blue-500/10 inline-block">
@@ -240,12 +246,14 @@ export default async function PoolPage({ searchParams }: PageProps) {
                 <div>
                   <h3 className="text-xl font-semibold text-blue-400">No Pools Found</h3>
                   <p className="text-muted-foreground mt-2">
-                    No stake pools are available at the moment.
+                    {searchQuery 
+                      ? `No pools matching "${searchQuery}" were found.`
+                      : 'No stake pools are available at the moment.'}
                   </p>
                 </div>
               </div>
             </Card>
-          ) : null}
+          )}
 
           {/* Pagination */}
           {pools.length > 0 && (
@@ -253,7 +261,7 @@ export default async function PoolPage({ searchParams }: PageProps) {
               <div className="flex items-center gap-2">
                 {prevPage && (
                   <Link
-                    href={`/pool?page=${prevPage}&pageSize=${pageSize}`}
+                    href={buildPaginationUrl(prevPage)}
                     className="px-4 py-2 bg-card/50 hover:bg-card/70 border border-border text-foreground rounded-md transition-colors inline-flex items-center gap-2"
                   >
                     <ChevronLeft className="h-4 w-4" />
@@ -265,13 +273,13 @@ export default async function PoolPage({ searchParams }: PageProps) {
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <span>Page {pagination.page} of {pagination.totalPages}</span>
                 <span>•</span>
-                <span>{pagination.totalCount} total pools</span>
+                <span>{pagination.totalCount} {searchQuery ? 'matching' : 'total'} pools</span>
               </div>
 
               <div className="flex items-center gap-2">
                 {nextPage && (
                   <Link
-                    href={`/pool?page=${nextPage}&pageSize=${pageSize}`}
+                    href={buildPaginationUrl(nextPage)}
                     className="px-4 py-2 bg-gradient-to-r from-blue-600/50 to-purple-600/50 hover:from-blue-600/70 hover:to-purple-600/70 border border-blue-500/30 text-foreground rounded-md transition-colors inline-flex items-center gap-2"
                   >
                     Next

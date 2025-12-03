@@ -10,7 +10,7 @@ import { useRouter } from "next/navigation"
 import { Card } from "@/components/ui/card"
 
 interface SearchBarProps {
-  searchType?: "all" | "transaction" | "block" | "address" | "contract"
+  searchType?: "all" | "transaction" | "block" | "address" | "contract" | "pool"
 }
 
 export function SearchBarPage({ searchType = "all" }: SearchBarProps) {
@@ -18,20 +18,6 @@ export function SearchBarPage({ searchType = "all" }: SearchBarProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const [isSearching, setIsSearching] = useState(false)
   const router = useRouter()
-
-  // Determine available search types based on current page
-  const getAvailableTypes = () => {
-    if (searchType === "all") {
-      return [
-        { value: "all", label: "All" },
-        { value: "transaction", label: "Transaction" },
-        { value: "block", label: "Block" },
-        { value: "contract", label: "Contract" }
-      ]
-    }
-    // Show only current type for specific pages
-    return [{ value: searchType, label: searchType.charAt(0).toUpperCase() + searchType.slice(1) }]
-  }
 
   const getPlaceholder = () => {
     switch (searchType) {
@@ -43,8 +29,10 @@ export function SearchBarPage({ searchType = "all" }: SearchBarProps) {
         return "Search by address..."
       case "contract":
         return "Search by contract address..."
+      case "pool":
+        return "Search by pool hash, ticker, or name..."
       default:
-        return "Search by Hash / Height / Contract Address"
+        return "Search by Hash / Height / Contract Address / Pool"
     }
   }
 
@@ -82,14 +70,19 @@ export function SearchBarPage({ searchType = "all" }: SearchBarProps) {
         return
       }
 
+      // If user selected Pool
+      if (selectedType === "pool") {
+        await searchAndNavigateToPool(cleanQuery)
+        return
+      }
+
       // If "all" is selected, smart detection
       if (selectedType === "all") {
         // Check if it's a number (block height)
         if (/^\d+$/.test(cleanQuery)) {
-          console.log('🔍 Detected block height:', cleanQuery)
-          const result = await verifyHash(cleanQuery, 'block')
+          const result = await checkBlock(cleanQuery)
           if (result.found) {
-            router.push(`/block/${result.value || cleanQuery}`)
+            router.push(`/block/${result.height || cleanQuery}`)
             setIsSearching(false)
             return
           }
@@ -106,8 +99,7 @@ export function SearchBarPage({ searchType = "all" }: SearchBarProps) {
         const isContractAddress = /^[a-fA-F0-9]{70}$/.test(cleanHashForCheck)
         
         if (isContractAddress) {
-          console.log('🔍 Detected contract address (70 chars):', cleanHashForCheck)
-          // Navigate directly to contract page
+       //   console.log('🔍 Detected contract address (70 chars):', cleanHashForCheck)
           router.push(`/contracts/${cleanQuery}`)
           setIsSearching(false)
           return
@@ -119,31 +111,35 @@ export function SearchBarPage({ searchType = "all" }: SearchBarProps) {
         if (isHexHash) {
           console.log('🔍 Detected hash:', cleanHashForCheck)
           
-          // Check BLOCK first (faster lookup)
-          const blockResult = await verifyHash(cleanQuery, 'block')
-          
-          if (blockResult.found) {
-            router.push(`/block/${blockResult.value}`)
+          // Check BLOCK first
+          const blockResult = await checkBlock(cleanQuery)
+          if (blockResult.found && blockResult.height) {
+            router.push(`/block/${blockResult.height}`)
             setIsSearching(false)
             return
           }
 
-          // If not a block, check transaction
-          const txResult = await verifyHash(cleanQuery, 'tx')
-
+          // Check transaction
+          const txResult = await checkTransaction(cleanQuery)
           if (txResult.found) {
             router.push(`/tx/${cleanQuery}`)
             setIsSearching(false)
             return
           }
 
-          // Not found in blocks or transactions
-          alert('Hash not found in blocks or transactions')
+          // Try pool search as fallback
+          const poolResult = await searchPool(cleanQuery)
+          if (poolResult.found && poolResult.value) {
+            router.push(`/pool/${poolResult.value}`)
+            setIsSearching(false)
+            return
+          }
+
+          alert('Hash not found in blocks, transactions, or pools')
           setIsSearching(false)
           return
         }
 
-        // Otherwise, show error
         alert('Invalid format. Please enter a valid block height, transaction hash, or contract address')
         setIsSearching(false)
       }
@@ -154,13 +150,93 @@ export function SearchBarPage({ searchType = "all" }: SearchBarProps) {
     }
   }
 
-  const verifyHash = async (query: string, type: 'tx' | 'block'): Promise<{ found: boolean; type?: string; value?: string }> => {
+  const checkBlock = async (query: string): Promise<{ found: boolean; height?: string }> => {
+    const timeoutMs = 15000
+    // Strip 0x prefix if present for API call
+    const cleanQuery = query.startsWith("0x") ? query.slice(2) : query
+    
+    try {
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
+
+      const response = await fetch(`/api/blocks/${encodeURIComponent(cleanQuery)}`, {
+        signal: controller.signal,
+        cache: 'no-store'
+      })
+      
+      clearTimeout(timeoutId)
+      
+      if (!response.ok) {
+        return { found: false }
+      }
+
+      const data = await response.json()
+      const height = data.block?.height ?? data.height
+      const hash = data.block?.hash ?? data.hash
+      const isSearchingByHeight = /^\d+$/.test(query)
+      if (!isSearchingByHeight && hash) {
+        const normalizedSearchHash = cleanQuery.toLowerCase()
+        const normalizedReturnedHash = (hash.startsWith("0x") ? hash.slice(2) : hash).toLowerCase()
+        
+        if (normalizedSearchHash !== normalizedReturnedHash) {
+          return { found: false }
+        }
+      }
+      
+      if (height !== undefined) {
+        return { found: true, height: String(height) }
+      }
+      
+      return { found: false }
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        console.log('⏱️ Block check timeout')
+      }
+      return { found: false }
+    }
+  }
+
+  const checkTransaction = async (query: string): Promise<{ found: boolean }> => {
     const timeoutMs = 15000
     
     try {
-      const endpoint = type === 'tx' ? '/api/transactions/verify' : '/api/blocks/verify'
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
+
+      const response = await fetch(`/api/transactions/${encodeURIComponent(query)}`, {
+        signal: controller.signal,
+        cache: 'no-store'
+      })
       
-      console.log(`🔍 Verifying ${type}:`, query)
+      clearTimeout(timeoutId)
+      
+      if (!response.ok) {
+        return { found: false }
+      }
+
+      const data = await response.json()
+      
+      // Check if transaction data exists
+      if (data.transaction || data.hash) {
+        return { found: true }
+      }
+      
+      return { found: false }
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+       // console.log('⏱️ Transaction check timeout')
+      }
+      return { found: false }
+    }
+  }
+
+  const searchPool = async (query: string): Promise<{ found: boolean; value?: string; count?: number }> => {
+    const timeoutMs = 15000
+    
+    try {
+      const endpoint = '/api/pools/search'
+      
+      
       
       const controller = new AbortController()
       const timeoutId = setTimeout(() => {
@@ -168,7 +244,7 @@ export function SearchBarPage({ searchType = "all" }: SearchBarProps) {
       }, timeoutMs)
 
       const response = await fetch(
-        `${endpoint}?hash=${encodeURIComponent(query)}`,
+        `${endpoint}?q=${encodeURIComponent(query)}`,
         { 
           signal: controller.signal,
           cache: 'no-store'
@@ -177,43 +253,66 @@ export function SearchBarPage({ searchType = "all" }: SearchBarProps) {
       
       clearTimeout(timeoutId)
       
-      console.log(`✅ ${type} API response status:`, response.status)
-      
       if (!response.ok) {
-        console.log(`❌ ${type} API returned error:`, response.status)
+    //    console.log('❌ Pool search API returned error:', response.status)
         return { found: false }
       }
 
       const data = await response.json()
-      console.log(`✅ ${type} API response:`, data)
+    
       
-      if (data.found) {
-        return { found: true, type: data.type, value: data.value }
+      if (data.data && data.data.length > 0) {
+        return { found: true, value: data.data[0].id, count: data.data.length }
       }
       
       return { found: false }
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') {
-        console.log('⏱️ Search timeout')
+ //       console.log('⏱️ Pool search timeout')
       } else {
-        console.error('❌ Verify error:', error)
+        console.error('❌ Pool search error:', error)
       }
       return { found: false }
     }
   }
 
   const verifyAndNavigate = async (query: string, type: 'tx' | 'block') => {
-    const result = await verifyHash(query, type)
-    
-    if (result.found) {
-      if (type === 'block' && result.value) {
-        router.push(`/block/${result.value}`)
+    if (type === 'block') {
+      const result = await checkBlock(query)
+      if (result.found && result.height) {
+        router.push(`/block/${result.height}`)
       } else {
-        const path = type === 'tx' ? `/tx/${query}` : `/block/${query}`
-        router.push(path)
+        alert('Block not found')
       }
     } else {
-      alert(`${type === 'tx' ? 'Transaction' : 'Block'} not found`)
+      const result = await checkTransaction(query)
+      if (result.found) {
+        router.push(`/tx/${query}`)
+      } else {
+        alert('Transaction not found')
+      }
+    }
+    
+    setIsSearching(false)
+  }
+
+  const searchAndNavigateToPool = async (query: string) => {
+    // Check if query looks like a pool hash (64 hex chars)
+    const cleanQuery = query.startsWith("0x") ? query.slice(2) : query
+    const isPoolHash = /^[a-fA-F0-9]{64}$/.test(cleanQuery)
+    
+    const result = await searchPool(query)
+    
+    if (result.found) {
+      // If it's a hash and found exactly 1 pool, navigate directly to pool detail
+      if (isPoolHash && result.count === 1 && result.value) {
+        router.push(`/pool/${result.value}`)
+      } else {
+        // For ticker/name search or multiple results, show list
+        router.push(`/pool?q=${encodeURIComponent(query)}`)
+      }
+    } else {
+      alert('Pool not found')
     }
     
     setIsSearching(false)
@@ -233,6 +332,7 @@ export function SearchBarPage({ searchType = "all" }: SearchBarProps) {
                   <SelectItem value="transaction">Transaction</SelectItem>
                   <SelectItem value="block">Block</SelectItem>
                   <SelectItem value="contract">Contract</SelectItem>
+                  <SelectItem value="pool">Pool</SelectItem>
                 </SelectContent>
               </Select>
             )}

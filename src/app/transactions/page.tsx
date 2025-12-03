@@ -12,7 +12,7 @@ import {
   Clock,
   AlertCircle,
 } from "lucide-react"
-import { formatDistanceToNow } from "@/lib/utils"
+import { formatDateTime } from "@/lib/utils"
 import { transactionAPI } from "@/lib/api"
 
 // Disable prerendering so network calls are executed at request time
@@ -109,7 +109,7 @@ export default async function TransactionsPage({ searchParams }: PageProps) {
                     <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Status</th>
                     <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Block</th>
                     <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Protocol</th>
-                    <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Age</th>
+                    <th className="text-center pr-24 p-4 text-sm font-semibold text-muted-foreground">Age</th>
                     <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Size</th>
                   </tr>
                 </thead>
@@ -144,7 +144,7 @@ export default async function TransactionsPage({ searchParams }: PageProps) {
                       </td>
                       <td className="p-4">
                         <span className="text-sm text-muted-foreground">
-                          {tx.timestamp ? `${formatDistanceToNow(new Date(parseInt(String(tx.timestamp))))} ago` : "N/A"}
+                          {tx.timestamp ? formatDateTime(new Date(parseInt(String(tx.timestamp)))) : "N/A"}
                         </span>
                       </td>
                       <td className="p-4">

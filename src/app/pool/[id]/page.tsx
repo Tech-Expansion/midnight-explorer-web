@@ -29,8 +29,8 @@ interface PoolJson {
   extended?: string
 }
 
-interface PoolDetails {
-  pool?: {  // API wraps pool data in pool property
+interface PoolApiResponse {
+  pool: {
     id: number
     poolId: number
     tickerName: string
@@ -39,14 +39,6 @@ interface PoolDetails {
     bytes: BufferData
     pmrId: number
   }
-  // Also support direct structure for backward compatibility
-  id?: number
-  poolId?: number
-  tickerName?: string
-  hash?: string | BufferData
-  json?: PoolJson
-  bytes?: BufferData
-  pmrId?: number
 }
 
 function bufferToHex(hash: string | BufferData): string {
@@ -62,26 +54,17 @@ function bufferToHex(hash: string | BufferData): string {
 export default async function PoolDetailPage({ params }: PageProps) {
   const { id } = await params
   
-  let pool: {
-    id: number
-    poolId: number
-    tickerName: string
-    hash: string | BufferData
-    json: PoolJson
-    bytes: BufferData
-    pmrId: number
-  }
+  let pool: PoolApiResponse['pool']
+  
   try {
-    const response = await poolAPI.getPool<PoolDetails>(id)
-    if (!response) {
+    const response = await poolAPI.getPool<PoolApiResponse>(id)
+    if (!response || !response.pool) {
       notFound()
     }
-    // Handle both response structures
-    const poolData = response.pool || response
-    if (!poolData || !poolData.json || !poolData.id || !poolData.poolId || !poolData.tickerName || !poolData.hash || !poolData.bytes || !poolData.pmrId) {
+    pool = response.pool
+    if (!pool.json || !pool.id) {
       notFound()
     }
-    pool = poolData as typeof pool
   } catch (_error) {
     notFound()
   }
@@ -123,13 +106,13 @@ export default async function PoolDetailPage({ params }: PageProps) {
               <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm text-muted-foreground mb-1">Pool ID</p>
+                    <p className="text-sm text-muted-foreground mb-1">ID</p>
                     <Badge
                       variant="outline"
                       className="bg-blue-500/10 text-blue-400 border-blue-500/20 text-base px-3 py-1"
                     >
                       <Waves className="h-4 w-4 mr-1" />
-                      #{pool.poolId}
+                      #{pool.id}
                     </Badge>
                   </div>
                   <div>

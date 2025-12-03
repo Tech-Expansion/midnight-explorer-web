@@ -15,9 +15,7 @@ export async function proxyToExternalAPI(
   endpoint: string
 ): Promise<NextResponse> {
   try {
-    const url = new URL(request.url)
-    const queryString = url.search
-    const fullUrl = `${API_BASE_URL}${endpoint}${queryString}`
+    const fullUrl = `${API_BASE_URL}${endpoint}`
 
     console.log(`Proxying request to: ${fullUrl}`)
 

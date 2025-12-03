@@ -5,37 +5,38 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { useEffect, useState } from "react"
 import { networkAPI } from "@/lib/api"
 
-// 🔹 Dữ liệu mẫu tạm thời (trước khi bạn kết nối API backend)
-const dummyData = [
-  { time: "00:00", count: 2400 },
-  { time: "04:00", count: 1398 },
-  { time: "08:00", count: 3800 },
-  { time: "12:00", count: 3908 },
-  { time: "16:00", count: 4800 },
-  { time: "20:00", count: 3800 },
-  { time: "24:00", count: 4300 },
-]
+interface StatsResponse {
+  totalTransactions: number
+  recent24h: number
+  chartData24h: Array<{
+    period: string
+    timestamp: number
+    count: number
+  }>
+  avgTransactionSize: number
+  successRate: number
+  failedCount: number
+  latestTxId: string
+  latestTimestamp: number
+}
 
 // 🔹 Giao diện chính
 export function NetworkCharts() {
-  const [data, setData] = useState(dummyData)
+  const [data, setData] = useState<Array<{ time: string; count: number }>>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const fetchTransactionData = async () => {
       try {
-        const stats = await networkAPI.getStats<{ recent24h: number }>()
-        const now = new Date()
-        const hours = Array.from({ length: 7 }, (_, i) => {
-          const h = (i * 4) % 24
-          const label = h.toString().padStart(2, "0") + ":00"
-          const randomFluctuation = Math.round(
-            stats.recent24h / 6 + (Math.random() - 0.5) * 200
-          )
-          return { time: label, count: Math.max(randomFluctuation, 0) }
-        })
+        const stats = await networkAPI.getStats<StatsResponse>()
+        
+        // Map chartData24h từ API response
+        const chartData = stats.chartData24h.map((item) => ({
+          time: item.period,
+          count: item.count,
+        }))
 
-        setData(hours)
+        setData(chartData)
       } catch (error) {
         console.error("Error fetching transaction data:", error)
       } finally {

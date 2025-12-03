@@ -6,9 +6,14 @@ export async function GET(request: NextRequest) {
 
   const page = searchParams.get('page') || '1'
   const pageSize = searchParams.get('pageSize') || '20'
+  const query = searchParams.get('q') || ''
+  const params = new URLSearchParams()
+  params.set('page', page)
+  params.set('pageSize', pageSize)
+  if (query) params.set('q', query)
 
   return proxyToExternalAPI(
     request,
-    `/pool?page=${page}&pageSize=${pageSize}`
+    `/pool?${params.toString()}`
   )
 }

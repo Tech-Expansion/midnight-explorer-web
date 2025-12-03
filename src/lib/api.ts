@@ -170,14 +170,15 @@ export const networkAPI = {
  */
 export const poolAPI = {
   /**
-   * Get all pools with pagination
+   * Get all pools with pagination and optional search
    */
-  getPools: <T = unknown>(page?: string, pageSize?: string) => {
+  getPools: <T = unknown>(page?: string, pageSize?: string, query?: string) => {
     const params = new URLSearchParams()
     if (page) params.append('page', page)
     if (pageSize) params.append('pageSize', pageSize)
-    const query = params.toString()
-    return apiFetch<T>(`/pool${query ? `?${query}` : ''}`)
+    if (query) params.append('q', query)
+    const queryString = params.toString()
+    return apiFetch<T>(`/pool${queryString ? `?${queryString}` : ''}`)
   },
 
   /**

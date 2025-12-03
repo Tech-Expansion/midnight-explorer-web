@@ -98,3 +98,22 @@ export function formatDateTimeWithRelative(date: Date): string {
     hour12: true
   });
 }
+
+/**
+ * Formats a date to standard datetime format
+ * Returns "Oct 3, 2025, 2:40:00 AM" format
+ * 
+ * @param date The date to format
+ * @returns A formatted datetime string
+ */
+export function formatDateTime(date: Date): string {
+  return date.toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: true
+  });
+}
