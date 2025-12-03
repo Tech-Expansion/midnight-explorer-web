@@ -63,6 +63,12 @@ export function Header() {
             >
               Pool
             </Link>
+            <Link 
+              href="https://reviews.projectcatalyst.io/proposal/2042" 
+              className="text-sm font-medium transition-colors hover:text-primary"
+            >
+              Project Catalyst
+            </Link>
           </nav>
 
           <div className="hidden md:block">
