@@ -426,7 +426,7 @@ export function SearchBar() {
             if (responseData.data && Array.isArray(responseData.data) && responseData.data.length > 0) {
                 const transactions = responseData
                     .data
-                    .map((tx : any) => {
+                    .map((tx: { hash: string; blockHeight?: number; status?: string }) => {
                         // Backend returns hash with 0x prefix
                         const txHash = tx.hash || query
                         return {
