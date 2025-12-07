@@ -99,6 +99,7 @@ export function SearchBarPage({ searchType = "all" }: SearchBarProps) {
         const isContractAddress = /^[a-fA-F0-9]{70}$/.test(cleanHashForCheck)
         
         if (isContractAddress) {
+       //   console.log('🔍 Detected contract address (70 chars):', cleanHashForCheck)
           router.push(`/contracts/${cleanQuery}`)
           setIsSearching(false)
           return
@@ -108,6 +109,8 @@ export function SearchBarPage({ searchType = "all" }: SearchBarProps) {
         const isHexHash = /^[a-fA-F0-9]{64}$/.test(cleanHashForCheck)
 
         if (isHexHash) {
+          console.log('🔍 Detected hash:', cleanHashForCheck)
+          
           // Check BLOCK first
           const blockResult = await checkBlock(cleanQuery)
           if (blockResult.found && blockResult.height) {
@@ -116,11 +119,10 @@ export function SearchBarPage({ searchType = "all" }: SearchBarProps) {
             return
           }
 
-          // Check transaction (now uses search API)
+          // Check transaction
           const txResult = await checkTransaction(cleanQuery)
           if (txResult.found) {
-            // Navigate to transactions page to show all matching transactions
-            router.push(`/transactions?hash=${cleanQuery}`)
+            router.push(`/tx/${cleanQuery}`)
             setIsSearching(false)
             return
           }
@@ -138,19 +140,7 @@ export function SearchBarPage({ searchType = "all" }: SearchBarProps) {
           return
         }
 
-        // If not a hex hash, try pool search (for ticker/name)
-        const poolResult = await searchPool(cleanQuery)
-        if (poolResult.found) {
-          if (poolResult.count === 1 && poolResult.value) {
-            router.push(`/pool/${poolResult.value}`)
-          } else {
-            router.push(`/pool?q=${encodeURIComponent(cleanQuery)}`)
-          }
-          setIsSearching(false)
-          return
-        }
-
-        alert('No results found. Please enter a valid block height, transaction hash, contract address, or pool name/ticker')
+        alert('Invalid format. Please enter a valid block height, transaction hash, or contract address')
         setIsSearching(false)
       }
     } catch (error) {
@@ -162,6 +152,7 @@ export function SearchBarPage({ searchType = "all" }: SearchBarProps) {
 
   const checkBlock = async (query: string): Promise<{ found: boolean; height?: string }> => {
     const timeoutMs = 15000
+    // Strip 0x prefix if present for API call
     const cleanQuery = query.startsWith("0x") ? query.slice(2) : query
     
     try {
@@ -183,7 +174,6 @@ export function SearchBarPage({ searchType = "all" }: SearchBarProps) {
       const height = data.block?.height ?? data.height
       const hash = data.block?.hash ?? data.hash
       const isSearchingByHeight = /^\d+$/.test(query)
-      
       if (!isSearchingByHeight && hash) {
         const normalizedSearchHash = cleanQuery.toLowerCase()
         const normalizedReturnedHash = (hash.startsWith("0x") ? hash.slice(2) : hash).toLowerCase()
@@ -297,8 +287,7 @@ export function SearchBarPage({ searchType = "all" }: SearchBarProps) {
     } else {
       const result = await checkTransaction(query)
       if (result.found) {
-        // Always navigate to transactions page to show all matching transactions
-        router.push(`/transactions?hash=${query}`)
+        router.push(`/tx/${query}`)
       } else {
         alert('Transaction not found')
       }

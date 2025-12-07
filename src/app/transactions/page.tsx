@@ -20,9 +20,9 @@ export const dynamic = "force-dynamic"
 
 // ✅ Define Transaction interface
 interface Transaction {
-  id?: string
+  id: string
   hash: string
-  status: 'success' | 'pending' | 'failure'
+  status: 'success' | 'pending' | 'failed'
   blockHeight?: number
   protocolVersion: number
   timestamp?: string | number
@@ -34,47 +34,21 @@ interface ApiResponse {
   nextCursor?: string
 }
 
-interface SearchApiResponse {
-  data: Transaction[]
-  pagination: {
-    page: number
-    pageSize: number
-    totalCount: number
-    totalPages: number
-  }
-}
-
 interface PageProps {
-  searchParams: Promise<{ cursor?: string; hash?: string; page?: string }>
+  searchParams: Promise<{ cursor?: string }>
 }
 
 
 export default async function TransactionsPage({ searchParams }: PageProps) {
   const resolvedSearchParams = await searchParams
   const cursor = resolvedSearchParams?.cursor
-  const searchHash = resolvedSearchParams?.hash
-  const searchPage = resolvedSearchParams?.page ? parseInt(resolvedSearchParams.page) : 1
   
-  let transactions: Transaction[] = []
-  let nextCursor: string | undefined = undefined
-  let searchMode = false
-  let pagination: SearchApiResponse['pagination'] | null = null
+  // Fetch transactions from API
+  const { items: transactions, nextCursor }: ApiResponse = await transactionAPI.getTransactions(cursor)
 
-  // If hash is provided, use search API
-  if (searchHash) {
-    searchMode = true
-    const response: SearchApiResponse = await transactionAPI.searchTransactions(searchHash, searchPage, 20)
-    transactions = response.data
-    pagination = response.pagination
-  } else {
-    // Otherwise, use normal list API with cursor pagination
-    const response: ApiResponse = await transactionAPI.getTransactions(cursor)
-    transactions = response.items
-    nextCursor = response.nextCursor
-  }
-
-  // Pagination helpers
-  const hasPrev = searchMode ? searchPage > 1 : (cursor !== null && cursor !== undefined)
+  // Pagination helpers - use transaction IDs instead of offsets
+  const prevCursor = transactions.length > 0 ? transactions[0].id : null
+  const hasPrev = cursor !== null && cursor !== undefined
 
   const getStatusBadge = (status: Transaction['status']) => {
     switch (status) {
@@ -92,7 +66,7 @@ export default async function TransactionsPage({ searchParams }: PageProps) {
             Pending
           </Badge>
         )
-      case "failure":
+      case "failed":
         return (
           <Badge className="bg-red-500/10 text-red-400 border-red-500/20 hover:bg-red-500/20">
             <AlertCircle className="h-3 w-3 mr-1" />
@@ -117,14 +91,9 @@ export default async function TransactionsPage({ searchParams }: PageProps) {
           {/* Header */}
           <div className="space-y-2">
             <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-              {searchMode ? 'Search Results' : 'Transactions'}
+              Transactions
             </h1>
-            <p className="text-muted-foreground text-lg">
-              {searchMode 
-                ? `Found ${pagination?.totalCount || 0} transaction(s) matching "${searchHash}"`
-                : 'Track all transactions on the Midnight network'
-              }
-            </p>
+            <p className="text-muted-foreground text-lg">Track all transactions on the Midnight network</p>
           </div>
 
           {/* Search */}
@@ -145,54 +114,46 @@ export default async function TransactionsPage({ searchParams }: PageProps) {
                   </tr>
                 </thead>
                 <tbody>
-                  {transactions.length > 0 ? (
-                    transactions.map((tx: Transaction, index: number) => (
-                      <tr key={tx.id || `${tx.hash}-${index}`} className="border-b border-border/50 hover:bg-accent/5 transition-colors">
-                        <td className="p-4">
+                  {transactions.map((tx: Transaction) => (
+                    <tr key={tx.id} className="border-b border-border/50 hover:bg-accent/5 transition-colors">
+                      <td className="p-4">
+                        <Link
+                          href={`/tx/${tx.hash}`}
+                          className="text-blue-400 hover:text-blue-300 transition-colors font-mono text-sm"
+                        >
+                          0x{tx.hash}
+                        </Link>
+                      </td>
+                      <td className="p-4">{getStatusBadge(tx.status)}</td>
+                      <td className="p-4">
+                        {tx.blockHeight ? (
                           <Link
-                            href={`/tx/${tx.hash}`}
-                            className="text-blue-400 hover:text-blue-300 transition-colors font-mono text-sm"
+                            href={`/block/${tx.blockHeight}`}
+                            className="text-purple-400 hover:text-purple-300 transition-colors font-mono text-sm"
                           >
-                            {tx.hash}
+                            #{tx.blockHeight}
                           </Link>
-                        </td>
-                        <td className="p-4">{getStatusBadge(tx.status)}</td>
-                        <td className="p-4">
-                          {tx.blockHeight ? (
-                            <Link
-                              href={`/block/${tx.blockHeight}`}
-                              className="text-purple-400 hover:text-purple-300 transition-colors font-mono text-sm"
-                            >
-                              #{tx.blockHeight}
-                            </Link>
-                          ) : (
-                            <span className="text-muted-foreground text-sm">Pending</span>
-                          )}
-                        </td>
-                        <td className="p-4">
-                          <span className="text-sm text-muted-foreground font-mono">
-                            v{tx.protocolVersion}
-                          </span>
-                        </td>
-                        <td className="p-4">
-                          <span className="text-sm text-muted-foreground">
-                            {tx.timestamp ? formatDateTime(new Date(parseInt(String(tx.timestamp)))) : "N/A"}
-                          </span>
-                        </td>
-                        <td className="p-4">
-                          <span className="text-sm text-muted-foreground">
-                            {tx.size ? `${tx.size} B` : "N/A"}
-                          </span>
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={6} className="p-8 text-center text-muted-foreground">
-                        No transactions found
+                        ) : (
+                          <span className="text-muted-foreground text-sm">Pending</span>
+                        )}
+                      </td>
+                      <td className="p-4">
+                        <span className="text-sm text-muted-foreground font-mono">
+                          v{tx.protocolVersion}
+                        </span>
+                      </td>
+                      <td className="p-4">
+                        <span className="text-sm text-muted-foreground">
+                          {tx.timestamp ? formatDateTime(new Date(parseInt(String(tx.timestamp)))) : "N/A"}
+                        </span>
+                      </td>
+                      <td className="p-4">
+                        <span className="text-sm text-muted-foreground">
+                          {tx.size ? `${tx.size} B` : "N/A"}
+                        </span>
                       </td>
                     </tr>
-                  )}
+                  ))}
                 </tbody>
               </table>
             </div>
@@ -203,10 +164,7 @@ export default async function TransactionsPage({ searchParams }: PageProps) {
             <div>
               {hasPrev && (
                 <Link
-                  href={searchMode 
-                    ? `/transactions?hash=${searchHash}&page=${searchPage - 1}`
-                    : '/transactions'
-                  }
+                  href="/transactions"
                   className="px-4 py-2 bg-card/50 hover:bg-card/70 border border-border text-foreground rounded-md transition-colors inline-flex items-center gap-2"
                 >
                   <ChevronLeft className="h-4 w-4" />
@@ -214,35 +172,15 @@ export default async function TransactionsPage({ searchParams }: PageProps) {
                 </Link>
               )}
             </div>
-            
-            {/* Page indicator for search mode */}
-            {searchMode && pagination && (
-              <div className="text-sm text-muted-foreground">
-                Page {pagination.page} of {pagination.totalPages}
-              </div>
-            )}
-            
             <div>
-              {searchMode ? (
-                pagination && searchPage < pagination.totalPages && (
-                  <Link
-                    href={`/transactions?hash=${searchHash}&page=${searchPage + 1}`}
-                    className="px-4 py-2 bg-gradient-to-r from-blue-600/50 to-purple-600/50 hover:from-blue-600/70 hover:to-purple-600/70 border border-blue-500/30 text-foreground rounded-md transition-colors inline-flex items-center gap-2"
-                  >
-                    Next
-                    <ChevronRight className="h-4 w-4" />
-                  </Link>
-                )
-              ) : (
-                nextCursor && (
-                  <Link
-                    href={`/transactions?cursor=${nextCursor}`}
-                    className="px-4 py-2 bg-gradient-to-r from-blue-600/50 to-purple-600/50 hover:from-blue-600/70 hover:to-purple-600/70 border border-blue-500/30 text-foreground rounded-md transition-colors inline-flex items-center gap-2"
-                  >
-                    Next
-                    <ChevronRight className="h-4 w-4" />
-                  </Link>
-                )
+              {nextCursor && (
+                <Link
+                  href={`/transactions?cursor=${nextCursor}`}
+                  className="px-4 py-2 bg-gradient-to-r from-blue-600/50 to-purple-600/50 hover:from-blue-600/70 hover:to-purple-600/70 border border-blue-500/30 text-foreground rounded-md transition-colors inline-flex items-center gap-2"
+                >
+                  Next
+                  <ChevronRight className="h-4 w-4" />
+                </Link>
               )}
             </div>
           </div>

@@ -64,12 +64,6 @@ export function Header() {
               Pool
             </Link>
             <Link 
-              href="https://docs.google.com/forms/d/e/1FAIpQLSfBguf59QpRRgVVFZCWt8S2D6W9aGlB8QEpxIfVJrrwH3fjUw/viewform?usp=publish-editor" 
-              className="text-sm font-medium transition-colors hover:text-primary"
-            >
-              Feedback
-            </Link>
-            <Link 
               href="https://reviews.projectcatalyst.io/proposal/2042" 
               className="text-sm font-medium transition-colors hover:text-primary"
             >

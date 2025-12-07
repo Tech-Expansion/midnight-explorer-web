@@ -1,4 +1,3 @@
-
 /**
  * API Proxy Utility
  * Forwards all requests to external API service
@@ -16,15 +15,7 @@ export async function proxyToExternalAPI(
   endpoint: string
 ): Promise<NextResponse> {
   try {
-  
-    const url = new URL(request.url)
-    const queryString = url.search 
-    
-    // Only append queryString if endpoint doesn't already have query params
-    // This prevents duplicate params like: /pool?page=1&q=HADA?q=HADA
-    const fullUrl = endpoint.includes('?') 
-      ? `${API_BASE_URL}${endpoint}`
-      : `${API_BASE_URL}${endpoint}${queryString}`
+    const fullUrl = `${API_BASE_URL}${endpoint}`
 
     console.log(`Proxying request to: ${fullUrl}`)
 

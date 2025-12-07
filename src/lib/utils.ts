@@ -117,25 +117,3 @@ export function formatDateTime(date: Date): string {
     hour12: true
   });
 }
-
-/**
- * Converts a Buffer object or hex string to a hex string with 0x prefix
- * Handles PostgreSQL Buffer format: { type: 'Buffer', data: [numbers] }
- * 
- * @param buffer Buffer object, hex string, null, or undefined
- * @returns Hex string with 0x prefix, or empty string if invalid
- */
-export function bufferToHex(buffer: { type: 'Buffer'; data: number[] } | string | null | undefined): string {
-  // If already a string, ensure 0x prefix
-  if (typeof buffer === 'string') {
-    return buffer.startsWith('0x') ? buffer : `0x${buffer}`
-  }
-  
-  // If it's a Buffer object from PostgreSQL
-  if (buffer && typeof buffer === 'object' && buffer.type === 'Buffer' && Array.isArray(buffer.data)) {
-    return '0x' + buffer.data.map(byte => byte.toString(16).padStart(2, '0')).join('')
-  }
-  
-  // Invalid or null
-  return ''
-}
