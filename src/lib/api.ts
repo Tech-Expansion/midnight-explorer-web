@@ -114,10 +114,25 @@ export const blockAPI = {
  */
 export const transactionAPI = {
   /**
-   * Get a transaction by hash
+   * Get a transaction by hash (full detail)
+   * Requires full 64-character hash
+   * Returns single transaction with all details
    */
   getTransaction: <T = unknown>(hash: string) =>
     apiFetch<T>(`/transactions/${hash}`),
+
+  /**
+   * Search transactions by hash (partial or full)
+   * Returns list with basic info and pagination
+   * Used for search functionality
+   */
+  searchTransactions: <T = unknown>(hash: string, page?: number, pageSize?: number) => {
+    const queryParams = new URLSearchParams()
+    queryParams.append('hash', hash)
+    if (page) queryParams.append('page', page.toString())
+    if (pageSize) queryParams.append('pageSize', pageSize.toString())
+    return apiFetch<T>(`/transactions/search?${queryParams.toString()}`)
+  },
 
   /**
    * Get a transaction by ID

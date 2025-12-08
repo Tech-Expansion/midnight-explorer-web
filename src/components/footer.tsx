@@ -142,13 +142,13 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/" className="text-sm text-muted-foreground hover:text-blue-400 transition-colors">
-                  Top Addresses
+                <Link href="/contracts" className="text-sm text-muted-foreground hover:text-blue-400 transition-colors">
+                  Contracts
                 </Link>
               </li>
               <li>
-                <Link href="/" className="text-sm text-muted-foreground hover:text-blue-400 transition-colors">
-                  Charts & Stats
+                <Link href="/pool" className="text-sm text-muted-foreground hover:text-blue-400 transition-colors">
+                  Pools
                 </Link>
               </li>
             </ul>
@@ -164,17 +164,17 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/" className="text-sm text-muted-foreground hover:text-blue-400 transition-colors">
+                <Link href="https://x.com/midnightexplr" className="text-sm text-muted-foreground hover:text-blue-400 transition-colors">
                   Developer Docs
                 </Link>
               </li>
               <li>
-                <Link href="/" className="text-sm text-muted-foreground hover:text-blue-400 transition-colors">
+                <Link href="https://x.com/midnightexplr" className="text-sm text-muted-foreground hover:text-blue-400 transition-colors">
                   FAQ
                 </Link>
               </li>
               <li>
-                <Link href="/" className="text-sm text-muted-foreground hover:text-blue-400 transition-colors">
+                <Link href="https://x.com/midnightexplr" className="text-sm text-muted-foreground hover:text-blue-400 transition-colors">
                   Support
                 </Link>
               </li>
