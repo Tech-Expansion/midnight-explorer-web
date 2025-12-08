@@ -5,7 +5,7 @@ import Link from "next/link"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { FileCode, ExternalLink } from "lucide-react"
+import { ExternalLink } from "lucide-react"
 import { contractAPI, transactionAPI } from "@/lib/api"
 import { Pagination } from "@/components/pagination"
 
@@ -24,7 +24,6 @@ interface ContractsListProps {
 
 export function ContractsList({ initialCursor, page = 1 }: ContractsListProps) {
   const [contracts, setContracts] = useState<Contract[]>([])
-  const [nextCursor, setNextCursor] = useState<string | undefined>()
   const [loading, setLoading] = useState(true)
   const [totalContracts, setTotalContracts] = useState<number>(0)
 
@@ -36,14 +35,14 @@ export function ContractsList({ initialCursor, page = 1 }: ContractsListProps) {
         setLoading(true)
         
         // Fetch contracts
-        const response: any = await contractAPI.getContracts(initialCursor)
+        const response: { items?: Contract[]; nextCursor?: string } = await contractAPI.getContracts(initialCursor)
         const contractsData = response.items || []
         
         // Fetch transaction hashes for all contracts
         const contractsWithHashes = await Promise.all(
           contractsData.map(async (contract: Contract): Promise<Contract> => {
             try {
-              const txData: any = await transactionAPI.getTransactionById(contract.transactionId)
+              const txData: { hash: string } = await transactionAPI.getTransactionById(contract.transactionId)
               return { ...contract, transactionHash: txData.hash }
             } catch (error) {
               console.error(`Failed to fetch hash for TX ${contract.transactionId}:`, error)
@@ -53,7 +52,6 @@ export function ContractsList({ initialCursor, page = 1 }: ContractsListProps) {
         )
         
         setContracts(contractsWithHashes)
-        setNextCursor(response.nextCursor)
         
         // Estimate total contracts from the first contract ID (assuming sequential IDs)
         if (contractsWithHashes.length > 0) {

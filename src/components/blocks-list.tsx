@@ -36,7 +36,7 @@ export function BlocksList({ initialCursor, page = 1 }: BlocksListProps) {
     async function fetchData() {
       try {
         setLoading(true)
-        const response: any = await blockAPI.getBlocks(initialCursor)
+        const response: { items: Block[]; nextCursor?: string } = await blockAPI.getBlocks(initialCursor)
         setBlocks(response.items)
         setNextCursor(response.nextCursor)
       } catch (error) {

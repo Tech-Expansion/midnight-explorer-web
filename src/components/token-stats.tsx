@@ -1,7 +1,6 @@
 "use client"
 
 import { Card } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Coins, TrendingUp, TrendingDown } from "lucide-react"
 
 const tokens = [

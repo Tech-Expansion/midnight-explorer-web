@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { Github, Mail, Sparkles } from "lucide-react"
+import { Github, Sparkles } from "lucide-react"
 import { useNetworkStats } from "@/hooks/useNetworkStats"
 interface NetworkStats {
   blockHeight: number
@@ -42,10 +42,6 @@ export function Footer() {
 
     return () => clearInterval(interval)
   }, [])
-
-  const formatBlockHeight = (height: number) => {
-    return height.toLocaleString('en-US')
-  }
 
   return (
     <footer className="border-t border-border bg-card/30 backdrop-blur-sm mt-16">

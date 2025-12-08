@@ -2,10 +2,8 @@ import { Header } from "@/components/header"
 import { Starfield } from "@/components/starfield"
 import { Footer } from "@/components/footer"
 import { SearchBarPage } from "@/components/search-bar-page"
-import { Card } from "@/components/ui/card"
-import { Waves } from "lucide-react"
-import Link from "next/link"
 import { PoolsList } from "@/components/pools-list"
+import Link from "next/link"
 
 export const dynamic = "force-dynamic"
 
@@ -14,28 +12,6 @@ export function generateViewport() {
     width: 'device-width',
     initialScale: 1,
   }
-}
-
-interface BufferData {
-  type: 'Buffer'
-  data: number[]
-}
-
-interface PoolJson {
-  name: string
-  ticker: string
-  homepage?: string
-  description: string
-}
-
-interface Pool {
-  id: number
-  poolId: number
-  tickerName: string
-  hash: string | BufferData
-  json: PoolJson
-  bytes: BufferData
-  pmrId: number
 }
 
 interface PageProps {

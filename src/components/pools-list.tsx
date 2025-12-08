@@ -1,7 +1,6 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import Link from "next/link"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Waves, Globe } from "lucide-react"
@@ -31,6 +30,13 @@ interface Pool {
   pmrId: number
 }
 
+interface PaginationInfo {
+  page: number
+  pageSize: number
+  totalCount: number
+  totalPages: number
+}
+
 interface PoolsListProps {
   initialPage?: number
   pageSize?: number
@@ -51,7 +57,7 @@ export function PoolsList({ initialPage = 1, pageSize = 20, searchQuery = '' }: 
     async function fetchData() {
       try {
         setLoading(true)
-        const response: any = await poolAPI.getPools(
+        const response: { data?: Pool[]; pagination?: PaginationInfo } = await poolAPI.getPools(
           initialPage.toString(),
           pageSize.toString(),
           searchQuery
@@ -72,6 +78,7 @@ export function PoolsList({ initialPage = 1, pageSize = 20, searchQuery = '' }: 
     }
 
     fetchData()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialPage, pageSize, searchQuery])
 
   const buildPaginationUrl = (targetPage: number) => {

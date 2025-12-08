@@ -17,16 +17,13 @@ interface PageProps {
 
 export const dynamic = "force-dynamic"
 
-function getBaseUrl() {
-  return `http://localhost:3002`;
-}
-
 export default async function TransactionPage({ params }: PageProps) {
   const resolvedParams = await params
   
   let transaction: Transaction
   try {
     transaction = await transactionAPI.getTransaction<Transaction>(resolvedParams.hash)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (_error) {
     notFound()
   }

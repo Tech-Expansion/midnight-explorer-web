@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { CheckCircle2, Clock, AlertCircle } from "lucide-react"
+import { CheckCircle2, AlertCircle } from "lucide-react"
 import { formatDateTime } from "@/lib/utils"
 import { transactionAPI } from "@/lib/api"
 import { Pagination, SimplePagination } from "@/components/pagination"
@@ -29,7 +29,7 @@ interface TransactionsListProps {
 export function TransactionsList({ initialCursor, searchHash, searchPage = 1 }: TransactionsListProps) {
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [nextCursor, setNextCursor] = useState<string | undefined>()
-  const [pagination, setPagination] = useState<any>(null)
+  const [pagination, setPagination] = useState<{ page: number; pageSize: number; totalCount: number; totalPages: number } | null>(null)
   const [loading, setLoading] = useState(true)
   const { totalTransactions } = useNetworkStats()
 
@@ -45,12 +45,12 @@ export function TransactionsList({ initialCursor, searchHash, searchPage = 1 }: 
         setLoading(true)
         if (searchHash) {
           // Search mode
-          const response: any = await transactionAPI.searchTransactions(searchHash, searchPage, pageSize)
+          const response: { data: Transaction[]; pagination?: { page: number; pageSize: number; totalCount: number; totalPages: number } } = await transactionAPI.searchTransactions(searchHash, searchPage, pageSize)
           setTransactions(response.data)
-          setPagination(response.pagination)
+          setPagination(response.pagination || null)
         } else {
           // Normal mode with cursor
-          const response: any = await transactionAPI.getTransactions(initialCursor)
+          const response: { items: Transaction[]; nextCursor?: string } = await transactionAPI.getTransactions(initialCursor)
           setTransactions(response.items)
           setNextCursor(response.nextCursor)
         }

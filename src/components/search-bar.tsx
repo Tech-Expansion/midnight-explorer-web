@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useRouter } from "next/navigation"
-import { bufferToHex } from "@/lib/utils"
 
 interface PoolResult {
     id: number
@@ -322,7 +321,8 @@ export function SearchBar() {
             }
 
             return { found: false }
-        } catch (error) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        } catch (_error) {
             return { found: false }
         }
     }
@@ -389,7 +389,8 @@ export function SearchBar() {
             }
 
             return { found: false }
-        } catch (error) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        } catch (_error) {
             return { found: false }
         }
     }
@@ -443,7 +444,8 @@ export function SearchBar() {
             }
 
             return { found: false }
-        } catch (error) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        } catch (_error) {
             return { found: false }
         }
     }
@@ -484,7 +486,8 @@ export function SearchBar() {
             }
 
             return { found: false }
-        } catch (error) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        } catch (_error) {
             return { found: false }
         }
     }

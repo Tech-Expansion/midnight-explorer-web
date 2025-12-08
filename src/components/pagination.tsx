@@ -67,8 +67,6 @@ export function Pagination({ currentPage, totalPages, buildUrl, className }: Pag
   }
 
   const pages = getPageNumbers()
-  const hasPrev = currentPage > 1
-  const hasNext = currentPage < totalPages
 
   return (
     <div className={cn("flex items-center justify-center gap-1", className)}>

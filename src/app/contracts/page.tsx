@@ -2,8 +2,6 @@ import { Header } from "@/components/header"
 import { Starfield } from "@/components/starfield"
 import { Footer } from "@/components/footer"
 import { SearchBarPage } from "@/components/search-bar-page"
-import { Card } from "@/components/ui/card"
-import { FileCode } from "lucide-react"
 import { ContractsList } from "@/components/contracts-list"
 
 export const dynamic = "force-dynamic"
