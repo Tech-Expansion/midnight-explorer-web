@@ -22,7 +22,7 @@ export const dynamic = "force-dynamic"
 interface Transaction {
   id?: string
   hash: string
-  status: 'success' | 'pending' | 'failure'
+  status: 'success' | 'failed' | 'failure'
   blockHeight?: number
   protocolVersion: number
   timestamp?: string | number
@@ -85,13 +85,7 @@ export default async function TransactionsPage({ searchParams }: PageProps) {
             Success 
           </Badge>
         )
-      case "pending":
-        return (
-          <Badge className="bg-amber-500/10 text-amber-400 border-amber-500/20 hover:bg-amber-500/20">
-            <Clock className="h-3 w-3 mr-1 animate-pulse" />
-            Pending
-          </Badge>
-        )
+      case "failed":
       case "failure":
         return (
           <Badge className="bg-red-500/10 text-red-400 border-red-500/20 hover:bg-red-500/20">
@@ -99,6 +93,7 @@ export default async function TransactionsPage({ searchParams }: PageProps) {
             Failed
           </Badge>
         )
+      
       default:
         return null
     }
@@ -153,7 +148,7 @@ export default async function TransactionsPage({ searchParams }: PageProps) {
                             href={`/tx/${tx.hash}`}
                             className="text-blue-400 hover:text-blue-300 transition-colors font-mono text-sm"
                           >
-                            {tx.hash}
+                            0x{tx.hash}
                           </Link>
                         </td>
                         <td className="p-4">{getStatusBadge(tx.status)}</td>
