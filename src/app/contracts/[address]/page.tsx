@@ -25,6 +25,7 @@ export default async function ContractPage({ params }: PageProps) {
   try {
     const data = await contractAPI.getContract<{ contract: Contract }>(address)
     contract = data.contract
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (_error) {
     notFound()
   }

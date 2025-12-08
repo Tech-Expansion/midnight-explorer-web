@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { Github, Mail, Sparkles } from "lucide-react"
+import { Github, Sparkles } from "lucide-react"
 import { useNetworkStats } from "@/hooks/useNetworkStats"
 interface NetworkStats {
   blockHeight: number
@@ -43,10 +43,6 @@ export function Footer() {
     return () => clearInterval(interval)
   }, [])
 
-  const formatBlockHeight = (height: number) => {
-    return height.toLocaleString('en-US')
-  }
-
   return (
     <footer className="border-t border-border bg-card/30 backdrop-blur-sm mt-16">
       <div className="container mx-auto px-4 py-12">
@@ -82,8 +78,11 @@ export function Footer() {
               in real-time.
             </p>
             <div className="flex items-center gap-3">
+              
               <Link
-                href="#"
+                href="https://github.com/Tech-Expansion"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="p-2 rounded-lg bg-background/50 hover:bg-background transition-colors"
               >
                 <Github className="h-4 w-4 text-muted-foreground hover:text-foreground transition-colors" />
@@ -101,7 +100,7 @@ export function Footer() {
                   <path d="M714.163 519.284L1160.89 0H1055.03L667.137 450.887L357.328 0H0L468.492 681.821L0 1226.37H105.866L515.491 750.218L842.672 1226.37H1200L714.137 519.284H714.163ZM569.165 687.828L521.697 619.934L144.011 79.6944H306.615L611.412 515.685L658.88 583.579L1055.08 1150.3H892.476L569.165 687.854V687.828Z" />
                 </svg>
               </Link>
-              <Link
+              {/* <Link
                 href="#"
                 className="p-2 rounded-lg bg-background/50 hover:bg-background transition-colors"
               >
@@ -120,7 +119,7 @@ export function Footer() {
                 className="p-2 rounded-lg bg-background/50 hover:bg-background transition-colors"
               >
                 <Mail className="h-4 w-4 text-muted-foreground hover:text-foreground transition-colors" />
-              </Link>
+              </Link> */}
             </div>
           </div>
 

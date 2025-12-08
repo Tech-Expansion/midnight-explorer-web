@@ -65,6 +65,7 @@ export default async function PoolDetailPage({ params }: PageProps) {
     if (!pool.json || !pool.id) {
       notFound()
     }
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (_error) {
     notFound()
   }

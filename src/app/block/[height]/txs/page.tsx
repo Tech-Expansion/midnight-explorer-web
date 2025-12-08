@@ -57,6 +57,7 @@ export default async function BlockTransactionsPage({ params, searchParams }: Pa
     )
     transactions = txData.transactions
     nextCursor = txData.nextCursor || null
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (_error) {
     notFound()
   }

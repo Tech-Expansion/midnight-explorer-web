@@ -48,8 +48,9 @@ export default async function BlockPage({ params }: PageProps) {
         const txData = await blockAPI.getBlockTransactions<{ transactions: Transaction[] }>(height, { limit: 20 })
         transactions = txData.transactions || []
         hasMoreTransactions = block.txCount > 20
-      } catch (error) {
-        console.error('Error fetching transactions:', error)
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      } catch (_error) {
+        console.error('Error fetching transactions:', _error)
       }
     }
 
@@ -260,13 +261,14 @@ export default async function BlockPage({ params }: PageProps) {
         </div>
       </div>
     )
-  } catch (error) {
-    console.error('Error fetching block:', error)
+  } catch (_error) {
+    console.error('Error fetching block:', _error)
     
     // Try transaction fallback
     try {
       await transactionAPI.getTransaction(height)
       redirect(`/tx/${height}`)
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (_txError) {
       notFound()
     }

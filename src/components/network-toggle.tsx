@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 
 export function NetworkToggle() {
-  const [network, setNetwork] = useState<"mainnet" | "preview">("preview")
+  const [, setNetwork] = useState<"mainnet" | "preview">("preview")
 
   return (
     <DropdownMenu>
