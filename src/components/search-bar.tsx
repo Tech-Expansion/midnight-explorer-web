@@ -1,20 +1,20 @@
 "use client"
 
 import type React from "react"
-import {useState, useRef, useEffect} from "react"
-import {Search, Waves, Box, ArrowRightLeft, FileCode} from "lucide-react"
-import {Input} from "@/components/ui/input"
-import {Button} from "@/components/ui/button"
-import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select"
-import {useRouter} from "next/navigation"
-import {bufferToHex} from "@/lib/utils"
+import { useState, useRef, useEffect } from "react"
+import { Search, Waves, Box, ArrowRightLeft, FileCode } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useRouter } from "next/navigation"
+import { bufferToHex } from "@/lib/utils"
 
 interface PoolResult {
-    id : number
-    poolId : number
-    tickerName : string
+    id: number
+    poolId: number
+    tickerName: string
     hash?: string | { type: 'Buffer'; data: number[] }
-    json : {
+    json: {
         name: string
         ticker: string
         description?: string
@@ -22,24 +22,24 @@ interface PoolResult {
 }
 
 interface BlockResult {
-    hash : string
-    height : number
+    hash: string
+    height: number
     timestamp?: number
     txCount?: number
 }
 
 interface TransactionResult {
-    hash : string
+    hash: string
     blockHeight?: number
     status?: string
 }
 
 interface ContractResult {
-    address : string
+    address: string
     variant?: string
 }
 
-type SearchResult = |{
+type SearchResult = | {
     type: 'block';
     block?: BlockResult
 } | {
@@ -65,15 +65,15 @@ export function SearchBar() {
     const [isSearching,
         setIsSearching] = useState(false)
     const [searchResults,
-        setSearchResults] = useState < SearchResult[] > ([])
+        setSearchResults] = useState<SearchResult[]>([])
     const [showDropdown,
         setShowDropdown] = useState(false)
-    const dropdownRef = useRef < HTMLDivElement > (null)
+    const dropdownRef = useRef<HTMLDivElement>(null)
     const router = useRouter()
 
     // Close dropdown when clicking outside
     useEffect(() => {
-        const handleClickOutside = (event : MouseEvent) => {
+        const handleClickOutside = (event: MouseEvent) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
                 setShowDropdown(false)
             }
@@ -82,9 +82,9 @@ export function SearchBar() {
         return () => document.removeEventListener('mousedown', handleClickOutside)
     }, [])
 
-    const handleSearch = async(e : React.FormEvent) => {
+    const handleSearch = async (e: React.FormEvent) => {
         e.preventDefault()
-        if (!searchQuery.trim()) 
+        if (!searchQuery.trim())
             return
 
         const cleanQuery = searchQuery.trim()
@@ -93,7 +93,7 @@ export function SearchBar() {
         setShowDropdown(false)
 
         try {
-            const results : SearchResult[] = []
+            const results: SearchResult[] = []
 
             // If user selected Transaction
             if (searchType === "transaction") {
@@ -110,12 +110,12 @@ export function SearchBar() {
                             .results
                             .slice(0, 5)
                         displayResults.forEach(tx => {
-                            results.push({type: 'transaction', transaction: tx})
+                            results.push({ type: 'transaction', transaction: tx })
                         })
 
                         // Add "View All" option if more than 5 results available
                         if (totalCount > 5) {
-                            results.push({type: 'viewAll', count: totalCount, searchHash: cleanQuery})
+                            results.push({ type: 'viewAll', count: totalCount, searchHash: cleanQuery })
                         }
 
                         setSearchResults(results)
@@ -132,7 +132,7 @@ export function SearchBar() {
             if (searchType === "block") {
                 const blockResult = await checkBlock(cleanQuery)
                 if (blockResult.found && blockResult.data) {
-                    results.push({type: 'block', block: blockResult.data})
+                    results.push({ type: 'block', block: blockResult.data })
                 }
                 if (results.length > 0) {
                     setSearchResults(results)
@@ -148,7 +148,7 @@ export function SearchBar() {
             if (searchType === "contract") {
                 const contractResult = await checkContract(cleanQuery)
                 if (contractResult.found && contractResult.data) {
-                    results.push({type: 'contract', contract: contractResult.data})
+                    results.push({ type: 'contract', contract: contractResult.data })
                 }
                 if (results.length > 0) {
                     setSearchResults(results)
@@ -169,7 +169,7 @@ export function SearchBar() {
                         .results
                         .slice(0, 5)
                     displayPools.forEach(pool => {
-                        results.push({type: 'pool', pool})
+                        results.push({ type: 'pool', pool })
                     })
                 }
                 if (results.length > 0) {
@@ -188,7 +188,7 @@ export function SearchBar() {
                 if (/^\d+$/.test(cleanQuery)) {
                     const blockResult = await checkBlock(cleanQuery)
                     if (blockResult.found && blockResult.data) {
-                        results.push({type: 'block', block: blockResult.data})
+                        results.push({ type: 'block', block: blockResult.data })
                     }
                     if (results.length > 0) {
                         setSearchResults(results)
@@ -210,7 +210,7 @@ export function SearchBar() {
                 if (isContractAddress) {
                     const contractResult = await checkContract(cleanQuery)
                     if (contractResult.found && contractResult.data) {
-                        results.push({type: 'contract', contract: contractResult.data})
+                        results.push({ type: 'contract', contract: contractResult.data })
                     }
                     if (results.length > 0) {
                         setSearchResults(results)
@@ -232,7 +232,7 @@ export function SearchBar() {
                         blockResult] = await Promise.all([checkTransaction(cleanQuery), searchPool(cleanQuery), checkBlock(cleanQuery)])
 
                     if (blockResult.found && blockResult.data) {
-                        results.push({type: 'block', block: blockResult.data})
+                        results.push({ type: 'block', block: blockResult.data })
                     }
 
                     // Handle multiple transactions
@@ -241,19 +241,19 @@ export function SearchBar() {
 
                         if (totalCount === 1) {
                             // Only one transaction, add to dropdown
-                            results.push({type: 'transaction', transaction: txResult.results[0]})
+                            results.push({ type: 'transaction', transaction: txResult.results[0] })
                         } else {
                             // Multiple transactions - show up to 5 in dropdown
                             const displayResults = txResult
                                 .results
                                 .slice(0, 5)
                             displayResults.forEach(tx => {
-                                results.push({type: 'transaction', transaction: tx})
+                                results.push({ type: 'transaction', transaction: tx })
                             })
 
                             // Add "View All" option if more than 5 results available
                             if (totalCount > 5) {
-                                results.push({type: 'viewAll', count: totalCount, searchHash: cleanQuery})
+                                results.push({ type: 'viewAll', count: totalCount, searchHash: cleanQuery })
                             }
                         }
                     }
@@ -264,7 +264,7 @@ export function SearchBar() {
                             .results
                             .slice(0, 5)
                         displayPools.forEach(pool => {
-                            results.push({type: 'pool', pool})
+                            results.push({ type: 'pool', pool })
                         })
                     }
 
@@ -280,7 +280,7 @@ export function SearchBar() {
 
                 // Otherwise, show error
                 alert('Invalid format. Please enter a valid block height, transaction hash, or contract' +
-                        ' address')
+                    ' address')
                 setIsSearching(false)
             }
         } catch (error) {
@@ -290,12 +290,12 @@ export function SearchBar() {
         }
     }
 
-    const searchPool = async(query : string) : Promise < {
+    const searchPool = async (query: string): Promise<{
         found: boolean;
         value?: string;
         count?: number;
         results?: PoolResult[]
-    } > => {
+    }> => {
         const timeoutMs = 15000
 
         try {
@@ -312,26 +312,26 @@ export function SearchBar() {
             clearTimeout(timeoutId)
 
             if (!response.ok) {
-                return {found: false}
+                return { found: false }
             }
 
             const data = await response.json()
 
             if (data.data && data.data.length > 0) {
-                return {found: true, value: data.data[0].id, count: data.data.length, results: data.data}
+                return { found: true, value: data.data[0].id, count: data.data.length, results: data.data }
             }
 
-            return {found: false}
+            return { found: false }
         } catch (error) {
-            return {found: false}
+            return { found: false }
         }
     }
 
-    const checkBlock = async(query : string) : Promise < {
+    const checkBlock = async (query: string): Promise<{
         found: boolean;
         height?: string;
         data?: BlockResult
-    } > => {
+    }> => {
         const timeoutMs = 15000
         const cleanQuery = query.startsWith("0x")
             ? query.slice(2)
@@ -349,7 +349,7 @@ export function SearchBar() {
             clearTimeout(timeoutId)
 
             if (!response.ok) {
-                return {found: false}
+                return { found: false }
             }
 
             const data = await response.json()
@@ -369,7 +369,7 @@ export function SearchBar() {
                     : hash).toLowerCase()
 
                 if (normalizedSearchHash !== normalizedReturnedHash) {
-                    return {found: false}
+                    return { found: false }
                 }
             }
 
@@ -388,18 +388,18 @@ export function SearchBar() {
                 }
             }
 
-            return {found: false}
+            return { found: false }
         } catch (error) {
-            return {found: false}
+            return { found: false }
         }
     }
 
-    const checkTransaction = async(query : string) : Promise < {
+    const checkTransaction = async (query: string): Promise<{
         found: boolean;
         data?: TransactionResult;
         count?: number;
         results?: TransactionResult[]
-    } > => {
+    }> => {
         const timeoutMs = 15000
 
         try {
@@ -415,7 +415,7 @@ export function SearchBar() {
             clearTimeout(timeoutId)
 
             if (!response.ok) {
-                return {found: false}
+                return { found: false }
             }
 
             const responseData = await response.json()
@@ -439,19 +439,19 @@ export function SearchBar() {
                 const totalCount = responseData.pagination
                     ?.totalCount || transactions.length
 
-                return {found: true, data: transactions[0], count: totalCount, results: transactions}
+                return { found: true, data: transactions[0], count: totalCount, results: transactions }
             }
 
-            return {found: false}
+            return { found: false }
         } catch (error) {
-            return {found: false}
+            return { found: false }
         }
     }
 
-    const checkContract = async(query : string) : Promise < {
+    const checkContract = async (query: string): Promise<{
         found: boolean;
         data?: ContractResult
-    } > => {
+    }> => {
         const timeoutMs = 15000
 
         try {
@@ -466,7 +466,7 @@ export function SearchBar() {
             clearTimeout(timeoutId)
 
             if (!response.ok) {
-                return {found: false}
+                return { found: false }
             }
 
             const data = await response.json()
@@ -483,13 +483,13 @@ export function SearchBar() {
                 }
             }
 
-            return {found: false}
+            return { found: false }
         } catch (error) {
-            return {found: false}
+            return { found: false }
         }
     }
 
-    const handleResultSelect = (result : SearchResult) => {
+    const handleResultSelect = (result: SearchResult) => {
         setShowDropdown(false)
         setSearchQuery("")
         setSearchResults([])
@@ -523,22 +523,22 @@ export function SearchBar() {
         }
     }
 
-    const getResultIcon = (type : SearchResult['type']) => {
+    const getResultIcon = (type: SearchResult['type']) => {
         switch (type) {
             case 'block':
-                return <Box className="h-4 w-4 text-purple-400"/>
+                return <Box className="h-4 w-4 text-purple-400" />
             case 'transaction':
-                return <ArrowRightLeft className="h-4 w-4 text-green-400"/>
+                return <ArrowRightLeft className="h-4 w-4 text-green-400" />
             case 'contract':
-                return <FileCode className="h-4 w-4 text-orange-400"/>
+                return <FileCode className="h-4 w-4 text-orange-400" />
             case 'pool':
-                return <Waves className="h-4 w-4 text-blue-400"/>
+                return <Waves className="h-4 w-4 text-blue-400" />
             case 'viewAll':
-                return <ArrowRightLeft className="h-4 w-4 text-blue-400"/>
+                return <ArrowRightLeft className="h-4 w-4 text-blue-400" />
         }
     }
 
-    const getResultBgColor = (type : SearchResult['type']) => {
+    const getResultBgColor = (type: SearchResult['type']) => {
         switch (type) {
             case 'block':
                 return 'bg-purple-500/10'
@@ -553,7 +553,7 @@ export function SearchBar() {
         }
     }
 
-    const getResultTextColor = (type : SearchResult['type']) => {
+    const getResultTextColor = (type: SearchResult['type']) => {
         switch (type) {
             case 'block':
                 return 'text-purple-400'
@@ -568,7 +568,7 @@ export function SearchBar() {
         }
     }
 
-    const renderResultItem = (result : SearchResult, index : number) => {
+    const renderResultItem = (result: SearchResult, index: number) => {
         let title = ''
         let subtitle = ''
 
@@ -578,44 +578,44 @@ export function SearchBar() {
                     ?.height}`
                 subtitle = result.block
                     ?.hash
-                        ? `${result
-                            .block
-                            .hash
-                            .slice(0, 16)}...`
-                        : ''
+                    ? `${result
+                        .block
+                        .hash
+                        .slice(0, 16)}...`
+                    : ''
                 break
             case 'transaction':
                 title = result.transaction
                     ?.blockHeight
-                        ? `Transaction (Block #${result.transaction.blockHeight})`
-                        : `Transaction`
+                    ? `Transaction (Block #${result.transaction.blockHeight})`
+                    : `Transaction`
                 subtitle = result.transaction
                     ?.hash
-                        ? `${result
-                            .transaction
-                            .hash
-                            .slice(0, 20)}...`
-                        : ''
+                    ? `${result
+                        .transaction
+                        .hash
+                        .slice(0, 20)}...`
+                    : ''
                 break
             case 'contract':
                 title = `Contract`
                 subtitle = result.contract
                     ?.address
-                        ? `${result
-                            .contract
-                            .address
-                            .slice(0, 20)}...`
-                        : ''
+                    ? `${result
+                        .contract
+                        .address
+                        .slice(0, 20)}...`
+                    : ''
                 break
             case 'pool':
                 title = result.pool
                     ?.json
-                        ?.ticker || result.pool
-                            ?.tickerName || 'Pool'
+                    ?.ticker || result.pool
+                        ?.tickerName || 'Pool'
                 subtitle = result.pool
                     ?.json
-                        ?.name || `Pool #${result.pool
-                            ?.id}`
+                    ?.name || `Pool #${result.pool
+                        ?.id}`
                 break
             case 'viewAll':
                 title = `View All ${result.count} Transactions`
@@ -648,7 +648,7 @@ export function SearchBar() {
                 <div className="flex flex-col sm:flex-row gap-2">
                     <Select value={searchType} onValueChange={setSearchType}>
                         <SelectTrigger className="w-full sm:w-[180px] bg-card border-border">
-                            <SelectValue placeholder="Search type"/>
+                            <SelectValue placeholder="Search type" />
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="all">All</SelectItem>
@@ -662,13 +662,13 @@ export function SearchBar() {
                     {/* Input wrapper with dropdown */}
                     <div className="relative flex-1" ref={dropdownRef}>
                         <Search
-                            className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10"/>
+                            className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
                         <Input
                             type="text"
                             placeholder="Search by Hash / Height / Contract Address / Pool"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="pl-10 bg-card border-border"/> {/* Search Results Dropdown */}
+                            className="pl-10 bg-card border-border" /> {/* Search Results Dropdown */}
                         {showDropdown && searchResults.length > 0 && (
                             <div
                                 className="absolute top-full left-0 right-0 mt-1 z-50 bg-card border border-border rounded-lg shadow-xl overflow-hidden">
@@ -691,11 +691,12 @@ export function SearchBar() {
                     <Button
                         type="submit"
                         disabled={isSearching}
-                        className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
-                        {isSearching
-                            ? 'Searching...'
-                            : 'Search'}
+                        className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-purple-600 
+             hover:from-blue-700 hover:to-purple-700 cursor-pointer 
+             disabled:opacity-50 disabled:cursor-not-allowed text-white">
+                        {isSearching ? 'Searching...' : 'Search'}
                     </Button>
+
                 </div>
             </form>
         </div>

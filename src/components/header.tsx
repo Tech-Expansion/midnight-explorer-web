@@ -39,42 +39,54 @@ export function Header() {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center flex-1 justify-center gap-6">
-            <Link 
-              href="/blocks" 
+            <Link
+              href="/"
+              className="text-sm font-medium transition-colors hover:text-primary"
+            >
+              Home
+            </Link>
+            <Link
+              href="/blocks"
               className="text-sm font-medium transition-colors hover:text-primary"
             >
               Blocks
             </Link>
-            <Link 
-              href="/transactions" 
+            <Link
+              href="/transactions"
               className="text-sm font-medium transition-colors hover:text-primary"
             >
               Transactions
             </Link>
-            <Link 
-              href="/contracts" 
+            <Link
+              href="/contracts"
               className="text-sm font-medium transition-colors hover:text-primary"
             >
               Contracts
             </Link>
-            <Link 
-              href="/pool" 
+            <Link
+              href="/pool"
               className="text-sm font-medium transition-colors hover:text-primary"
             >
               Pool
             </Link>
-            <Link 
-              href="https://docs.google.com/forms/d/e/1FAIpQLSfBguf59QpRRgVVFZCWt8S2D6W9aGlB8QEpxIfVJrrwH3fjUw/viewform?usp=publish-editor" 
+            <Link
+              href="https://docs.google.com/forms/d/e/1FAIpQLSfBguf59QpRRgVVFZCWt8S2D6W9aGlB8QEpxIfVJrrwH3fjUw/viewform?usp=publish-editor"
+              target="_blank"
+              rel="noopener noreferrer"
               className="text-sm font-medium transition-colors hover:text-primary"
             >
               Feedback
             </Link>
-            <Link 
-              href="https://reviews.projectcatalyst.io/proposal/2042" 
+
+            <Link
+              href="https://reviews.projectcatalyst.io/proposal/2042"
+              target="_blank"
+              rel="noopener noreferrer"
               className="text-sm font-medium transition-colors hover:text-primary"
             >
               Project Catalyst
             </Link>
+
           </nav>
 
           <div className="hidden md:block">
