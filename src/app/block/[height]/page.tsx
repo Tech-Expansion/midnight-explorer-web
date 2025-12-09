@@ -39,7 +39,7 @@ export default async function BlockPage({ params }: PageProps) {
     const { block } = data
     const blockHeight = block.height
 
-    // Fetch transactions for preview
+    // Fetch transactions for testnet
     let transactions: Transaction[] = []
     let hasMoreTransactions = false
     
@@ -190,7 +190,7 @@ export default async function BlockPage({ params }: PageProps) {
                 </div>
               </Card>
 
-              {/* Transactions Preview */}
+              {/* Transactions Testnet */}
               {block.txCount > 0 && (
                 <Card className="p-6 bg-card/50 border-border">
                   <div className="flex items-center justify-between mb-4">

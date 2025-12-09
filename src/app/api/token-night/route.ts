@@ -1,5 +1,4 @@
-import { NextRequest } from "next/server";
-export async function GET(request: NextRequest) {
+export async function GET() {
     const res = await fetch("https://www.okx.com/api/v5/market/ticker?instId=NIGHT-USDT");
     const json = await res.json();
     const item = json.data[0];

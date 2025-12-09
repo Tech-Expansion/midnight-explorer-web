@@ -11,11 +11,11 @@ import {
 } from "@/components/ui/dropdown-menu"
 
 export function NetworkToggle() {
-  const [, setNetwork] = useState<"mainnet" | "preview">("preview")
+  const [, setNetwork] = useState<"mainnet" | "testnet">("testnet")
 
   return (
     <DropdownMenu>
-      {/* Nút chính hiển thị Preview */}
+      {/* Nút chính hiển thị Testnet */}
       <DropdownMenuTrigger asChild>
         <Button
           variant="outline"
@@ -23,29 +23,29 @@ export function NetworkToggle() {
           className="gap-2 border-border hover:bg-accent transition-colors bg-transparent"
         >
           <Globe className="h-4 w-4" />
-          <span className="font-medium text-amber-400">Preview</span>
+          <span className="font-medium text-amber-400">Testnet</span>
           <ChevronDown className="h-3 w-3 opacity-50" />
         </Button>
       </DropdownMenuTrigger>
 
       {/* Menu xổ xuống */}
       <DropdownMenuContent align="end" className="w-[210px]">
-        {/* Preview item */}
+        {/* Testnet item */}
         <DropdownMenuItem
-          onClick={() => setNetwork("preview")}
+          onClick={() => setNetwork("testnet")}
           className="cursor-pointer flex flex-col items-start"
         >
           <div className="flex items-center">
             <Globe className="h-4 w-4 mr-2 text-amber-400" />
-            <span className="text-amber-400 font-medium">Preview</span>
+            <span className="text-amber-400 font-medium">Testnet</span>
           </div>
           <a
-            href="https://preview.midnightexplorer.com"
+            href="https://testnet.midnightexplorer.com"
             target="_blank"
             rel="noopener noreferrer"
             className="text-xs text-muted-foreground underline ml-6 hover:text-primary transition-colors"
           >
-            preview.midnightexplorer.com
+            testnet.midnightexplorer.com
           </a>
         </DropdownMenuItem>
 
