@@ -6,6 +6,7 @@ import { Menu, Sparkles } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { NetworkToggle } from "@/components/network-toggle"
+import { TokenPrice } from "@/components/token-price"
 
 export function Header() {
   return (
@@ -73,7 +74,7 @@ export function Header() {
               href="https://docs.google.com/forms/d/e/1FAIpQLSfBguf59QpRRgVVFZCWt8S2D6W9aGlB8QEpxIfVJrrwH3fjUw/viewform?usp=publish-editor"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-sm font-medium transition-colors hover:text-primary"
+              className="text-sm font-medium transition-colors hover:text-primary"  
             >
               Feedback
             </Link>
@@ -89,12 +90,14 @@ export function Header() {
 
           </nav>
 
-          <div className="hidden md:block">
+          <div className="hidden md:flex items-center gap-3">
+            <TokenPrice />
             <NetworkToggle />
           </div>
 
           {/* Mobile Menu */}
           <div className="flex md:hidden items-center gap-2">
+            <TokenPrice />
             <NetworkToggle />
             <Sheet>
               <SheetTrigger asChild className="md:hidden">
