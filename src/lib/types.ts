@@ -23,16 +23,52 @@ export interface Block {
  * Represents a transaction in the Midnight blockchain
  */
 export interface Transaction {
+  /** Transaction ID */
+  id?: string;
   /** Transaction hash identifier */
   hash: string;
   /** Current status of the transaction */
   status: 'success' | 'failed' | 'pending';
   /** Height of the block containing this transaction (if confirmed) */
   blockHeight?: number;
+  /** Block ID */
+  blockId?: string;
   /** ISO timestamp when the transaction was included in a block (if confirmed) */
-  timestamp?: string;
+  timestamp?: string | number;
   /** Size of the transaction in bytes */
   size?: number;
+  /** Protocol version */
+  protocolVersion?: number;
+  /** Raw transaction data */
+  raw?: string;
+  /** Merkle tree root */
+  merkleTreeRoot?: string;
+  /** Start index */
+  startIndex?: number;
+  /** End index */
+  endIndex?: number;
+  /** Identifiers */
+  identifiers?: string[];
+}
+
+/**
+ * Represents a contract on the Midnight blockchain
+ */
+export interface Contract {
+  /** Contract address */
+  address: string;
+  /** Transaction ID that deployed the contract */
+  transactionId: string;
+  /** Transaction hash (if fetched) */
+  transactionHash?: string;
+  /** Contract variant (Deploy or Call) */
+  variant: 'Deploy' | 'Call';
+  /** Contract state */
+  state?: string;
+  /** ZSwap state */
+  zswapState?: string;
+  /** Additional attributes */
+  attributes?: Record<string, unknown>;
 }
 
 /**

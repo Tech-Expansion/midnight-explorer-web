@@ -6,7 +6,7 @@ import { useNetworkStats } from "@/hooks/useNetworkStats"
 import { useEffect, useState } from "react"
 
 export function NetworkStats() {
-  const { sidechainStatus, latestBlock, loading, error } = useNetworkStats()
+  const { sidechainStatus, latestBlock, totalTransactions, loading, error } = useNetworkStats()
   const [timeUntilEpoch, setTimeUntilEpoch] = useState<string>('')
 
   // Calculate time until next epoch
@@ -41,27 +41,13 @@ export function NetworkStats() {
   }, [sidechainStatus?.nextEpochTimestamp])
 
   // Format numbers with commas
-  const formatNumber = (num: number | undefined) => {
-    if (num === undefined) return 'N/A'
+  const formatNumber = (num: number | undefined | null) => {
+    if (num === undefined || num === null) return 'N/A'
     return num.toLocaleString('en-US')
   }
 
-  // Format date
-  const formatDate = (timestamp: number | undefined) => {
-    if (!timestamp) return 'N/A'
-    return new Date(timestamp).toLocaleString('en-US', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
-  }
-
-  // Calculate average block time (assuming each slot is ~6 seconds)
   const calculateAvgBlockTime = () => {
     if (!latestBlock || !sidechainStatus) return 'N/A'
-    // Midnight has ~6 second block time
     return '6s'
   }
 
@@ -87,8 +73,8 @@ export function NetworkStats() {
     },
     {
       label: "Total Transactions",
-      value: loading ? '...' : formatNumber(latestBlock?.transactionCount),
-      trend: "neutral",
+      value: loading ? '...' : formatNumber(totalTransactions),
+      trend: "up",
       icon: Activity,
     },
     {
@@ -136,7 +122,6 @@ export function NetworkStats() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
         {stats.map((stat) => {
           const Icon = stat.icon
-          const isPositive = stat.trend === "up"
           const isNeutral = stat.trend === "neutral"
 
           return (
@@ -145,11 +130,6 @@ export function NetworkStats() {
                 <div className="p-2 rounded-lg bg-primary/10">
                   <Icon className="h-4 w-4 text-primary" />
                 </div>
-                {/* {!isNeutral && (
-                  <span className={`text-xs font-medium ${isPositive ? "text-success" : "text-destructive"}`}>
-                    {stat.change}
-                  </span>
-                )} */}
               </div>
               <div className="space-y-1">
                 <p className="text-2xl font-bold font-mono">{stat.value}</p>

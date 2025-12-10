@@ -4,16 +4,26 @@
  */
 
 /**
+ * Application environment types
+ */
+export enum Environment {
+  DEVELOPMENT = 'development',
+  TESTING = 'testing',
+  PRODUCTION = 'production',
+}
+
+/**
+ * Current application environment
+ * Set via NEXT_PUBLIC_ENVIRONMENT environment variable
+ * Defaults to development if not specified
+ */
+export const APP_ENVIRONMENT = (process.env.NEXT_PUBLIC_ENVIRONMENT as Environment) || Environment.DEVELOPMENT;
+
+/**
  * URL for the Midnight testnet indexer API
  * Set via NEXT_PUBLIC_INDEXER_URL environment variable
  */
 export const INDEXER_URL = process.env.NEXT_PUBLIC_INDEXER_URL || "";
-
-/**
- * URL for the Midnight testnet RPC node
- * Set via NEXT_PUBLIC_RPC_URL environment variable
- */
-export const RPC_URL = process.env.NEXT_PUBLIC_RPC_URL || "";
 
 /**
  * Flag to determine if mock data should be used

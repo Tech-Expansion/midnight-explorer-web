@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { Github, Mail, Sparkles } from "lucide-react"
-
+import { Github, Sparkles } from "lucide-react"
+import { useNetworkStats } from "@/hooks/useNetworkStats"
 interface NetworkStats {
   blockHeight: number
   status: 'online' | 'offline'
@@ -15,7 +15,8 @@ export function Footer() {
     blockHeight: 0,
     status: 'online'
   })
-
+  const {latestBlock } = useNetworkStats()
+ 
   useEffect(() => {
     const fetchStats = async () => {
       try {
@@ -41,10 +42,6 @@ export function Footer() {
 
     return () => clearInterval(interval)
   }, [])
-
-  const formatBlockHeight = (height: number) => {
-    return height.toLocaleString('en-US')
-  }
 
   return (
     <footer className="border-t border-border bg-card/30 backdrop-blur-sm mt-16">
@@ -77,12 +74,15 @@ export function Footer() {
               </div>
             </Link>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              The most comprehensive blockchain explorer for Midnight Cardano. Track transactions, blocks, and addresses
+              The most comprehensive blockchain explorer for Midnight Network. Track transactions, blocks, and addresses
               in real-time.
             </p>
             <div className="flex items-center gap-3">
+              
               <Link
-                href="#"
+                href="https://github.com/Tech-Expansion"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="p-2 rounded-lg bg-background/50 hover:bg-background transition-colors"
               >
                 <Github className="h-4 w-4 text-muted-foreground hover:text-foreground transition-colors" />
@@ -100,7 +100,7 @@ export function Footer() {
                   <path d="M714.163 519.284L1160.89 0H1055.03L667.137 450.887L357.328 0H0L468.492 681.821L0 1226.37H105.866L515.491 750.218L842.672 1226.37H1200L714.137 519.284H714.163ZM569.165 687.828L521.697 619.934L144.011 79.6944H306.615L611.412 515.685L658.88 583.579L1055.08 1150.3H892.476L569.165 687.854V687.828Z" />
                 </svg>
               </Link>
-              <Link
+              {/* <Link
                 href="#"
                 className="p-2 rounded-lg bg-background/50 hover:bg-background transition-colors"
               >
@@ -119,7 +119,7 @@ export function Footer() {
                 className="p-2 rounded-lg bg-background/50 hover:bg-background transition-colors"
               >
                 <Mail className="h-4 w-4 text-muted-foreground hover:text-foreground transition-colors" />
-              </Link>
+              </Link> */}
             </div>
           </div>
 
@@ -141,13 +141,13 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/" className="text-sm text-muted-foreground hover:text-blue-400 transition-colors">
-                  Top Addresses
+                <Link href="/contracts" className="text-sm text-muted-foreground hover:text-blue-400 transition-colors">
+                  Contracts
                 </Link>
               </li>
               <li>
-                <Link href="/" className="text-sm text-muted-foreground hover:text-blue-400 transition-colors">
-                  Charts & Stats
+                <Link href="/pool" className="text-sm text-muted-foreground hover:text-blue-400 transition-colors">
+                  Pools
                 </Link>
               </li>
             </ul>
@@ -163,17 +163,17 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/" className="text-sm text-muted-foreground hover:text-blue-400 transition-colors">
+                <Link href="https://x.com/midnightexplr" className="text-sm text-muted-foreground hover:text-blue-400 transition-colors">
                   Developer Docs
                 </Link>
               </li>
               <li>
-                <Link href="/" className="text-sm text-muted-foreground hover:text-blue-400 transition-colors">
+                <Link href="https://x.com/midnightexplr" className="text-sm text-muted-foreground hover:text-blue-400 transition-colors">
                   FAQ
                 </Link>
               </li>
               <li>
-                <Link href="/" className="text-sm text-muted-foreground hover:text-blue-400 transition-colors">
+                <Link href="https://x.com/midnightexplr" className="text-sm text-muted-foreground hover:text-blue-400 transition-colors">
                   Support
                 </Link>
               </li>
@@ -187,18 +187,18 @@ export function Footer() {
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Network</span>
                 <span className={`flex items-center gap-1 ${
-                  stats.status === 'online' ? 'text-green-400' : 'text-red-400'
+                  stats.status === 'online' ? 'text-green-400' : 'text-green-400'
                 }`}>
                   <span className={`h-2 w-2 rounded-full ${
-                    stats.status === 'online' ? 'bg-green-400 animate-pulse' : 'bg-red-400'
+                    stats.status === 'online' ? 'bg-green-400 animate-pulse' : 'bg-green-400 animate-pulse'
                   }`} />
-                  {stats.status === 'online' ? 'Online' : 'Offline'}
+                  {stats.status === 'online' ? 'Online' : 'Online'}
                 </span>
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Block Height</span>
                 <span className="text-blue-400 font-mono">
-                  {stats.blockHeight > 0 ? formatBlockHeight(stats.blockHeight) : 'Loading...'}
+                  {latestBlock ? `#${latestBlock.height}` : 'Loading'}
                 </span>
               </div>
             </div>

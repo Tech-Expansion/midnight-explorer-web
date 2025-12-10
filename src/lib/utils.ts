@@ -61,3 +61,81 @@ export function formatDistanceToNow(date: Date): string {
   const diffYear = Math.floor(diffMonth / 12);
   return `${diffYear}y`;
 }
+  
+/**
+ * Formats a date to show either relative time for recent dates or full datetime for older dates
+ * Returns "a few seconds ago", "2 minutes ago" for recent times
+ * Returns "Nov 26, 2025 7:47:59 PM" format for older times
+ * 
+ * @param date The date to format
+ * @returns A formatted time string
+ */
+export function formatDateTimeWithRelative(date: Date): string {
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffSec = Math.floor(diffMs / 1000);
+  
+  // For very recent times (less than 1 hour), show relative time
+  if (diffSec < 3600) {
+    if (diffSec < 10) {
+      return 'a few seconds ago';
+    } else if (diffSec < 60) {
+      return `${diffSec} seconds ago`;
+    } else {
+      const minutes = Math.floor(diffSec / 60);
+      return minutes === 1 ? 'a minute ago' : `${minutes} minutes ago`;
+    }
+  }
+  
+  // For older times, show full date and time
+  return date.toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric', 
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: true
+  });
+}
+
+/**
+ * Formats a date to standard datetime format
+ * Returns "Oct 3, 2025, 2:40:00 AM" format
+ * 
+ * @param date The date to format
+ * @returns A formatted datetime string
+ */
+export function formatDateTime(date: Date): string {
+  return date.toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: true
+  });
+}
+
+/**
+ * Converts a Buffer object or hex string to a hex string with 0x prefix
+ * Handles PostgreSQL Buffer format: { type: 'Buffer', data: [numbers] }
+ * 
+ * @param buffer Buffer object, hex string, null, or undefined
+ * @returns Hex string with 0x prefix, or empty string if invalid
+ */
+export function bufferToHex(buffer: { type: 'Buffer'; data: number[] } | string | null | undefined): string {
+  // If already a string, ensure 0x prefix
+  if (typeof buffer === 'string') {
+    return buffer.startsWith('0x') ? buffer : `0x${buffer}`
+  }
+  
+  // If it's a Buffer object from PostgreSQL
+  if (buffer && typeof buffer === 'object' && buffer.type === 'Buffer' && Array.isArray(buffer.data)) {
+    return '0x' + buffer.data.map(byte => byte.toString(16).padStart(2, '0')).join('')
+  }
+  
+  // Invalid or null
+  return ''
+}

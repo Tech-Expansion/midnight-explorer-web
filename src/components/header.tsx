@@ -1,19 +1,12 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import Image from "next/image"
-import { Menu, Sparkles } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import {
-  NavigationMenu,
-  NavigationMenuContent,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-  NavigationMenuTrigger,
-} from "@/components/ui/navigation-menu"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { NetworkToggle } from "@/components/network-toggle"
+import Link from "next/link";
+import Image from "next/image";
+import { Menu, Sparkles } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { NetworkToggle } from "@/components/network-toggle";
+import { TokenPrice } from "@/components/token-price";
 
 export function Header() {
   return (
@@ -27,7 +20,7 @@ export function Header() {
                 alt="Midnightexplorer Logo"
                 width={180}
                 height={40}
-                className="h-6 w-auto brightness-200"
+                className="h-6 w-auto min-w-[180px] brightness-200"
               />
               {/* Twinkling stars around logo */}
               <Sparkles
@@ -46,131 +39,134 @@ export function Header() {
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center flex-1 justify-center">
-            <NavigationMenu>
-              <NavigationMenuList>
-                <NavigationMenuItem>
-                  <NavigationMenuTrigger>Blockchain</NavigationMenuTrigger>
-                  <NavigationMenuContent>
-                    <ul className="grid w-[400px] gap-3 p-4">
-                      <li>
-                        <NavigationMenuLink asChild>
-                          <Link
-                            href="/blocks"
-                            className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-                          >
-                            <div className="text-sm font-medium leading-none">Blocks</div>
-                            <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                              View all blocks on the Midnight network
-                            </p>
-                          </Link>
-                        </NavigationMenuLink>
-                      </li>
-                      <li>
-                        <NavigationMenuLink asChild>
-                          <Link
-                            href="/transactions"
-                            className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-                          >
-                            <div className="text-sm font-medium leading-none">Transactions</div>
-                            <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                              Explore all transactions and their details
-                            </p>
-                          </Link>
-                        </NavigationMenuLink>
-                      </li>
-                      <li>
-                        <NavigationMenuLink asChild>
-                          <Link
-                            href="/"
-                            className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-                          >
-                            <div className="text-sm font-medium leading-none">Addresses</div>
-                            <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                              Look up address balances and history
-                            </p>
-                          </Link>
-                        </NavigationMenuLink>
-                      </li>
-                    </ul>
-                  </NavigationMenuContent>
-                </NavigationMenuItem>
+          <nav className="hidden lg:flex items-center flex-1 justify-center gap-6 mx-2">
+            <Link
+              href="/"
+              className="text-sm font-medium transition-colors hover:text-primary"
+            >
+              Home
+            </Link>
+            <Link
+              href="/blocks"
+              className="text-sm font-medium transition-colors hover:text-primary"
+            >
+              Blocks
+            </Link>
+            <Link
+              href="/transactions"
+              className="text-sm font-medium transition-colors hover:text-primary"
+            >
+              Transactions
+            </Link>
+            <Link
+              href="/contracts"
+              className="text-sm font-medium transition-colors hover:text-primary"
+            >
+              Contracts
+            </Link>
+            <Link
+              href="/pool"
+              className="text-sm font-medium transition-colors hover:text-primary"
+            >
+              Pool
+            </Link>
+            <Link
+              href="https://docs.google.com/forms/d/e/1FAIpQLSfBguf59QpRRgVVFZCWt8S2D6W9aGlB8QEpxIfVJrrwH3fjUw/viewform?usp=publish-editor"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm font-medium transition-colors hover:text-primary"
+            >
+              Feedback
+            </Link>
 
-                <NavigationMenuItem>
-                  <NavigationMenuTrigger>Analytics</NavigationMenuTrigger>
-                  <NavigationMenuContent>
-                    <ul className="grid w-[400px] gap-3 p-4">
-                      <li>
-                        <NavigationMenuLink asChild>
-                          <Link
-                            href="/"
-                            className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50"
-                          >
-                            <div className="text-sm font-medium leading-none">Network Charts</div>
-                            <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                              Visualize network metrics and trends
-                            </p>
-                          </Link>
-                        </NavigationMenuLink>
-                      </li>
-                      <li>
-                        <NavigationMenuLink asChild>
-                          <Link
-                            href="/"
-                            className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50"
-                          >
-                            <div className="text-sm font-medium leading-none">Statistics</div>
-                            <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                              Detailed network statistics and metrics
-                            </p>
-                          </Link>
-                        </NavigationMenuLink>
-                      </li>
-                    </ul>
-                  </NavigationMenuContent>
-                </NavigationMenuItem>
-
-                <NavigationMenuItem>
-                  <Link href="/" className="group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50">
-                    API
-                  </Link>
-                </NavigationMenuItem>
-              </NavigationMenuList>
-            </NavigationMenu>
+            <Link
+              href="https://reviews.projectcatalyst.io/proposal/2042"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm font-medium transition-colors hover:text-primary"
+            >
+              Project Catalyst
+            </Link>
           </nav>
 
-          <div className="hidden md:block">
+          <div className="hidden lg:flex items-center gap-3">
+            <TokenPrice />
             <NetworkToggle />
           </div>
 
           {/* Mobile Menu */}
-          <div className="flex md:hidden items-center gap-2">
-            <NetworkToggle />
+          <div className="flex lg:hidden items-center gap-2">
+            <div className="hidden sm:block">
+              <TokenPrice />
+            </div>
+            <div className="hidden sm:block">
+              <NetworkToggle />
+            </div>
             <Sheet>
-              <SheetTrigger asChild className="md:hidden">
+              <SheetTrigger asChild className="lg:hidden">
                 <Button variant="ghost" size="icon">
                   <Menu className="h-5 w-5" />
                 </Button>
               </SheetTrigger>
               <SheetContent side="right" className="w-[300px]">
-                <nav className="flex flex-col gap-4 mt-8">
-                  <Link href="/blocks" className="text-lg font-medium hover:text-primary transition-colors">
+                <div className="mt-6 mb-4 px-4 space-y-4">
+                  <div className="sm:hidden">
+                    <TokenPrice />
+                  </div>
+                  <div className="sm:hidden">
+                    <NetworkToggle />
+                  </div>
+                </div>
+
+                <nav className="flex flex-col gap-1">
+                  <Link
+                    href="/"
+                    className="px-4 py-3 text-base font-medium hover:text-primary hover:bg-accent rounded-lg transition-all"
+                  >
+                    Home
+                  </Link>
+                  <Link
+                    href="/blocks"
+                    className="px-4 py-3 text-base font-medium hover:text-primary hover:bg-accent rounded-lg transition-all"
+                  >
                     Blocks
                   </Link>
-                  <Link href="/transactions" className="text-lg font-medium hover:text-primary transition-colors">
+                  <Link
+                    href="/transactions"
+                    className="px-4 py-3 text-base font-medium hover:text-primary hover:bg-accent rounded-lg transition-all"
+                  >
                     Transactions
                   </Link>
-                  <Link href="/" className="text-lg font-medium hover:text-primary transition-colors">
-                    Addresses
+                  <Link
+                    href="/contracts"
+                    className="px-4 py-3 text-base font-medium hover:text-primary hover:bg-accent rounded-lg transition-all"
+                  >
+                    Contracts
                   </Link>
-                  <Link href="/" className="text-lg font-medium hover:text-primary transition-colors">
-                    Charts
+                  <Link
+                    href="/pool"
+                    className="px-4 py-3 text-base font-medium hover:text-primary hover:bg-accent rounded-lg transition-all"
+                  >
+                    Pool
                   </Link>
-                  <Link href="/" className="text-lg font-medium hover:text-primary transition-colors">
-                    Statistics
+
+                  <div className="my-2 border-t border-border" />
+
+                  <Link
+                    href="https://docs.google.com/forms/d/e/1FAIpQLSfBguf59QpRRgVVFZCWt8S2D6W9aGlB8QEpxIfVJrrwH3fjUw/viewform?usp=publish-editor"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-4 py-3 text-base font-medium hover:text-primary hover:bg-accent rounded-lg transition-all"
+                  >
+                    Feedback
                   </Link>
-                  <Link href="/" className="text-lg font-medium hover:text-primary transition-colors">
-                    API
+                  <Link
+                    href="https://reviews.projectcatalyst.io/proposal/2042"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-4 py-3 text-base font-medium hover:text-primary hover:bg-accent rounded-lg transition-all"
+                  >
+                    Project Catalyst
                   </Link>
                 </nav>
               </SheetContent>
@@ -179,5 +175,5 @@ export function Header() {
         </div>
       </div>
     </header>
-  )
+  );
 }

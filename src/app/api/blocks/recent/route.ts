@@ -1,30 +1,6 @@
-import { getProvider } from '@/lib/data'
-import { NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
+import { proxyToExternalAPI } from '@/lib/proxy'
 
-// Disable caching
-export const dynamic = 'force-dynamic'
-export const revalidate = 0
-
-export async function GET() {
-  try {
-    const provider = getProvider()
-    const blocks = await provider.getLatestBlocks(20)
-    
-    return NextResponse.json(
-      { blocks },
-      {
-        headers: {
-          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0',
-        },
-      }
-    )
-  } catch (error) {
-    console.error('Error fetching blocks:', error)
-    return NextResponse.json(
-      { error: 'Failed to fetch blocks', blocks: [] },
-      { status: 500 }
-    )
-  }
+export async function GET(request: NextRequest) {
+  return proxyToExternalAPI(request, '/blocks/recent')
 }
