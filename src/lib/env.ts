@@ -4,6 +4,22 @@
  */
 
 /**
+ * Application environment types
+ */
+export enum Environment {
+  DEVELOPMENT = 'development',
+  TESTING = 'testing',
+  PRODUCTION = 'production',
+}
+
+/**
+ * Current application environment
+ * Set via NEXT_PUBLIC_ENVIRONMENT environment variable
+ * Defaults to development if not specified
+ */
+export const APP_ENVIRONMENT = (process.env.NEXT_PUBLIC_ENVIRONMENT as Environment) || Environment.DEVELOPMENT;
+
+/**
  * URL for the Midnight testnet indexer API
  * Set via NEXT_PUBLIC_INDEXER_URL environment variable
  */
