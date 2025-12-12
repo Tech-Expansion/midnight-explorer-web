@@ -67,10 +67,6 @@ export function useNetworkStats() {
 
     fetchData()
 
-    // Fetch mỗi 10 giây
-    const interval = setInterval(fetchData, 10000)
-
-    return () => clearInterval(interval)
   }, [])
 
   return data

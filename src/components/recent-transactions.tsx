@@ -85,10 +85,6 @@ export function RecentTransactions() {
 
     fetchTransactions()
 
-    // Poll every 10 seconds for new transactions
-    const interval = setInterval(fetchTransactions, 10000)
-
-    return () => clearInterval(interval)
   }, [])
 
   useLayoutEffect(() => {

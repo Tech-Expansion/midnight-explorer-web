@@ -7,36 +7,19 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useRouter } from "next/navigation"
-
-interface PoolResult {
-    id: number
-    poolId: number
-    tickerName: string
-    hash?: string | { type: 'Buffer'; data: number[] }
-    json: {
-        name: string
-        ticker: string
-        description?: string
-    }
-}
-
-interface BlockResult {
-    hash: string
-    height: number
-    timestamp?: number
-    txCount?: number
-}
-
-interface TransactionResult {
-    hash: string
-    blockHeight?: number
-    status?: string
-}
-
-interface ContractResult {
-    address: string
-    variant?: string
-}
+import {
+  checkBlock,
+  checkTransaction,
+  checkContract,
+  searchPool,
+  isContractAddress,
+  isHexHash,
+  isBlockHeight,
+  type PoolResult,
+  type BlockResult,
+  type TransactionResult,
+  type ContractResult,
+} from "@/lib/search-utils"
 
 type SearchResult = | {
     type: 'block';
@@ -184,7 +167,7 @@ export function SearchBar() {
             // If "all" is selected, smart detection
             if (searchType === "all") {
                 // Check if it's a number (block height)
-                if (/^\d+$/.test(cleanQuery)) {
+                if (isBlockHeight(cleanQuery)) {
                     const blockResult = await checkBlock(cleanQuery)
                     if (blockResult.found && blockResult.data) {
                         results.push({ type: 'block', block: blockResult.data })
@@ -200,13 +183,7 @@ export function SearchBar() {
                 }
 
                 // Check if it's a contract address (70 chars without 0x, or 72 chars with 0x)
-                const cleanHashForCheck = cleanQuery.startsWith("0x")
-                    ? cleanQuery.slice(2)
-                    : cleanQuery
-
-                const isContractAddress = /^[a-fA-F0-9]{70}$/.test(cleanHashForCheck)
-
-                if (isContractAddress) {
+                if (isContractAddress(cleanQuery)) {
                     const contractResult = await checkContract(cleanQuery)
                     if (contractResult.found && contractResult.data) {
                         results.push({ type: 'contract', contract: contractResult.data })
@@ -222,9 +199,7 @@ export function SearchBar() {
                 }
 
                 // Check if it looks like a block/tx hash (64 chars)
-                const isHexHash = /^[a-fA-F0-9]{64}$/.test(cleanHashForCheck)
-
-                if (isHexHash) {
+                if (isHexHash(cleanQuery)) {
                     // Check all types in parallel
                     const [txResult,
                         poolResult,
@@ -286,209 +261,6 @@ export function SearchBar() {
             console.error('Search error:', error)
             alert('Search failed. Please try again.')
             setIsSearching(false)
-        }
-    }
-
-    const searchPool = async (query: string): Promise<{
-        found: boolean;
-        value?: string;
-        count?: number;
-        results?: PoolResult[]
-    }> => {
-        const timeoutMs = 15000
-
-        try {
-            const endpoint = '/api/pools/search'
-
-            const controller = new AbortController()
-            const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
-
-            const response = await fetch(`${endpoint}?q=${encodeURIComponent(query)}`, {
-                signal: controller.signal,
-                cache: 'no-store'
-            })
-
-            clearTimeout(timeoutId)
-
-            if (!response.ok) {
-                return { found: false }
-            }
-
-            const data = await response.json()
-
-            if (data.data && data.data.length > 0) {
-                return { found: true, value: data.data[0].id, count: data.data.length, results: data.data }
-            }
-
-            return { found: false }
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        } catch (_error) {
-            return { found: false }
-        }
-    }
-
-    const checkBlock = async (query: string): Promise<{
-        found: boolean;
-        height?: string;
-        data?: BlockResult
-    }> => {
-        const timeoutMs = 15000
-        const cleanQuery = query.startsWith("0x")
-            ? query.slice(2)
-            : query
-
-        try {
-            const controller = new AbortController()
-            const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
-
-            const response = await fetch(`/api/blocks/${encodeURIComponent(cleanQuery)}`, {
-                signal: controller.signal,
-                cache: 'no-store'
-            })
-
-            clearTimeout(timeoutId)
-
-            if (!response.ok) {
-                return { found: false }
-            }
-
-            const data = await response.json()
-
-            const height = data.block
-                ?.height ?? data.height
-            const hash = data.block
-                ?.hash ?? data.hash
-
-            // If searching by hash (not height), verify the returned hash matches
-            const isSearchingByHeight = /^\d+$/.test(query)
-            if (!isSearchingByHeight && hash) {
-                // Normalize both hashes for comparison (remove 0x prefix, lowercase)
-                const normalizedSearchHash = cleanQuery.toLowerCase()
-                const normalizedReturnedHash = (hash.startsWith("0x")
-                    ? hash.slice(2)
-                    : hash).toLowerCase()
-
-                if (normalizedSearchHash !== normalizedReturnedHash) {
-                    return { found: false }
-                }
-            }
-
-            if (height !== undefined) {
-                return {
-                    found: true,
-                    height: String(height),
-                    data: {
-                        hash: hash || query,
-                        height: Number(height),
-                        timestamp: data.block
-                            ?.timestamp ?? data.timestamp,
-                        txCount: data.block
-                            ?.txCount ?? data.txCount
-                    }
-                }
-            }
-
-            return { found: false }
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        } catch (_error) {
-            return { found: false }
-        }
-    }
-
-    const checkTransaction = async (query: string): Promise<{
-        found: boolean;
-        data?: TransactionResult;
-        count?: number;
-        results?: TransactionResult[]
-    }> => {
-        const timeoutMs = 15000
-
-        try {
-            const controller = new AbortController()
-            const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
-
-            // Use /api/transactions/search for partial or full hash search
-            const response = await fetch(`/api/transactions/search?hash=${encodeURIComponent(query)}&page=1&pageSize=20`, {
-                signal: controller.signal,
-                cache: 'no-store'
-            })
-
-            clearTimeout(timeoutId)
-
-            if (!response.ok) {
-                return { found: false }
-            }
-
-            const responseData = await response.json()
-
-            // Backend /transactions/search returns: { data: [...], pagination: {
-            // totalCount, ... } } Each item in data has: { hash, status, blockHeight,
-            // protocolVersion, timestamp, size }
-            if (responseData.data && Array.isArray(responseData.data) && responseData.data.length > 0) {
-                const transactions = responseData
-                    .data
-                    .map((tx: { hash: string; blockHeight?: number; status?: string }) => {
-                        // Backend returns hash with 0x prefix
-                        const txHash = tx.hash || query
-                        return {
-                            hash: txHash,
-                            blockHeight: tx.blockHeight,
-                            status: tx.status ?? 'success'
-                        }
-                    })
-
-                const totalCount = responseData.pagination
-                    ?.totalCount || transactions.length
-
-                return { found: true, data: transactions[0], count: totalCount, results: transactions }
-            }
-
-            return { found: false }
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        } catch (_error) {
-            return { found: false }
-        }
-    }
-
-    const checkContract = async (query: string): Promise<{
-        found: boolean;
-        data?: ContractResult
-    }> => {
-        const timeoutMs = 15000
-
-        try {
-            const controller = new AbortController()
-            const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
-
-            const response = await fetch(`/api/contracts/${encodeURIComponent(query)}`, {
-                signal: controller.signal,
-                cache: 'no-store'
-            })
-
-            clearTimeout(timeoutId)
-
-            if (!response.ok) {
-                return { found: false }
-            }
-
-            const data = await response.json()
-
-            if (data.contract || data.address) {
-                return {
-                    found: true,
-                    data: {
-                        address: data.contract
-                            ?.address ?? data.address ?? query,
-                        variant: data.contract
-                            ?.variant ?? data.variant
-                    }
-                }
-            }
-
-            return { found: false }
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        } catch (_error) {
-            return { found: false }
         }
     }
 

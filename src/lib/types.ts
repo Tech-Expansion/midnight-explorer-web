@@ -62,13 +62,13 @@ export interface Contract {
   /** Transaction hash (if fetched) */
   transactionHash?: string;
   /** Contract variant (Deploy or Call) */
-  variant: 'Deploy' | 'Call';
+  variant: 'Deploy' | 'Call' | string;
   /** Contract state */
   state?: string;
   /** ZSwap state */
   zswapState?: string;
   /** Additional attributes */
-  attributes?: Record<string, unknown>;
+  attributes?: Record<string, unknown> | string;
 }
 
 /**
