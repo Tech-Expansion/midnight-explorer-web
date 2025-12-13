@@ -34,13 +34,7 @@ export function Footer() {
       }
     }
 
-    // Fetch immediately
     fetchStats()
-
-    // Then fetch every 10 seconds
-    const interval = setInterval(fetchStats, 10000)
-
-    return () => clearInterval(interval)
   }, [])
 
   return (

@@ -45,8 +45,6 @@ export function NetworkCharts() {
     }
 
     fetchTransactionData()
-    const interval = setInterval(fetchTransactionData, 15000)
-    return () => clearInterval(interval)
   }, [])
 
   return (

@@ -1,4 +1,3 @@
-
 import { Header } from "@/components/header"
 import { Starfield } from "@/components/starfield"
 import { Footer } from "@/components/footer"

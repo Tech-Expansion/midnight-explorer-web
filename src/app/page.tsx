@@ -36,7 +36,6 @@ function HomePageContent() {
       const data = await blockAPI.getRecentBlocks<{ blocks: Block[] }>()
       return data.blocks || []
     },
-    refetchInterval: 30000,
   })
 
   const blocks = blocksData || []
