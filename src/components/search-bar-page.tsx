@@ -8,6 +8,14 @@ import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useRouter } from "next/navigation"
 import { Card } from "@/components/ui/card"
+import {
+  checkBlock,
+  checkTransaction,
+  searchPool,
+  isContractAddress,
+  isHexHash,
+  isBlockHeight,
+} from "@/lib/search-utils"
 
 interface SearchBarProps {
   searchType?: "all" | "transaction" | "block" | "address" | "contract" | "pool"
@@ -79,7 +87,7 @@ export function SearchBarPage({ searchType = "all" }: SearchBarProps) {
       // If "all" is selected, smart detection
       if (selectedType === "all") {
         // Check if it's a number (block height)
-        if (/^\d+$/.test(cleanQuery)) {
+        if (isBlockHeight(cleanQuery)) {
           const result = await checkBlock(cleanQuery)
           if (result.found) {
             router.push(`/block/${result.height || cleanQuery}`)
@@ -92,22 +100,14 @@ export function SearchBarPage({ searchType = "all" }: SearchBarProps) {
         }
 
         // Check if it's a contract address (70 chars without 0x, or 72 chars with 0x)
-        const cleanHashForCheck = cleanQuery.startsWith("0x") 
-          ? cleanQuery.slice(2) 
-          : cleanQuery
-        
-        const isContractAddress = /^[a-fA-F0-9]{70}$/.test(cleanHashForCheck)
-        
-        if (isContractAddress) {
+        if (isContractAddress(cleanQuery)) {
           router.push(`/contracts/${cleanQuery}`)
           setIsSearching(false)
           return
         }
 
         // Check if it looks like a block/tx hash (64 chars)
-        const isHexHash = /^[a-fA-F0-9]{64}$/.test(cleanHashForCheck)
-
-        if (isHexHash) {
+        if (isHexHash(cleanQuery)) {
           // Check BLOCK first
           const blockResult = await checkBlock(cleanQuery)
           if (blockResult.found && blockResult.height) {
@@ -160,132 +160,6 @@ export function SearchBarPage({ searchType = "all" }: SearchBarProps) {
     }
   }
 
-  const checkBlock = async (query: string): Promise<{ found: boolean; height?: string }> => {
-    const timeoutMs = 15000
-    const cleanQuery = query.startsWith("0x") ? query.slice(2) : query
-    
-    try {
-      const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
-
-      const response = await fetch(`/api/blocks/${encodeURIComponent(cleanQuery)}`, {
-        signal: controller.signal,
-        cache: 'no-store'
-      })
-      
-      clearTimeout(timeoutId)
-      
-      if (!response.ok) {
-        return { found: false }
-      }
-
-      const data = await response.json()
-      const height = data.block?.height ?? data.height
-      const hash = data.block?.hash ?? data.hash
-      const isSearchingByHeight = /^\d+$/.test(query)
-      
-      if (!isSearchingByHeight && hash) {
-        const normalizedSearchHash = cleanQuery.toLowerCase()
-        const normalizedReturnedHash = (hash.startsWith("0x") ? hash.slice(2) : hash).toLowerCase()
-        
-        if (normalizedSearchHash !== normalizedReturnedHash) {
-          return { found: false }
-        }
-      }
-      
-      if (height !== undefined) {
-        return { found: true, height: String(height) }
-      }
-      
-      return { found: false }
-    } catch (error) {
-      if (error instanceof Error && error.name === 'AbortError') {
-        console.log('⏱️ Block check timeout')
-      }
-      return { found: false }
-    }
-  }
-
-  const checkTransaction = async (query: string): Promise<{ found: boolean }> => {
-    const timeoutMs = 15000
-    
-    try {
-      const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
-
-      const response = await fetch(`/api/transactions/${encodeURIComponent(query)}`, {
-        signal: controller.signal,
-        cache: 'no-store'
-      })
-      
-      clearTimeout(timeoutId)
-      
-      if (!response.ok) {
-        return { found: false }
-      }
-
-      const data = await response.json()
-      
-      // Check if transaction data exists
-      if (data.transaction || data.hash) {
-        return { found: true }
-      }
-      
-      return { found: false }
-    } catch (error) {
-      if (error instanceof Error && error.name === 'AbortError') {
-       // console.log('⏱️ Transaction check timeout')
-      }
-      return { found: false }
-    }
-  }
-
-  const searchPool = async (query: string): Promise<{ found: boolean; value?: string; count?: number }> => {
-    const timeoutMs = 15000
-    
-    try {
-      const endpoint = '/api/pools/search'
-      
-      
-      
-      const controller = new AbortController()
-      const timeoutId = setTimeout(() => {
-        controller.abort()
-      }, timeoutMs)
-
-      const response = await fetch(
-        `${endpoint}?q=${encodeURIComponent(query)}`,
-        { 
-          signal: controller.signal,
-          cache: 'no-store'
-        }
-      )
-      
-      clearTimeout(timeoutId)
-      
-      if (!response.ok) {
-    //    console.log('❌ Pool search API returned error:', response.status)
-        return { found: false }
-      }
-
-      const data = await response.json()
-    
-      
-      if (data.data && data.data.length > 0) {
-        return { found: true, value: data.data[0].id, count: data.data.length }
-      }
-      
-      return { found: false }
-    } catch (error) {
-      if (error instanceof Error && error.name === 'AbortError') {
- //       console.log('⏱️ Pool search timeout')
-      } else {
-        console.error('❌ Pool search error:', error)
-      }
-      return { found: false }
-    }
-  }
-
   const verifyAndNavigate = async (query: string, type: 'tx' | 'block') => {
     if (type === 'block') {
       const result = await checkBlock(query)
@@ -309,8 +183,7 @@ export function SearchBarPage({ searchType = "all" }: SearchBarProps) {
 
   const searchAndNavigateToPool = async (query: string) => {
     // Check if query looks like a pool hash (64 hex chars)
-    const cleanQuery = query.startsWith("0x") ? query.slice(2) : query
-    const isPoolHash = /^[a-fA-F0-9]{64}$/.test(cleanQuery)
+    const isPoolHash = isHexHash(query)
     
     const result = await searchPool(query)
     
@@ -362,8 +235,9 @@ export function SearchBarPage({ searchType = "all" }: SearchBarProps) {
             <Button 
               type="submit" 
               disabled={isSearching}
-              className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-            >
+              className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-purple-600 
+             hover:from-blue-700 hover:to-purple-700 cursor-pointer 
+             disabled:opacity-50 disabled:cursor-not-allowed text-white" >
               {isSearching ? 'Searching...' : 'Search'}
             </Button>
           </div>
