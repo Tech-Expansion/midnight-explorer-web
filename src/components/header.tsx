@@ -80,7 +80,7 @@ export function Header() {
             </Link>
 
             <Link
-              href="https://reviews.projectcatalyst.io/proposal/2042"
+              href="https://projectcatalyst.io/funds/15/cardano-use-cases-prototype-and-launch/midnight-explorer-a-privacy-preserving-blockchain-explorer"
               target="_blank"
               rel="noopener noreferrer"
               className="text-sm font-medium transition-colors hover:text-primary"
