@@ -1,37 +1,87 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app). 
+# Midnight Explorer Web
 
-## Getting Started
+Next.js blockchain explorer application.
 
-First, run the development server:
+## Development
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# Open http://localhost:3000
 ```
-...
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Docker Deployment
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+docker compose up -d
+```
 
-## Learn More
-...
-To learn more about Next.js, take a look at the following resources:
+## HTTPS Setup
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 1. DNS Configuration
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Point your domain to server IP:
+```
+A    @      YOUR_SERVER_IP
+A    www    YOUR_SERVER_IP
+```
 
-## Deploy on Vercel
+### 2. Get SSL Certificate
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js. 
+```bash
+# Stop Nginx
+docker stop midnight-explorer-web-nginx
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details. 
-.
+# Get certificate
+docker run --rm -p 80:80 \
+  -v $(pwd)/nginx/certs:/etc/letsencrypt \
+  certbot/certbot certonly --standalone \
+  -d yourdomain.com \
+  --email your@email.com \
+  --agree-tos --no-eff-email --non-interactive
+
+# Start Nginx
+docker compose -f docker-compose.nginx.yml up -d nginx
+```
+
+### 3. Auto-Renewal
+
+```bash
+chmod +x renew-certs.sh
+(crontab -l 2>/dev/null; echo "0 3 * * * /root/midnight-explorer-web/renew-certs.sh") | crontab -
+```
+
+Auto-renews daily at 3 AM for all configured domains.
+
+## Blue-Green Deployment
+
+### Deploy to Green environment
+
+```bash
+# 1. Update inactive container
+docker compose up -d midnight-explorer-web-test
+
+# 2. Switch traffic in nginx config
+sed -i 's/midnight-explorer-web-dev/midnight-explorer-web-test/g' nginx/conf.d/default.conf
+
+# 3. Reload (zero downtime)
+docker exec midnight-explorer-web-nginx nginx -s reload
+```
+
+### Rollback
+
+```bash
+sed -i 's/midnight-explorer-web-test/midnight-explorer-web-dev/g' nginx/conf.d/default.conf
+docker exec midnight-explorer-web-nginx nginx -s reload
+```
+
+## Network Setup
+
+Ensure containers are on same network:
+
+```bash
+docker network create midnight-net
+docker network connect midnight-net midnight-explorer-web-nginx
+docker network connect midnight-net midnight-explorer-web-dev
+docker network connect midnight-net midnight-explorer-web-test
+```
