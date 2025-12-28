@@ -175,17 +175,29 @@ export const contractAPI = {
  */
 export const networkAPI = {
   /**
-   * Get network statistics
+   * Get network chart data for a specific time range
+   * @param range - '1D' (1 day), '7D' (7 days), or '1M' (1 month) - defaults to '1D'
    */
-  getStats: <T = unknown>() =>
-    apiFetch<T>('/network/stats')
+  getChart: <T = unknown>(range: '1D' | '7D' | '1M' = '1D') =>
+    apiFetch<T>(`/network/chart?range=${range}`)
+}
+
+/**
+ * Token API methods
+ */
+export const tokenAPI = {
+  /**
+   * Get NIGHT token information from CoinMarketCap
+   */
+  getNightToken: <T = unknown>() =>
+    apiFetch<T>('/token-night')
 }
 /**
  * Pool API methods
  */
 export const poolAPI = {
   /**
-   * Get all pools with pagination and optional search
+   * Get all pools with pagination
    */
   getPools: <T = unknown>(page?: string, pageSize?: string, query?: string) => {
     const params = new URLSearchParams()
@@ -195,6 +207,19 @@ export const poolAPI = {
     const queryString = params.toString()
     return apiFetch<T>(`/pool${queryString ? `?${queryString}` : ''}`)
   },
+
+  /**
+   * Search pools by query (name, ticker, or auraPublicKey)
+   * Returns array of pools matching the query
+   */
+  searchPools: <T = unknown>(query: string) =>
+    apiFetch<T>(`/pool/search?q=${encodeURIComponent(query)}`),
+
+  /**
+   * Get pool detail by aura public key
+   */
+  getPoolDetail: <T = unknown>(auraPublicKey: string) =>
+    apiFetch<T>(`/pool/detail/${auraPublicKey}`),
 
   /**
    * Get a specific pool by ID

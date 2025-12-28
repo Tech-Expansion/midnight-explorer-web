@@ -7,13 +7,8 @@ import { CopyButton } from "@/components/ui/copy-button"
 import { Blocks, ArrowRight } from "lucide-react"
 import Link from "next/link"
 import { formatDateTimeWithRelative } from '@/lib/utils'
+import { Block } from '@/lib/types'
 
-interface Block {
-  height: number
-  hash: string
-  timestamp: string
-  txCount: number
-}
 
 interface RecentBlocksProps {
   blocks: Block[]
@@ -39,22 +34,30 @@ export function RecentBlocks({ blocks }: RecentBlocksProps) {
       >
         <Link href={`/block/${block.height}`} className="block h-full">
           <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <Badge variant="outline" className="font-mono">
-                #{block.height}
-              </Badge>
-              <span className="text-sm text-muted-foreground">
-                {formatDateTimeWithRelative(new Date(block.timestamp))}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Badge variant="outline" className="font-mono">
+                  #{block.height}
+                </Badge>
+                <span className="text-sm text-muted-foreground">
+                  {formatDateTimeWithRelative(new Date(block.timestamp))}
+                </span>
+              </div>
+              <span className="text-sm text-muted-foreground max-w-[160px] truncate mr-40">
+                Author
               </span>
             </div>
 
-            <div className="flex items-center gap-2 group/hash">
-              <p className="text-sm font-mono text-muted-foreground truncate flex-1 select-all">
-                {block.hash}
+            <div className="flex items-center justify-between group/hash">
+              <p className="text-sm font-mono text-muted-foreground flex-1 select-all">
+                {`${block.hash.slice(0, 15)}...${block.hash.slice(-15)}`}
               </p>
+              <span className="text-sm text-muted-foreground mr-10 max-w-[240px] truncate text-right flex-none">
+                {`${block.author.slice(0,15)}...${block.author.slice(-15)}`}
+              </span>
               <div 
                 onClick={(e) => e.preventDefault()}
-                className="opacity-50 group-hover/hash:opacity-100 transition-opacity"
+                className="opacity-50 group-hover/hash:opacity-100 transition-opacity ml-2"
               >
                 <CopyButton text={block.hash} className="h-6 w-6" />
               </div>

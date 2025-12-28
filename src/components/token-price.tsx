@@ -5,8 +5,16 @@ import { TrendingUp, TrendingDown } from "lucide-react"
 import Image from "next/image"
 
 interface TokenPriceData {
-  price: number
-  percentChange: string
+  data: {
+    NIGHT: {
+      quote: {
+        USD: {
+          price: number
+          percent_change_24h: number
+        }
+      }
+    }
+  }
 }
 
 // Singleton to manage price fetching across all instances
@@ -81,7 +89,7 @@ export function TokenPrice() {
     }
   }, [])
 
-  if (loading || !data) {
+  if (loading || !data || !data.data?.NIGHT) {
     return (
       <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-card/50 border border-border animate-pulse">
         <div className="w-6 h-6 bg-muted rounded-full" />
@@ -90,8 +98,10 @@ export function TokenPrice() {
     )
   }
 
-  const percentValue = parseFloat(data.percentChange.replace('%', ''))
-  const isPositive = percentValue >= 0
+  const tokenData = data.data.NIGHT
+  const price = tokenData.quote.USD.price
+  const percentChange = tokenData.quote.USD.percent_change_24h
+  const isPositive = percentChange >= 0
 
   return (
     <div className="flex items-center gap-2">
@@ -108,7 +118,7 @@ export function TokenPrice() {
         <div className="flex items-center gap-1.5">
           <span className="text-sm font-semibold font-mono">NIGHT:</span>
           <span className="text-sm font-semibold font-mono">
-            ${data.price.toFixed(4)}
+            ${price.toFixed(4)}
           </span>
         </div>
         <div className={`flex items-center gap-1 text-[10px] font-medium ${
@@ -119,7 +129,7 @@ export function TokenPrice() {
           ) : (
             <TrendingDown className="h-2.5 w-2.5" />
           )}
-          <span>{isPositive ? '+' : ''}{percentValue.toFixed(2)}% (24h)</span>
+          <span>{isPositive ? '+' : ''}{percentChange.toFixed(2)}% (24h)</span>
         </div>
       </div>
     </div>
