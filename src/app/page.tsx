@@ -8,15 +8,10 @@ import { NetworkStats } from "@/components/network-stats"
 import { RecentBlocks } from "@/components/recent-blocks"
 import { RecentTransactions } from "@/components/recent-transactions"
 import { NetworkCharts } from "@/components/network-charts"
+import { MidnightTokenInfo } from "@/components/midnight-token-info"
 import { Starfield } from "@/components/starfield"
 import { blockAPI } from "@/lib/api"
-
-interface Block {
-  height: number
-  hash: string
-  timestamp: string
-  txCount: number
-}
+import { Block } from "@/lib/types"
 
 // Tạo QueryClient global
 const queryClient = new QueryClient({
@@ -55,7 +50,7 @@ function HomePageContent() {
             <div className="space-y-3">
               <h1 className="text-4xl md:text-5xl font-bold text-balance">Midnight Blockchain Explorer</h1>
               <p className="text-lg text-muted-foreground text-balance max-w-2xl mx-auto">
-                Trace and explore all transactions, blocks, and addresses on the Midnight network
+                Trace and explore all transactions, blocks, contracts, pools on the Midnight network
               </p>
             </div>
             <SearchBar />
@@ -63,8 +58,12 @@ function HomePageContent() {
 
           {/* Network Statistics */}
           <NetworkStats /> 
-          {/* Charts Section */}
-          <NetworkCharts /> 
+          
+          {/* Charts & Token Info Grid */}
+          <div className="grid lg:grid-cols-[3fr_1fr] gap-6">
+            <NetworkCharts />
+            <MidnightTokenInfo />
+          </div> 
 
           {/* Recent Activity Grid */}
           <div className="grid lg:grid-cols-2 gap-6">

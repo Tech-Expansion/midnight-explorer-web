@@ -13,7 +13,10 @@ import { useNetworkStats } from "@/hooks/useNetworkStats"
 interface Block {
   hash: string
   height: number
+  parent_hash: string
+  author: string
   timestamp: number | string
+  protocol_version: number
   txCount: number
 }
 
@@ -95,6 +98,19 @@ export function BlocksList({ initialCursor, page = 1 }: BlocksListProps) {
                       <div className="flex items-center gap-1 text-xs text-muted-foreground font-mono">
                         {block.hash}
                       </div>
+                      {block.parent_hash && block.author && (
+                        <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
+                          <span className="font-mono text-xs truncate max-w-[220px]">
+                            Parent: {block.parent_hash.slice(0, 12)}...{block.parent_hash.slice(-8)}
+                          </span>
+                          <span className="truncate max-w-[160px]">
+                            Author: {block.author.length > 24 ? `${block.author.slice(0, 12)}...${block.author.slice(-8)}` : block.author}
+                          </span>
+                          {block.protocol_version && (
+                            <span className="text-muted-foreground">Protocol: v{block.protocol_version}</span>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </td>
                   <td className="p-4">

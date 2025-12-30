@@ -9,14 +9,11 @@
  * Represents a block in the Midnight blockchain
  */
 export interface Block {
-  /** Block height (number of blocks from genesis) */
-  height: number;
-  /** Block hash identifier */
-  hash: string;
-  /** ISO timestamp when the block was created */
-  timestamp: string;
-  /** Number of transactions included in this block */
-  txCount: number;
+  height: number
+  hash: string
+  author: string
+  timestamp: string
+  txCount: number
 }
 
 /**
@@ -91,4 +88,39 @@ export interface Page<T> {
   items: T[];
   /** Optional cursor for fetching the next page of results */
   nextCursor?: string;
+}
+
+/**
+ * Pool offchain data (name, ticker, homepage, description)
+ */
+export interface PoolOffchainData {
+  name: string;
+  ticker: string;
+  homepage?: string;
+  description?: string;
+}
+
+/**
+ * Represents a stake pool on the Midnight blockchain
+ */
+export interface Pool {
+  /** Aura public key identifier for the pool */
+  auraPublicKey: string;
+  /** Number of blocks minted by this pool */
+  blocksMinted: number;
+  /** Mainchain public key (optional) */
+  mainchainPublicKey?: string;
+  /** Offchain pool metadata (optional) */
+  poolOffchainData?: PoolOffchainData;
+}
+
+/**
+ * Pool list API response
+ */
+export interface PoolsResponse {
+  pools: Pool[];
+  total: number;
+  page: number;
+  pageSize: number;
+  hasMore: boolean;
 }

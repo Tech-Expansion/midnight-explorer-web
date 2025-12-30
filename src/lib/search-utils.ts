@@ -1,12 +1,12 @@
 // Shared types for search functionality
 export interface PoolResult {
-  id: number
-  poolId: number
-  tickerName: string
-  hash?: string | { type: 'Buffer'; data: number[] }
-  json: {
+  auraPublicKey: string
+  blocksMinted: number
+  mainchainPublicKey?: string
+  poolOffchainData?: {
     name: string
     ticker: string
+    homepage?: string
     description?: string
   }
 }
@@ -151,47 +151,52 @@ export async function checkTransaction(query: string): Promise<{
 
 /**
  * Search for pools by query (hash, ticker, or name)
+ * Returns pools matching the query
  */
 export async function searchPool(query: string): Promise<{
   found: boolean
   value?: string
   count?: number
-  results?: PoolResult[]
+  results?: Array<{
+    auraPublicKey: string
+    blocksMinted: number
+    mainchainPublicKey?: string
+    poolOffchainData?: {
+      name: string
+      ticker: string
+      homepage?: string
+      description?: string
+    }
+  }>
 }> {
   try {
-    const endpoint = '/api/pools/search'
-    const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS)
+    const { poolAPI } = await import('@/lib/api')
+    
+    const data = await poolAPI.searchPools<Array<{
+      auraPublicKey: string
+      blocksMinted: number
+      mainchainPublicKey?: string
+      poolOffchainData?: {
+        name: string
+        ticker: string
+        homepage?: string
+        description?: string
+      }
+    }>>(query)
 
-    const response = await fetch(`${endpoint}?q=${encodeURIComponent(query)}`, {
-      signal: controller.signal,
-      cache: 'no-store'
-    })
-
-    clearTimeout(timeoutId)
-
-    if (!response.ok) {
-      return { found: false }
-    }
-
-    const data = await response.json()
-
-    if (data.data && data.data.length > 0) {
+    // API returns array directly
+    if (Array.isArray(data) && data.length > 0) {
       return {
         found: true,
-        value: data.data[0].id,
-        count: data.data.length,
-        results: data.data
+        value: data[0].auraPublicKey,
+        count: data.length,
+        results: data
       }
     }
 
     return { found: false }
   } catch (error) {
-    if (error instanceof Error && error.name === 'AbortError') {
-      console.log('⏱️ Pool search timeout')
-    } else {
-      console.error('❌ Pool search error:', error)
-    }
+    console.error('❌ Pool search error:', error)
     return { found: false }
   }
 }
