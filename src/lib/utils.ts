@@ -15,6 +15,44 @@ export function cn(...inputs: ClassValue[]) {
  * @param date The date to format
  * @returns A human-friendly relative time string
  */
+// Helper to decode hex string to readable text
+export function decodeHex(hex: string): string {
+  try {
+    if (!hex.startsWith('0x')) return hex
+    const hexString = hex.slice(2)
+    let result = ''
+    for (let i = 0; i < hexString.length; i += 2) {
+      result += String.fromCharCode(parseInt(hexString.substr(i, 2), 16))
+    }
+    return result
+  } catch {
+    return hex
+  }
+}
+export function formatAttributes(attributes: unknown): unknown {
+  if (typeof attributes === 'string') {
+    return decodeHex(attributes)
+  }
+  
+  if (Array.isArray(attributes)) {
+    return attributes.map(formatAttributes)
+  }
+  
+  if (attributes && typeof attributes === 'object') {
+    const formatted: Record<string, unknown> = {}
+    for (const [key, value] of Object.entries(attributes)) {
+      if (typeof value === 'string' && value.startsWith('0x')) {
+        formatted[key] = decodeHex(value)
+      } else {
+        formatted[key] = formatAttributes(value)
+      }
+    }
+    return formatted
+  }
+  
+  return attributes
+}
+
 export function formatDistanceToNow(date: Date): string {
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
