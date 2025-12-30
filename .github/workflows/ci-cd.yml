@@ -1,0 +1,134 @@
+name: Build, Push Docker Image and Deploy
+
+on:
+  push:
+    branches:
+      - main
+      - testing
+      - production
+
+env:
+  IMAGE_NAME: midnight-explorer-web
+  DOCKER_IMAGE: texlabs/midnight-explorer-web
+
+jobs:
+  # ======================================================
+  # Job 1: Build & Push Docker Image
+  # ======================================================
+  docker:
+    name: Docker Build and Push
+    runs-on: ubuntu-24.04
+
+    outputs:
+      tag: ${{ steps.set_tag.outputs.tag }}
+      container: ${{ steps.set_env.outputs.container }}
+      env_file: ${{ steps.set_env.outputs.env_file }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # -----------------------------
+      # Set ENV / container / port
+      # -----------------------------
+      - name: Set environment config
+        id: set_env
+        run: |
+          if [[ "$GITHUB_REF_NAME" == "production" ]]; then
+            echo "NODE_ENV=prod" >> $GITHUB_ENV
+            echo "container=midnight-explorer-web-prod" >> $GITHUB_OUTPUT
+            echo "env_file=.env.prod" >> $GITHUB_OUTPUT
+          elif [[ "$GITHUB_REF_NAME" == "testing" ]]; then
+            echo "NODE_ENV=test" >> $GITHUB_ENV
+            echo "container=midnight-explorer-web-test" >> $GITHUB_OUTPUT
+            echo "env_file=.env.test" >> $GITHUB_OUTPUT
+          else
+            echo "NODE_ENV=dev" >> $GITHUB_ENV
+            echo "container=midnight-explorer-web-dev" >> $GITHUB_OUTPUT
+            echo "env_file=.env.dev" >> $GITHUB_OUTPUT
+          fi
+
+      # -----------------------------
+      # Set Docker tag
+      # -----------------------------
+      - name: Set image tag
+        id: set_tag
+        run: |
+          TAG="${GITHUB_REF_NAME}-$(git rev-parse --short HEAD)"
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+
+      # -----------------------------
+      # Login DockerHub (TOKEN)
+      # -----------------------------
+      - name: Login DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # -----------------------------
+      # Build & Push
+      # -----------------------------
+      - name: Build image
+        run: |
+          docker build \
+            --build-arg NODE_ENV=$NODE_ENV \
+            -t $DOCKER_IMAGE:${{ steps.set_tag.outputs.tag }} .
+
+      - name: Push image
+        run: |
+          docker push $DOCKER_IMAGE:${{ steps.set_tag.outputs.tag }}
+
+  # ======================================================
+  # Job 2: Deploy to VPS (Blue–Green)
+  # ======================================================
+  deploy:
+    name: Deploy to Remote VPS
+    runs-on: ubuntu-24.04
+    needs: docker
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.REMOTE_HOST }}
+          username: ${{ secrets.REMOTE_USER }}
+          key: ${{ secrets.REMOTE_SSH_KEY }}
+          script: |
+            set -e
+
+            IMAGE=${{ env.DOCKER_IMAGE }}
+            TAG=${{ needs.docker.outputs.tag }}
+            CONTAINER=${{ needs.docker.outputs.container }}
+            ENV_FILE=${{ needs.docker.outputs.env_file }}
+
+            echo "Deploying $IMAGE:$TAG"
+            echo "Container: $CONTAINER | Env: $ENV_FILE"
+
+            cd midnight-explorer-web
+
+            # Pull image
+            docker pull $IMAGE:$TAG
+
+            # Run GREEN container (NO PORT BIND)
+            docker run -d \
+              --name ${CONTAINER}-green \
+              --env-file $ENV_FILE \
+              --network midnight-net \
+              --restart unless-stopped \
+              $IMAGE:$TAG
+
+            # Optional: wait & basic health check
+            sleep 5
+            docker inspect --format='{{.State.Running}}' ${CONTAINER}-green
+
+            # Swap BLUE -> GREEN
+            docker stop $CONTAINER || true
+            docker rm $CONTAINER || true
+            docker rename ${CONTAINER}-green $CONTAINER
+
+            # Reload nginx (safe)
+            docker exec midnight-explorer-web-nginx nginx -s reload || true
+
+            # Cleanup
+            docker image prune -f

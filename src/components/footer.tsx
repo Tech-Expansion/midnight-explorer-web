@@ -11,31 +11,11 @@ interface NetworkStats {
 }
 
 export function Footer() {
-  const [stats, setStats] = useState<NetworkStats>({
+  const [stats] = useState<NetworkStats>({
     blockHeight: 0,
     status: 'online'
   })
   const {latestBlock } = useNetworkStats()
- 
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const response = await fetch('/api/network/stats')
-        if (response.ok) {
-          const data = await response.json()
-          setStats({
-            blockHeight: data.blockHeight,
-            status: data.status
-          })
-        }
-      } catch (error) {
-        console.error('Failed to fetch network stats:', error)
-        setStats(prev => ({ ...prev, status: 'offline' }))
-      }
-    }
-
-    fetchStats()
-  }, [])
 
   return (
     <footer className="border-t border-border bg-card/30 backdrop-blur-sm mt-16">
@@ -68,7 +48,7 @@ export function Footer() {
               </div>
             </Link>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              The most comprehensive blockchain explorer for Midnight Network. Track transactions, blocks, and addresses
+              The most comprehensive blockchain explorer for Midnight Network. Track transactions, blocks, and contracts, pools
               in real-time.
             </p>
             <div className="flex items-center gap-3">

@@ -4,7 +4,7 @@ import { Footer } from "@/components/footer"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, Waves, Globe, ExternalLink } from "lucide-react"
+import { ArrowLeft, ExternalLink } from "lucide-react"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import { CopyButton } from "@/components/ui/copy-button"
@@ -16,61 +16,50 @@ interface PageProps {
 
 export const dynamic = "force-dynamic"
 
-interface BufferData {
-  type: 'Buffer'
-  data: number[]
-}
-
-interface PoolJson {
-  name: string
-  ticker: string
-  homepage?: string
-  description: string
-  extended?: string
-}
-
-interface PoolApiResponse {
-  pool: {
-    id: number
-    poolId: number
-    tickerName: string
-    hash: string | BufferData
-    json: PoolJson
-    bytes: BufferData
-    pmrId: number
+interface PoolDetail {
+  auraPublicKey: string
+  sidechainPublicKey: string
+  grandpaPublicKey: string
+  isValid: boolean
+  type: string
+  blocksMinted: number
+  sidechainAccountId: string
+  mainchainPublicKey: string
+  crossChainPublicKey: string
+  sidechainSignature: string
+  mainchainSignature: string
+  crossChainSignature: string
+  utxo?: {
+    utxoId: string
+    epochNumber: number
+    blockNumber: number
+    slotNumber: number
+    txIndexWithinBlock: number
   }
-}
-
-function bufferToHex(hash: string | BufferData): string {
-  if (typeof hash === 'string') {
-    return hash.startsWith('0x') ? hash : `0x${hash}`
+  invalidReasons?: Record<string, string>
+  poolOffchainData?: {
+    name: string
+    ticker: string
+    homepage?: string
+    description?: string
   }
-  if (hash && typeof hash === 'object' && 'data' in hash && Array.isArray(hash.data)) {
-    return '0x' + Buffer.from(hash.data).toString('hex')
-  }
-  return ''
 }
 
 export default async function PoolDetailPage({ params }: PageProps) {
   const { id } = await params
   
-  let pool: PoolApiResponse['pool']
+  let pool: PoolDetail
   
   try {
-    const response = await poolAPI.getPool<PoolApiResponse>(id)
-    if (!response || !response.pool) {
+    const response = await poolAPI.getPoolDetail<PoolDetail>(id)
+    if (!response) {
       notFound()
     }
-    pool = response.pool
-    if (!pool.json || !pool.id) {
-      notFound()
-    }
+    pool = response
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (_error) {
     notFound()
   }
-
-  const poolHash = bufferToHex(pool.hash)
 
   return (
     <div className="min-h-screen bg-background relative">
@@ -107,14 +96,10 @@ export default async function PoolDetailPage({ params }: PageProps) {
               <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm text-muted-foreground mb-1">ID</p>
-                    <Badge
-                      variant="outline"
-                      className="bg-blue-500/10 text-blue-400 border-blue-500/20 text-base px-3 py-1"
-                    >
-                      <Waves className="h-4 w-4 mr-1" />
-                      #{pool.id}
-                    </Badge>
+                    <p className="text-sm text-muted-foreground mb-1">Pool Name</p>
+                    <p className="text-lg font-semibold text-blue-400">
+                      {pool.poolOffchainData?.name || 'Unknown Pool'}
+                    </p>
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground mb-1">Ticker</p>
@@ -122,100 +107,180 @@ export default async function PoolDetailPage({ params }: PageProps) {
                       variant="outline"
                       className="bg-green-500/10 text-green-400 border-green-500/20 text-base px-3 py-1"
                     >
-                      {pool.json?.ticker || 'N/A'}
+                      {pool.poolOffchainData?.ticker || 'N/A'}
                     </Badge>
-                  </div>
-                </div>
-
-                <div>
-                  <p className="text-sm text-muted-foreground mb-2">Pool Name</p>
-                  <div className="flex items-center gap-3">
-                    <h3 className="text-lg font-semibold">{pool.json?.name || 'Unknown Pool'}</h3>
-                    {pool.json?.homepage && (
-                      <a
-                        href={pool.json?.homepage || '#'}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1"
-                      >
-                        <Globe className="h-4 w-4" />
-                        <ExternalLink className="h-3 w-3" />
-                      </a>
-                    )}
-                  </div>
-                </div>
-
-                <div className="pt-4 border-t border-border">
-                  <p className="text-sm text-muted-foreground mb-2">Pool Hash</p>
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm font-mono break-all flex-1 text-blue-400">
-                      {poolHash}
-                    </p>
-                    <CopyButton text={poolHash} />
-                  </div>
-                </div>
-              </div>
-            </Card>
-
-            {/* Description */}
-            <Card className="p-6 bg-card/50 border-border">
-              <h2 className="text-xl font-semibold mb-4 text-purple-400">Description</h2>
-              <div className="bg-secondary/30 rounded-lg p-4">
-                <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                  {pool.json?.description || 'No description available'}
-                </p>
-              </div>
-            </Card>
-
-            {/* Metadata */}
-            <Card className="p-6 bg-card/50 border-border">
-              <h2 className="text-xl font-semibold mb-4 text-purple-400">Pool Metadata</h2>
-              <div className="space-y-4">
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="text-sm text-muted-foreground">JSON Metadata</p>
-                    <CopyButton text={JSON.stringify(pool.json || {}, null, 2)} />
-                  </div>
-                  <div className="bg-secondary/30 rounded-lg p-4 max-h-64 overflow-y-auto">
-                    <pre className="text-xs font-mono whitespace-pre-wrap">
-                      {JSON.stringify(pool.json || {}, null, 2)}
-                    </pre>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm text-muted-foreground mb-1">PMR ID</p>
-                    <p className="text-sm font-mono text-foreground">#{pool.pmrId}</p>
+                    <p className="text-sm text-muted-foreground mb-1">Blocks Minted</p>
+                    <Badge
+                      variant="outline"
+                      className="bg-blue-500/10 text-blue-400 border-blue-500/20 text-base px-3 py-1"
+                    >
+                      {pool.blocksMinted.toLocaleString()}
+                    </Badge>
                   </div>
-                  {pool.json?.homepage && (
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-1">Homepage</p>
-                      <a
-                        href={pool.json.homepage}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sm text-blue-400 hover:text-blue-300 transition-colors break-all"
-                      >
-                        {pool.json.homepage}
-                      </a>
-                    </div>
-                  )}
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Pool Status</p>
+                    <Badge
+                      variant="outline"
+                      className={`text-base px-3 py-1 ${
+                        pool.isValid
+                          ? 'bg-green-500/10 text-green-400 border-green-500/20'
+                          : 'bg-red-500/10 text-red-400 border-red-500/20'
+                      }`}
+                    >
+                      {pool.isValid ? 'Valid' : 'Invalid'}
+                    </Badge>
+                  </div>
                 </div>
 
-                {pool.json?.extended && (
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">Extended Metadata URL</p>
+                <div className="pt-4 border-t border-border">
+                  <p className="text-sm text-muted-foreground mb-2">Aura Public Key</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-xs font-mono break-all flex-1 text-blue-400">
+                      {pool.auraPublicKey}
+                    </p>
+                    <CopyButton text={pool.auraPublicKey} />
+                  </div>
+                </div>
+
+                {pool.poolOffchainData?.homepage && (
+                  <div className="pt-2">
+                    <p className="text-sm text-muted-foreground mb-2">Homepage</p>
                     <a
-                      href={pool.json.extended}
+                      href={pool.poolOffchainData.homepage}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-sm text-blue-400 hover:text-blue-300 transition-colors break-all"
+                      className="text-sm text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1 break-all"
                     >
-                      {pool.json.extended}
+                      {pool.poolOffchainData.homepage}
+                      <ExternalLink className="h-3 w-3 flex-shrink-0" />
                     </a>
                   </div>
                 )}
+              </div>
+            </Card>
+
+            {/* Description */}
+            {pool.poolOffchainData?.description && (
+              <Card className="p-6 bg-card/50 border-border">
+                <h2 className="text-xl font-semibold mb-4 text-purple-400">Description</h2>
+                <div className="bg-secondary/30 rounded-lg p-4">
+                  <p className="text-sm leading-relaxed">
+                    {pool.poolOffchainData.description}
+                  </p>
+                </div>
+              </Card>
+            )}
+
+            {/* Pool Information */}
+            <Card className="p-6 bg-card/50 border-border">
+              <h2 className="text-xl font-semibold mb-4 text-purple-400">Pool Information</h2>
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-2">Sidechain Public Key</p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-xs font-mono break-all flex-1 text-blue-400">
+                        {pool.sidechainPublicKey}
+                      </p>
+                      <CopyButton text={pool.sidechainPublicKey} />
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-2">Grandpa Public Key</p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-xs font-mono break-all flex-1 text-blue-400">
+                        {pool.grandpaPublicKey}
+                      </p>
+                      <CopyButton text={pool.grandpaPublicKey} />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-2">Mainchain Public Key</p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-xs font-mono break-all flex-1 text-blue-400">
+                        {pool.mainchainPublicKey}
+                      </p>
+                      <CopyButton text={pool.mainchainPublicKey} />
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-2">Sidechain Account ID</p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-xs font-mono break-all flex-1 text-blue-400">
+                        {pool.sidechainAccountId}
+                      </p>
+                      <CopyButton text={pool.sidechainAccountId} />
+                    </div>
+                  </div>
+                </div>
+
+                {pool.utxo && (
+                  <div className="pt-4 border-t border-border">
+                    <p className="text-sm font-semibold text-muted-foreground mb-3">UTXO Information</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-xs text-muted-foreground">UTXO ID</p>
+                        <p className="text-xs font-mono text-blue-400 break-all">{pool.utxo.utxoId}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Epoch Number</p>
+                        <p className="text-xs font-mono text-blue-400">{pool.utxo.epochNumber}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Block Number</p>
+                        <p className="text-xs font-mono text-blue-400">{pool.utxo.blockNumber.toLocaleString()}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Slot Number</p>
+                        <p className="text-xs font-mono text-blue-400">{pool.utxo.slotNumber.toLocaleString()}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </Card>
+
+            {/* Signatures */}
+            <Card className="p-6 bg-card/50 border-border">
+              <h2 className="text-xl font-semibold mb-4 text-purple-400">Signatures</h2>
+              <div className="space-y-4">
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-sm text-muted-foreground">Sidechain Signature</p>
+                    <CopyButton text={pool.sidechainSignature} />
+                  </div>
+                  <p className="text-xs font-mono text-blue-400 break-all bg-secondary/30 p-3 rounded">
+                    {pool.sidechainSignature}
+                  </p>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-sm text-muted-foreground">Mainchain Signature</p>
+                    <CopyButton text={pool.mainchainSignature} />
+                  </div>
+                  <p className="text-xs font-mono text-blue-400 break-all bg-secondary/30 p-3 rounded">
+                    {pool.mainchainSignature}
+                  </p>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-sm text-muted-foreground">Cross Chain Signature</p>
+                    <CopyButton text={pool.crossChainSignature} />
+                  </div>
+                  <p className="text-xs font-mono text-blue-400 break-all bg-secondary/30 p-3 rounded">
+                    {pool.crossChainSignature}
+                  </p>
+                </div>
               </div>
             </Card>
           </div>

@@ -20,28 +20,29 @@ import {
   type TransactionResult,
   type ContractResult,
 } from "@/lib/search-utils"
+import {
+  SEARCH_TYPE_ALL,
+  SEARCH_TYPE_BLOCK,
+  SEARCH_TYPE_TRANSACTION,
+  SEARCH_TYPE_CONTRACT,
+  SEARCH_TYPE_POOL,
+  RESULT_TYPE_BLOCK,
+  RESULT_TYPE_TRANSACTION,
+  RESULT_TYPE_CONTRACT,
+  RESULT_TYPE_POOL,
+  RESULT_TYPE_VIEW_ALL,
+  type SearchType,
+} from "@/lib/constants/search.constants"
 
-type SearchResult = | {
-    type: 'block';
-    block?: BlockResult
-} | {
-    type: 'transaction';
-    transaction?: TransactionResult
-} | {
-    type: 'contract';
-    contract?: ContractResult
-} | {
-    type: 'pool';
-    pool?: PoolResult
-} | {
-    type: 'viewAll';
-    count: number;
-    searchHash: string
-}
+type SearchResult = 
+  | { type: typeof RESULT_TYPE_BLOCK; block: BlockResult }
+  | { type: typeof RESULT_TYPE_TRANSACTION; transaction: TransactionResult }
+  | { type: typeof RESULT_TYPE_CONTRACT; contract: ContractResult }
+  | { type: typeof RESULT_TYPE_POOL; pool: PoolResult }
+  | { type: typeof RESULT_TYPE_VIEW_ALL; count: number; searchHash: string }
 
 export function SearchBar() {
-    const [searchType,
-        setSearchType] = useState("all")
+    const [searchType, setSearchType] = useState<SearchType>(SEARCH_TYPE_ALL)
     const [searchQuery,
         setSearchQuery] = useState("")
     const [isSearching,
@@ -78,7 +79,7 @@ export function SearchBar() {
             const results: SearchResult[] = []
 
             // If user selected Transaction
-            if (searchType === "transaction") {
+            if (searchType === SEARCH_TYPE_TRANSACTION) {
                 const txResult = await checkTransaction(cleanQuery)
                 if (txResult.found && txResult.results && txResult.results.length > 0) {
                     const totalCount = txResult.count || txResult.results.length
@@ -92,12 +93,12 @@ export function SearchBar() {
                             .results
                             .slice(0, 5)
                         displayResults.forEach(tx => {
-                            results.push({ type: 'transaction', transaction: tx })
+                            results.push({ type: RESULT_TYPE_TRANSACTION, transaction: tx })
                         })
 
                         // Add "View All" option if more than 5 results available
                         if (totalCount > 5) {
-                            results.push({ type: 'viewAll', count: totalCount, searchHash: cleanQuery })
+                            results.push({ type: RESULT_TYPE_VIEW_ALL, count: totalCount, searchHash: cleanQuery })
                         }
 
                         setSearchResults(results)
@@ -111,10 +112,10 @@ export function SearchBar() {
             }
 
             // If user selected Block
-            if (searchType === "block") {
+            if (searchType === SEARCH_TYPE_BLOCK) {
                 const blockResult = await checkBlock(cleanQuery)
                 if (blockResult.found && blockResult.data) {
-                    results.push({ type: 'block', block: blockResult.data })
+                    results.push({ type: RESULT_TYPE_BLOCK, block: blockResult.data })
                 }
                 if (results.length > 0) {
                     setSearchResults(results)
@@ -127,10 +128,10 @@ export function SearchBar() {
             }
 
             // If user selected Contract
-            if (searchType === "contract") {
+            if (searchType === SEARCH_TYPE_CONTRACT) {
                 const contractResult = await checkContract(cleanQuery)
                 if (contractResult.found && contractResult.data) {
-                    results.push({ type: 'contract', contract: contractResult.data })
+                    results.push({ type: RESULT_TYPE_CONTRACT, contract: contractResult.data })
                 }
                 if (results.length > 0) {
                     setSearchResults(results)
@@ -143,7 +144,7 @@ export function SearchBar() {
             }
 
             // If user selected Pool
-            if (searchType === "pool") {
+            if (searchType === SEARCH_TYPE_POOL) {
                 const poolResult = await searchPool(cleanQuery)
                 if (poolResult.found && poolResult.results) {
                     // Show up to 5 pools in dropdown
@@ -151,7 +152,7 @@ export function SearchBar() {
                         .results
                         .slice(0, 5)
                     displayPools.forEach(pool => {
-                        results.push({ type: 'pool', pool })
+                        results.push({ type: RESULT_TYPE_POOL, pool })
                     })
                 }
                 if (results.length > 0) {
@@ -165,12 +166,12 @@ export function SearchBar() {
             }
 
             // If "all" is selected, smart detection
-            if (searchType === "all") {
+            if (searchType === SEARCH_TYPE_ALL) {
                 // Check if it's a number (block height)
                 if (isBlockHeight(cleanQuery)) {
                     const blockResult = await checkBlock(cleanQuery)
                     if (blockResult.found && blockResult.data) {
-                        results.push({ type: 'block', block: blockResult.data })
+                        results.push({ type: RESULT_TYPE_BLOCK, block: blockResult.data })
                     }
                     if (results.length > 0) {
                         setSearchResults(results)
@@ -186,7 +187,7 @@ export function SearchBar() {
                 if (isContractAddress(cleanQuery)) {
                     const contractResult = await checkContract(cleanQuery)
                     if (contractResult.found && contractResult.data) {
-                        results.push({ type: 'contract', contract: contractResult.data })
+                        results.push({ type: RESULT_TYPE_CONTRACT, contract: contractResult.data })
                     }
                     if (results.length > 0) {
                         setSearchResults(results)
@@ -206,7 +207,7 @@ export function SearchBar() {
                         blockResult] = await Promise.all([checkTransaction(cleanQuery), searchPool(cleanQuery), checkBlock(cleanQuery)])
 
                     if (blockResult.found && blockResult.data) {
-                        results.push({ type: 'block', block: blockResult.data })
+                        results.push({ type: RESULT_TYPE_BLOCK, block: blockResult.data })
                     }
 
                     // Handle multiple transactions
@@ -215,19 +216,19 @@ export function SearchBar() {
 
                         if (totalCount === 1) {
                             // Only one transaction, add to dropdown
-                            results.push({ type: 'transaction', transaction: txResult.results[0] })
+                            results.push({ type: RESULT_TYPE_TRANSACTION, transaction: txResult.results[0] })
                         } else {
                             // Multiple transactions - show up to 5 in dropdown
                             const displayResults = txResult
                                 .results
                                 .slice(0, 5)
                             displayResults.forEach(tx => {
-                                results.push({ type: 'transaction', transaction: tx })
+                                results.push({ type: RESULT_TYPE_TRANSACTION, transaction: tx })
                             })
 
                             // Add "View All" option if more than 5 results available
                             if (totalCount > 5) {
-                                results.push({ type: 'viewAll', count: totalCount, searchHash: cleanQuery })
+                                results.push({ type: RESULT_TYPE_VIEW_ALL, count: totalCount, searchHash: cleanQuery })
                             }
                         }
                     }
@@ -238,7 +239,7 @@ export function SearchBar() {
                             .results
                             .slice(0, 5)
                         displayPools.forEach(pool => {
-                            results.push({ type: 'pool', pool })
+                            results.push({ type: RESULT_TYPE_POOL, pool })
                         })
                     }
 
@@ -252,9 +253,22 @@ export function SearchBar() {
                     return
                 }
 
-                // Otherwise, show error
-                alert('Invalid format. Please enter a valid block height, transaction hash, or contract' +
-                    ' address')
+                // If not a hex hash or number, try pool search (for name/ticker)
+                const poolResult = await searchPool(cleanQuery)
+                if (poolResult.found && poolResult.results) {
+                    // Show up to 5 pools in dropdown
+                    const displayPools = poolResult.results.slice(0, 5)
+                    displayPools.forEach(pool => {
+                        results.push({ type: RESULT_TYPE_POOL, pool })
+                    })
+                }
+                
+                if (results.length > 0) {
+                    setSearchResults(results)
+                    setShowDropdown(true)
+                } else {
+                    alert('No results found. Please enter a valid block height, transaction hash, contract address, or pool name/ticker')
+                }
                 setIsSearching(false)
             }
         } catch (error) {
@@ -270,27 +284,27 @@ export function SearchBar() {
         setSearchResults([])
 
         switch (result.type) {
-            case 'block':
+            case RESULT_TYPE_BLOCK:
                 if (result.block) {
                     router.push(`/block/${result.block.height}`)
                 }
                 break
-            case 'transaction':
+            case RESULT_TYPE_TRANSACTION:
                 if (result.transaction) {
                     router.push(`/tx/${result.transaction.hash}`)
                 }
                 break
-            case 'contract':
+            case RESULT_TYPE_CONTRACT:
                 if (result.contract) {
                     router.push(`/contracts/${result.contract.address}`)
                 }
                 break
-            case 'pool':
+            case RESULT_TYPE_POOL:
                 if (result.pool) {
-                    router.push(`/pool/${result.pool.id}`)
+                    router.push(`/pool/${result.pool.auraPublicKey}`)
                 }
                 break
-            case 'viewAll':
+            case RESULT_TYPE_VIEW_ALL:
                 if (result.searchHash) {
                     router.push(`/transactions?hash=${result.searchHash}`)
                 }
@@ -300,45 +314,45 @@ export function SearchBar() {
 
     const getResultIcon = (type: SearchResult['type']) => {
         switch (type) {
-            case 'block':
+            case RESULT_TYPE_BLOCK:
                 return <Box className="h-4 w-4 text-purple-400" />
-            case 'transaction':
+            case RESULT_TYPE_TRANSACTION:
                 return <ArrowRightLeft className="h-4 w-4 text-green-400" />
-            case 'contract':
+            case RESULT_TYPE_CONTRACT:
                 return <FileCode className="h-4 w-4 text-orange-400" />
-            case 'pool':
+            case RESULT_TYPE_POOL:
                 return <Waves className="h-4 w-4 text-blue-400" />
-            case 'viewAll':
+            case RESULT_TYPE_VIEW_ALL:
                 return <ArrowRightLeft className="h-4 w-4 text-blue-400" />
         }
     }
 
     const getResultBgColor = (type: SearchResult['type']) => {
         switch (type) {
-            case 'block':
+            case RESULT_TYPE_BLOCK:
                 return 'bg-purple-500/10'
-            case 'transaction':
+            case RESULT_TYPE_TRANSACTION:
                 return 'bg-green-500/10'
-            case 'contract':
+            case RESULT_TYPE_CONTRACT:
                 return 'bg-orange-500/10'
-            case 'pool':
+            case RESULT_TYPE_POOL:
                 return 'bg-blue-500/10'
-            case 'viewAll':
+            case RESULT_TYPE_VIEW_ALL:
                 return 'bg-blue-500/10'
         }
     }
 
     const getResultTextColor = (type: SearchResult['type']) => {
         switch (type) {
-            case 'block':
+            case RESULT_TYPE_BLOCK:
                 return 'text-purple-400'
-            case 'transaction':
+            case RESULT_TYPE_TRANSACTION:
                 return 'text-green-400'
-            case 'contract':
+            case RESULT_TYPE_CONTRACT:
                 return 'text-orange-400'
-            case 'pool':
+            case RESULT_TYPE_POOL:
                 return 'text-blue-400'
-            case 'viewAll':
+            case RESULT_TYPE_VIEW_ALL:
                 return 'text-blue-400'
         }
     }
@@ -348,7 +362,7 @@ export function SearchBar() {
         let subtitle = ''
 
         switch (result.type) {
-            case 'block':
+            case RESULT_TYPE_BLOCK:
                 title = `Block #${result.block
                     ?.height}`
                 subtitle = result.block
@@ -359,7 +373,7 @@ export function SearchBar() {
                         .slice(0, 16)}...`
                     : ''
                 break
-            case 'transaction':
+            case RESULT_TYPE_TRANSACTION:
                 title = result.transaction
                     ?.blockHeight
                     ? `Transaction (Block #${result.transaction.blockHeight})`
@@ -372,7 +386,7 @@ export function SearchBar() {
                         .slice(0, 20)}...`
                     : ''
                 break
-            case 'contract':
+            case RESULT_TYPE_CONTRACT:
                 title = `Contract`
                 subtitle = result.contract
                     ?.address
@@ -382,17 +396,16 @@ export function SearchBar() {
                         .slice(0, 20)}...`
                     : ''
                 break
-            case 'pool':
+            case RESULT_TYPE_POOL:
                 title = result.pool
-                    ?.json
-                    ?.ticker || result.pool
-                        ?.tickerName || 'Pool'
+                    ?.poolOffchainData
+                    ?.ticker || 'Pool'
                 subtitle = result.pool
-                    ?.json
-                    ?.name || `Pool #${result.pool
-                        ?.id}`
+                    ?.poolOffchainData
+                    ?.name || `Pool ${result.pool
+                        ?.auraPublicKey?.slice(0, 12)}...`
                 break
-            case 'viewAll':
+            case RESULT_TYPE_VIEW_ALL:
                 title = `View All ${result.count} Transactions`
                 subtitle = `Click to see all transactions with this hash`
                 break
@@ -421,16 +434,19 @@ export function SearchBar() {
         <div className="max-w-3xl mx-auto">
             <form onSubmit={handleSearch}>
                 <div className="flex flex-col sm:flex-row gap-2">
-                    <Select value={searchType} onValueChange={setSearchType}>
-                        <SelectTrigger className="w-full sm:w-[180px] bg-card border-border">
+                    <Select value={searchType} onValueChange={(value: string) => setSearchType(value as SearchType)}>
+                        <SelectTrigger 
+                            className="w-full sm:w-[180px] bg-card border-border"
+                            suppressHydrationWarning
+                        >
                             <SelectValue placeholder="Search type" />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="all">All</SelectItem>
-                            <SelectItem value="transaction">Transaction</SelectItem>
-                            <SelectItem value="block">Block</SelectItem>
-                            <SelectItem value="contract">Contract</SelectItem>
-                            <SelectItem value="pool">Pool</SelectItem>
+                            <SelectItem value={SEARCH_TYPE_ALL}>All</SelectItem>
+                            <SelectItem value={SEARCH_TYPE_TRANSACTION}>Transaction</SelectItem>
+                            <SelectItem value={SEARCH_TYPE_BLOCK}>Block</SelectItem>
+                            <SelectItem value={SEARCH_TYPE_CONTRACT}>Contract</SelectItem>
+                            <SelectItem value={SEARCH_TYPE_POOL}>Pool</SelectItem>
                         </SelectContent>
                     </Select>
 
@@ -440,10 +456,12 @@ export function SearchBar() {
                             className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
                         <Input
                             type="text"
-                            placeholder="Search by Hash / Height / Contract Address / Pool"
+                            placeholder="Search by Hash / Height / Contract Address / Pool Name / AuraPubkey"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="pl-10 bg-card border-border" /> {/* Search Results Dropdown */}
+                            className="pl-10 bg-card border-border"
+                            suppressHydrationWarning
+                        /> {/* Search Results Dropdown */}
                         {showDropdown && searchResults.length > 0 && (
                             <div
                                 className="absolute top-full left-0 right-0 mt-1 z-50 bg-card border border-border rounded-lg shadow-xl overflow-hidden">
@@ -468,7 +486,9 @@ export function SearchBar() {
                         disabled={isSearching}
                         className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-purple-600 
              hover:from-blue-700 hover:to-purple-700 cursor-pointer 
-             disabled:opacity-50 disabled:cursor-not-allowed text-white">
+             disabled:opacity-50 disabled:cursor-not-allowed text-white"
+                        suppressHydrationWarning
+                    >
                         {isSearching ? 'Searching...' : 'Search'}
                     </Button>
 
