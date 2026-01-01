@@ -1,74 +1,12 @@
 "use client"
 
 import { Card } from "@/components/ui/card"
-import { useEffect, useState } from "react"
-import { tokenAPI } from "@/lib/api"
 import { ArrowUpIcon, ArrowDownIcon } from "lucide-react"
 import Image from "next/image"
-
-interface TokenQuote {
-  price: number
-  volume_24h: number
-  volume_change_24h: number
-  percent_change_1h: number
-  percent_change_24h: number
-  percent_change_7d: number
-  percent_change_30d: number
-  market_cap: number
-  market_cap_dominance: number
-  fully_diluted_market_cap: number
-  last_updated: string
-}
-
-interface TokenData {
-  id: number
-  name: string
-  symbol: string
-  slug: string
-  cmc_rank: number
-  circulating_supply: number
-  total_supply: number
-  max_supply: number
-  quote: {
-    USD: TokenQuote
-  }
-}
-
-interface TokenResponse {
-  data: {
-    NIGHT: TokenData
-  }
-}
+import { useNightToken } from "@/hooks/useNightToken"
 
 export function MidnightTokenInfo() {
-  const [tokenData, setTokenData] = useState<TokenData | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  useEffect(() => {
-    if (!mounted) return
-
-    const fetchTokenData = async () => {
-      try {
-        const response = await tokenAPI.getNightToken<TokenResponse>()
-        setTokenData(response.data.NIGHT)
-      } catch (error) {
-        console.error("Error fetching token data:", error)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchTokenData()
-    
-    // Refresh every 60 seconds
-    const interval = setInterval(fetchTokenData, 60000)
-    return () => clearInterval(interval)
-  }, [mounted])
+  const { data: tokenData, loading, mounted } = useNightToken()
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -97,7 +35,6 @@ export function MidnightTokenInfo() {
     )
   }
 
-  // Prevent hydration mismatch by not rendering until mounted
   if (!mounted || loading) {
     return (
       <div className="h-full flex flex-col w-full overflow-hidden">
