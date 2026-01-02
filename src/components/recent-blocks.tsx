@@ -39,7 +39,7 @@ export function RecentBlocks({ blocks }: RecentBlocksProps) {
                 <Badge variant="outline" className="font-mono">
                   #{block.height}
                 </Badge>
-                <span className="text-sm text-muted-foreground">
+                <span className="text-sm text-muted-foreground" suppressHydrationWarning>
                   {formatDateTimeWithRelative(new Date(block.timestamp))}
                 </span>
               </div>

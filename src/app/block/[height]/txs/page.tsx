@@ -69,8 +69,8 @@ export default async function BlockTransactionsPage({ params, searchParams }: Pa
   const prevCursorCalc = current - pageSize
   const prevHref =
     prevCursorCalc > 0
-      ? `/block/${block.height}/txs?cursor=${prevCursorCalc}`
-      : `/block/${block.height}/txs`
+      ? `/blocks/${block.height}/txs?cursor=${prevCursorCalc}`
+      : `/blocks/${block.height}/txs`
 
   const getStatusBadge = (status: Transaction['status']) => {
     switch (status) {
@@ -123,7 +123,7 @@ export default async function BlockTransactionsPage({ params, searchParams }: Pa
             </div>
             <div className="flex gap-2">
               <Link
-                href={`/block/${block.height}`}
+                href={`/blocks/${block.height}`}
                 className="px-4 py-2 bg-card/50 hover:bg-card/70 border border-border text-foreground rounded-md transition-colors inline-flex items-center gap-2"
               >
                 <ArrowLeft className="h-4 w-4" />
@@ -198,7 +198,7 @@ export default async function BlockTransactionsPage({ params, searchParams }: Pa
             <div>
               {nextCursor && (
                 <Link
-                  href={`/block/${block.height}/txs?cursor=${nextCursor}`}
+                  href={`/blocks/${block.height}/txs?cursor=${nextCursor}`}
                   className="px-4 py-2 bg-gradient-to-r from-blue-600/50 to-purple-600/50 hover:from-blue-600/70 hover:to-purple-600/70 border border-blue-500/30 text-foreground rounded-md transition-colors inline-flex items-center gap-2"
                 >
                   Next

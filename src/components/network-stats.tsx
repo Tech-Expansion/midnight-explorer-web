@@ -8,6 +8,12 @@ import { useEffect, useState } from "react"
 export function NetworkStats() {
   const { sidechainStatus, latestBlock, totalTransactions, loading, error } = useNetworkStats()
   const [timeUntilEpoch, setTimeUntilEpoch] = useState<string>('')
+  const [mounted, setMounted] = useState(false)
+
+  // Prevent hydration mismatch
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   // Calculate time until next epoch
   useEffect(() => {
@@ -82,6 +88,7 @@ export function NetworkStats() {
       value: loading ? '...' : timeUntilEpoch || 'N/A',
       trend: "neutral",
       icon: Clock,
+      suppressHydration: true, // Time-based value
     },
     {
       label: "Avg Block Time",
@@ -132,7 +139,12 @@ export function NetworkStats() {
                 </div>
               </div>
               <div className="space-y-1">
-                <p className="text-2xl font-bold font-mono">{stat.value}</p>
+                <p 
+                  className="text-2xl font-bold font-mono"
+                  suppressHydrationWarning={stat.suppressHydration}
+                >
+                  {stat.value}
+                </p>
                 <p className="text-xs text-muted-foreground">{stat.label}</p>
                 {isNeutral && (
                   <p className="text-xs text-muted-foreground/70">{stat.change}</p>

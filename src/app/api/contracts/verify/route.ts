@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const response = await proxyToExternalAPI(request, `/contract/${address}`)
+    const response = await proxyToExternalAPI(request, `/contracts/${address}`)
     const data = await response.json()
 
     if (response.ok && data.contract) {
