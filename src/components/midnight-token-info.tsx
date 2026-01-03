@@ -6,7 +6,7 @@ import Image from "next/image"
 import { useNightToken } from "@/hooks/useNightToken"
 
 export function MidnightTokenInfo() {
-  const { data: tokenData, loading, mounted } = useNightToken()
+  const { data: tokenData, isLoading } = useNightToken()
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -35,7 +35,7 @@ export function MidnightTokenInfo() {
     )
   }
 
-  if (!mounted || loading) {
+  if (isLoading) {
     return (
       <div className="h-full flex flex-col w-full overflow-hidden">
         <h2 className="text-xl sm:text-2xl font-bold mb-4">Midnight Token (NIGHT)</h2>

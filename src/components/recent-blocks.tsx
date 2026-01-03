@@ -49,17 +49,28 @@ export function RecentBlocks({ blocks }: RecentBlocksProps) {
             </div>
 
             <div className="flex items-center justify-between group/hash gap-2">
-              <p className="text-sm font-mono text-muted-foreground flex-1 min-w-0 truncate">
-                {`${block.hash.slice(0, 15)}...${block.hash.slice(-15)}`}
-              </p>
+              {/* HASH + COPY */}
+              <div className="flex items-center gap-2 flex-1 min-w-0">
+                <p className="text-sm font-mono text-muted-foreground truncate">
+                  {`${block.hash.slice(0, 15)}...${block.hash.slice(-15)}`}
+                </p>
+                <div
+                  onClick={(e) => e.preventDefault()}
+                  className="opacity-50 group-hover/hash:opacity-100 transition-opacity flex-shrink-0"
+                >
+                  <CopyButton text={block.hash} className="h-5 w-5" />
+                </div>
+              </div>
+
+              {/* AUTHOR */}
               <span className="text-sm text-muted-foreground truncate text-right flex-shrink-0 max-w-[100px] md:max-w-[240px]">
-                {`${block.author.slice(0,15)}...${block.author.slice(-15)}`}
+                {`${block.author.slice(0, 15)}...${block.author.slice(-15)}`}
               </span>
-              <div 
+              <div
                 onClick={(e) => e.preventDefault()}
                 className="opacity-50 group-hover/hash:opacity-100 transition-opacity flex-shrink-0"
               >
-                <CopyButton text={block.hash} className="h-6 w-6" />
+                <CopyButton text={block.author} className="h-6 w-6" />
               </div>
             </div>
 

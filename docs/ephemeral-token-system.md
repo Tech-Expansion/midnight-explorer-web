@@ -20,13 +20,14 @@ Hệ thống **Ephemeral Token** được thiết kế để bảo vệ API back
 
 ```
 src/lib/
-├── token-client.ts      # Token manager cho browser (client-side)
+├── token-client.ts      # Token manager (class-based singleton)
 ├── server-token.ts      # Token fetcher cho SSR (server-side)
 ├── token-manager.ts     # Utilities (decode, validate, cookie)
 └── fetch-utils.ts       # Retry logic với token refresh
 
 src/components/
-└── token-provider.tsx   # React wrapper khởi động token system
+├── token-provider.tsx   # React wrapper khởi động token system
+└── query-provider.tsx   # React Query provider
 
 src/app/api/auth/refresh/
 └── route.ts            # Endpoint để browser refresh token
@@ -80,11 +81,11 @@ export async function fetchServerToken(): Promise<string | null> {
 ```
 Browser receives HTML
          ↓
-React hydration → TokenProvider mounted
+React hydration → QueryProvider → TokenProvider mounted
          ↓
 useEffect triggers → startTokenRefresh()
          ↓
-Ngay lập tức: refreshTokenSync()
+Ngay lập tức: fetchInitialToken()
          ↓
 POST /api/auth/refresh (với real fingerprint)
          ↓
@@ -92,7 +93,11 @@ Backend validates fingerprint → issues token
          ↓
 Token stored in HttpOnly cookie (__et)
          ↓
+TokenProvider shows loading until ready
+         ↓
 Set interval: refresh mỗi 90s
+         ↓
+Children components render (React Query hooks active)
 ```
 
 **Đặc điểm:**
@@ -103,28 +108,47 @@ Set interval: refresh mỗi 90s
 
 **Code:**
 ```typescript
-// token-client.ts
-export function startTokenRefresh() {
-  if (typeof window === 'undefined') return
+// token-client.ts - Class-based singleton
+class TokenManager {
+  async start(): Promise<void> {
+    if (this.isReady) return
     
-  // Refresh ngay lập tức
-  refreshTokenSync()
+    // Create ready promise
+    this.readyPromise = new Promise((resolve) => {
+      this.readyResolve = resolve
+    })
+    
+    // Fetch initial token
+    await this.fetchInitialToken()
+    
+    // Start auto-refresh every 90s
+    this.refreshTimer = setInterval(() => {
+      this.refresh()
+    }, REFRESH_INTERVAL)
+  }
   
-  // Sau đó refresh mỗi 90s
-  refreshTimer = setInterval(() => {
-    refreshToken()
-  }, REFRESH_INTERVAL) // 90000ms
+  async refresh(): Promise<boolean> {
+    const response = await fetch('/api/auth/refresh', {
+      method: 'POST',
+      credentials: 'include',
+    })
+    
+    return response.ok
+  }
+  
+  async waitUntilReady(): Promise<boolean> {
+    if (this.isReady) return true
+    return this.readyPromise || Promise.resolve(false)
+  }
 }
 
-async function refreshToken(): Promise<boolean> {
-  const response = await fetch('/api/auth/refresh', {
-    method: 'POST',
-    credentials: 'include', // Gửi cookies
-  })
-  
-  // Token được set vào cookie bởi server
-  return response.ok
-}
+// Singleton instance
+const tokenManager = new TokenManager()
+
+// Public API
+export const startTokenRefresh = () => tokenManager.start()
+export const stopTokenRefresh = () => tokenManager.stop()
+export const waitForToken = () => tokenManager.waitUntilReady()
 ```
 
 ---
@@ -161,17 +185,18 @@ export async function fetchWithTokenRetry(
   url: string,
   options: RequestInit = {}
 ): Promise<Response> {
-  return fetchWithRetry(url, options, refreshToken)
+  // Wait for initial token automatically
+  await tokenManager.waitUntilReady()
+  
+  // Fetch with retry logic (handles 401 auto-refresh)
+  return fetchWithRetry(url, options, () => tokenManager.refresh())
 }
 
-// fetch-utils.ts - Xử lý 401
-if (response.status === 401 && onTokenRefresh) {
-  const refreshed = await onTokenRefresh()
-  if (refreshed) {
-    // Retry với token mới
-    return await fetch(url, fetchOptions)
-  }
-}
+// Components just use hooks - no manual waiting needed
+const { data, isLoading } = useQuery({
+  queryKey: ['blocks'],
+  queryFn: () => blockAPI.getRecentBlocks(),
+})
 ```
 
 ---
@@ -451,18 +476,7 @@ for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
 ---
 
 ## 🧪 Testing
-
-### Server Token Test
-
-```typescript
-// test/test.ts
-import { fetchServerToken } from '@/lib/server-token'
-
-const token = await fetchServerToken()
-console.log('Server token:', token)
-```
-
-### Browser Token Test
+Browser Token Test
 
 ```typescript
 // Browser console
@@ -470,6 +484,25 @@ console.log('Server token:', token)
 document.cookie // Won't see __et (HttpOnly)
 
 // Check token refresh
+// Open Network tab → Filter "refresh" → See POST every 90s
+```
+
+### React Query Integration Test
+
+```typescript
+// Any component
+import { useQuery } from '@tanstack/react-query'
+import { blockAPI } from '@/lib/api'
+
+function MyComponent() {
+  const { data, isLoading } = useQuery({
+    queryKey: ['blocks'],
+    queryFn: () => blockAPI.getRecentBlocks(),
+  })
+  
+  // Token automatically handled
+  // No manual waitForToken needed
+}
 // Open Network tab → Filter "refresh" → See POST every 90s
 ```
 
@@ -482,18 +515,21 @@ const token = 'eyJhbGc...'
 const payload = decodeJWT(token)
 console.log('Payload:', payload)
 // { fingerprint: "...", iat: 1234567890, exp: 1234567890 }
-```
-
----
-
-## 📝 Best Practices
-
-### ✅ DO
-
-- Luôn dùng `fetchWithTokenRetry` cho API calls từ client
-- Dùng `apiFetch` từ `api.ts` để tự động xử lý SSR/CSR
-- Để TokenProvider wrap toàn bộ app
+``Wrap app with QueryProvider → TokenProvider hierarchy
+- Use React Query hooks (useQuery) for data fetching
+- Let `fetchWithTokenRetry` handle token waiting automatically
 - Monitor token refresh trong Network tab
+- Use `apiFetch` từ `api.ts` để tự động xử lý SSR/CSR
+
+### ❌ DON'T
+
+- Không manually call `waitForToken` trong components
+- Không lưu token trong localStorage
+- Không gửi token qua URL
+- Không tắt `credentials: 'include'`
+- Không manually manage token cookie
+- Không dùng server token cho client requests
+- Không tạo custom token fetching logic
 
 ### ❌ DON'T
 
@@ -519,12 +555,49 @@ console.log('Payload:', payload)
 | **Auto-retry** | ❌ No | ✅ Yes |
 
 ---
-
-## 🔗 Related Files
-
-- [token-client.ts](../src/lib/token-client.ts) - Browser token manager
+Class-based token manager singleton
 - [server-token.ts](../src/lib/server-token.ts) - SSR token fetcher
 - [token-manager.ts](../src/lib/token-manager.ts) - Token utilities
+- [token-provider.tsx](../src/components/token-provider.tsx) - React initialization with loading gate
+- [query-provider.tsx](../src/components/query-provider.tsx) - React Query setup
+- [fetch-utils.ts](../src/lib/fetch-utils.ts) - Retry logic with exponential backoff
+- [route.ts](../src/app/api/auth/refresh/route.ts) - Token refresh endpoint
+
+---
+
+## 🎯 Architecture Highlights
+
+### Provider Hierarchy
+```
+QueryClientProvider (React Query)
+  └─ TokenProvider (Wait for initial token)
+      └─ App Components (Use React Query hooks)
+```
+
+### Token Manager (Singleton Pattern)
+```typescript
+class TokenManager {
+  start()          // Initialize + fetch first token
+  refresh()        // Refresh token from backend
+  waitUntilReady() // Promise that resolves when ready
+  stop()           // Cleanup
+}
+```
+
+### Automatic Token Handling
+```typescript
+// Components just use standard React Query
+const { data } = useQuery({
+  queryKey: ['blocks'],
+  queryFn: () => blockAPI.getRecentBlocks(),
+})
+
+// fetchWithTokenRetry handles everything:
+// ✅ Wait for initial token
+// ✅ Auto-retry on 401
+// ✅ Exponential backoff
+// ✅ No manual management needed
+```
 - [token-provider.tsx](../src/components/token-provider.tsx) - React initialization
 - [fetch-utils.ts](../src/lib/fetch-utils.ts) - Retry logic
 - [route.ts](../src/app/api/auth/refresh/route.ts) - Refresh endpoint

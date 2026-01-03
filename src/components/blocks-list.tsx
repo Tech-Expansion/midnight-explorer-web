@@ -29,7 +29,8 @@ export function BlocksList({ initialCursor, page = 1 }: BlocksListProps) {
   const [blocks, setBlocks] = useState<Block[]>([])
   const [nextCursor, setNextCursor] = useState<string | undefined>()
   const [loading, setLoading] = useState(true)
-  const { latestBlock } = useNetworkStats()
+  const { data } = useNetworkStats()
+  const latestBlock = data?.latestBlock
 
   const pageSize = 20
   // Calculate total pages from latest block height

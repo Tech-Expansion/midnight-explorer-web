@@ -15,7 +15,8 @@ export function Footer() {
     blockHeight: 0,
     status: 'online'
   })
-  const {latestBlock } = useNetworkStats()
+  const { data } = useNetworkStats()
+  const latestBlock = data?.latestBlock
 
   return (
     <footer className="border-t border-border bg-card/30 backdrop-blur-sm mt-16">

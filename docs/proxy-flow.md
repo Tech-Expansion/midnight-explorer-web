@@ -331,7 +331,7 @@ async function apiFetch<T>(endpoint: string, options?: RequestInit): Promise<T> 
   const baseUrl = getApiBaseUrl() // Returns '/api' for client
   const url = `${baseUrl}${endpoint}` // '/api/blocks/recent'
   
-  // Client-side: use fetchWithTokenRetry
+  // Client-side: use fetchWithTokenRetry (auto-waits for token)
   const response = await fetchWithTokenRetry(url, options)
   
   if (!response.ok) {
@@ -350,7 +350,11 @@ export async function fetchWithTokenRetry(
   url: string,
   options: RequestInit = {}
 ): Promise<Response> {
-  return fetchWithRetry(url, options, refreshToken)
+  // Wait for initial token automatically
+  await tokenManager.waitUntilReady()
+  
+  // Fetch with retry logic (handles 401 auto-refresh)
+  return fetchWithRetry(url, options, () => tokenManager.refresh())
 }
 
 // fetch-utils.ts
@@ -860,6 +864,7 @@ const response = await fetch(fullUrl, {
 |------|---------|
 | [proxy.ts](../src/lib/proxy.ts) | Core proxy logic with token validation |
 | [api.ts](../src/lib/api.ts) | Client wrapper (SSR/CSR detection) |
+| [token-client.ts](../src/lib/token-client.ts) | Class-based token manager singleton |
 | [fetch-utils.ts](../src/lib/fetch-utils.ts) | Retry logic & error handling |
 | [app/api/*/route.ts](../src/app/api) | Proxy route handlers |
 
@@ -870,7 +875,43 @@ const response = await fetch(fullUrl, {
 3. ✅ **Maintainability**: Centralized API logic
 4. ✅ **Debugging**: All requests logged in BFF
 5. ✅ **Type Safety**: TypeScript end-to-end
+6. ✅ **Auto Token Management**: React Query + Token Manager handle everything
 
 ---
 
 **This BFF pattern provides a secure, maintainable, and flexible way to handle API communication while keeping tokens safe!** 🔒
+
+## 🎯 Modern Stack Integration
+
+### React Query + Token Manager
+```typescript
+// Components use standard React Query
+function MyComponent() {
+  const { data, isLoading } = useQuery({
+    queryKey: ['blocks'],
+    queryFn: () => blockAPI.getRecentBlocks(),
+  })
+  
+  // Token automatically handled by:
+  // 1. TokenProvider ensures token ready
+  // 2. fetchWithTokenRetry waits for token
+  // 3. Auto-retry on 401
+  // 4. No manual management needed
+}
+```
+
+### Provider Hierarchy
+```
+App Layout
+  └─ QueryClientProvider (React Query)
+      └─ TokenProvider (Token initialization + loading gate)
+          └─ Components (Use useQuery hooks freely)
+```
+
+### Benefits of Integration
+- ✅ **Automatic**: Token ready before any API calls
+- ✅ **Declarative**: Standard React Query patterns
+- ✅ **Type-safe**: Full TypeScript support
+- ✅ **Cacheable**: React Query handles caching
+- ✅ **Optimistic**: Can use optimistic updates
+- ✅ **Retryable**: Built-in retry + token refresh
