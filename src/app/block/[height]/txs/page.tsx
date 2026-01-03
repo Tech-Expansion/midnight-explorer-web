@@ -54,7 +54,8 @@ export default async function BlockTransactionsPage({ params, searchParams }: Pa
     // Fetch transactions
     const txData: { transactions: Transaction[], nextCursor?: string } = await blockAPI.getBlockTransactions(
       resolvedParams.height, 
-      { limit: 20, offset: cursor }
+      20,
+      parseInt(cursor, 10)
     )
     transactions = txData.transactions
     nextCursor = txData.nextCursor || null

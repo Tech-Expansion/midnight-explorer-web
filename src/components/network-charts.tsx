@@ -9,12 +9,12 @@ import {
   TIME_RANGE_1D,
   TIME_RANGE_7D,
   TIME_RANGE_1M,
-  DATA_TYPE_SUCCESS,
-  DATA_TYPE_UNSIGNED_EXTRINSICS,
+  DATA_TYPE_REGULAR,
+  DATA_TYPE_SYSTEM,
   DATA_TYPE_TRANSACTIONS,
-  COLOR_SUCCESS,
+  COLOR_REGULAR,
   COLOR_TRANSACTIONS,
-  COLOR_FAILED,
+  COLOR_SYSTEM,
   TIME_LABELS,
   X_AXIS_INTERVALS,
   CHART_HEIGHTS,
@@ -30,8 +30,8 @@ export interface ChartDataPoint {
 
 export interface NetworkStatsResponse {
   chartData: ChartDataPoint[]
-  chartDataSuccess: ChartDataPoint[]
-  chartDataFailed: ChartDataPoint[]
+  chartDataRegular: ChartDataPoint[]
+  chartDataSystem: ChartDataPoint[]
 }
 
 // 🔹 Giao diện chính
@@ -90,10 +90,10 @@ export function NetworkCharts() {
         let sourceData: ChartDataPoint[] = []
         
         // Determine which data field to use based on dataType
-        if (dataType === DATA_TYPE_SUCCESS) {
-          sourceData = stats.chartDataSuccess || []
-        } else if (dataType === DATA_TYPE_UNSIGNED_EXTRINSICS) {
-          sourceData = stats.chartDataFailed || []
+        if (dataType === DATA_TYPE_REGULAR) {
+          sourceData = stats.chartDataRegular || []
+        } else if (dataType === DATA_TYPE_SYSTEM) {
+          sourceData = stats.chartDataSystem || []
         } else {
           sourceData = stats.chartData || []
         }
@@ -122,9 +122,9 @@ export function NetworkCharts() {
   }
 
   const getChartColor = () => {
-    if (dataType === DATA_TYPE_SUCCESS) return COLOR_SUCCESS
+    if (dataType === DATA_TYPE_REGULAR) return COLOR_REGULAR
     if (dataType === DATA_TYPE_TRANSACTIONS) return COLOR_TRANSACTIONS
-    return COLOR_FAILED
+    return COLOR_SYSTEM
   }
 
   // Custom tooltip để hiện thông tin chi tiết
@@ -187,26 +187,26 @@ export function NetworkCharts() {
                   Transactions
                 </button>
                 <button
-                  onClick={() => setDataType(DATA_TYPE_SUCCESS)}
+                  onClick={() => setDataType(DATA_TYPE_REGULAR)}
                   className={`px-3 py-1.5 text-xs font-medium rounded transition-colors ${
-                    dataType === DATA_TYPE_SUCCESS
+                    dataType === DATA_TYPE_REGULAR
                       ? 'bg-green-600 text-white'
                       : 'text-muted-foreground hover:text-foreground'
                   }`}
                   suppressHydrationWarning
                 >
-                  Success
+                  Regular Network
                 </button>
                 <button
-                  onClick={() => setDataType(DATA_TYPE_UNSIGNED_EXTRINSICS)}
+                  onClick={() => setDataType(DATA_TYPE_SYSTEM)}
                   className={`px-3 py-1.5 text-xs font-medium rounded transition-colors whitespace-nowrap ${
-                    dataType === DATA_TYPE_UNSIGNED_EXTRINSICS
+                    dataType === DATA_TYPE_SYSTEM
                       ? 'bg-red-500 text-white'
                       : 'text-muted-foreground hover:text-foreground'
                   }`}
                   suppressHydrationWarning
                 >
-                  Unsigned Extrinsics
+                  System Network
                 </button>
               </div>
 
