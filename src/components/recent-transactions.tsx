@@ -8,34 +8,9 @@ import { Activity, ArrowRight } from "lucide-react"
 import Link from "next/link"
 import { formatDateTimeWithRelative } from '@/lib/utils'
 import { transactionAPI } from '@/lib/api'
+import { Transaction, RawTransaction, BufferData } from '@/lib/transaction-types'
 
-interface BufferData {
-  type: 'Buffer'
-  data: number[]
-}
 
-interface RawTransaction {
-  id?: string
-  hash: string | BufferData
-  status?: string
-  apply_stage?: string
-  blockHeight?: number
-  blockId?: string
-  timestamp?: string | number
-  protocolVersion?: string | number
-  size?: string | number
-}
-
-interface Transaction {
-  id: string
-  hash: string
-  status: string
-  blockHeight?: number
-  blockId?: string
-  timestamp?: number
-  protocolVersion?: number
-  size?: number
-}
 
 export function RecentTransactions() {
   const [txs, setTxs] = useState<Transaction[]>([])
@@ -57,23 +32,17 @@ export function RecentTransactions() {
             hashStr = '0x' + Buffer.from((tx.hash as BufferData).data).toString('hex')
           }
 
-          // ✅ Normalize status to known values
-          let statusStr = String(tx.status || tx.apply_stage || '').toLowerCase()
-          if (statusStr.includes('fail')) statusStr = 'failed'
-          else if (statusStr.includes('succ')) statusStr = 'success'
-          else if (statusStr.includes('pend')) statusStr = 'pending'
-          else statusStr = statusStr || 'pending'
-
           return {
             id: tx.id || '',
             hash: hashStr,
-            status: statusStr,
-            blockHeight: tx.blockHeight,
+            variant: tx.variant || 'System',
+            transactionResult: tx.regularTransaction?.transactionResult,
+            blockHeight: tx.blockHeight ?? (tx.blockId ? parseInt(tx.blockId) : undefined),
             blockId: tx.blockId,
             timestamp: tx.timestamp ? Number(tx.timestamp) : undefined,
             protocolVersion: tx.protocolVersion ? Number(tx.protocolVersion) : undefined,
             size: tx.size ? Number(tx.size) : undefined,
-          }
+          } as Transaction
         })
         setTxs(normalizedData)
       } catch (error) {
@@ -111,9 +80,9 @@ export function RecentTransactions() {
             <div className="space-y-2">
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
-                  {tx.blockHeight ? (
+                  {tx.blockId ? (
                     <Badge variant="outline" className="font-mono">
-                      #{tx.blockHeight}
+                      #{tx.blockId}
                     </Badge>
                   ) : (
                     <Badge variant="outline" className="font-mono">
@@ -127,16 +96,14 @@ export function RecentTransactions() {
                   )}
                 </div>
                 <Badge
-                  variant={tx.status === "success" ? "default" : tx.status === "failed" ? "destructive" : "secondary"}
+                  variant={tx.variant === "Regular" ? "default" : "secondary"}
                   className={
-                    tx.status === "success"
-                      ? "bg-green-500/20 text-green-500 border-green-500/30"
-                      : tx.status === "failed"
-                        ? "bg-red-500/20 text-red-500 border-red-500/30"
-                        : "bg-yellow-500/20 text-yellow-500 border-yellow-500/30"
+                    tx.variant === "Regular"
+                      ? "bg-blue-500/20 text-blue-400 border-blue-500/30"
+                      : "bg-purple-500/20 text-purple-400 border-purple-500/30"
                   }
                 >
-                  {tx.status}
+                  {tx.variant}
                 </Badge>
               </div>
 

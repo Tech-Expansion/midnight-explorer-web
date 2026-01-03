@@ -53,7 +53,7 @@ export function BlocksList({ initialCursor, page = 1 }: BlocksListProps) {
     }
 
     fetchData()
-  }, [cursor, latestBlock])
+  }, [cursor])
 
   if (loading) {
     return (

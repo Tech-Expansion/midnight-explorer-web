@@ -4,21 +4,11 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { CheckCircle2, AlertCircle } from "lucide-react"
 import { formatDateTime } from "@/lib/utils"
 import { transactionAPI } from "@/lib/api"
 import { Pagination, SimplePagination } from "@/components/pagination"
 import { useNetworkStats } from "@/hooks/useNetworkStats"
-
-interface Transaction {
-  id?: string
-  hash: string
-  status: 'success' | 'failed' | 'failure'
-  blockHeight?: number
-  protocolVersion: number
-  timestamp?: string | number
-  size?: number
-}
+import { Transaction } from "@/lib/transaction-types"
 
 interface TransactionsListProps {
   initialCursor?: string
@@ -64,21 +54,18 @@ export function TransactionsList({ initialCursor, searchHash, searchPage = 1 }: 
     fetchData()
   }, [initialCursor, searchHash, searchPage])
 
-  const getStatusBadge = (status: Transaction['status']) => {
-    switch (status) {
-      case "success":
+  const getVariantBadge = (variant?: Transaction['variant']) => {
+    switch (variant) {
+      case "Regular":
         return (
-          <Badge className="bg-green-500/10 text-green-400 border-green-500/20 hover:bg-green-500/20">
-            <CheckCircle2 className="h-3 w-3 mr-1" />
-            Success 
+          <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">
+            {variant}
           </Badge>
         )
-      case "failed":
-      case "failure":
+      case "System":
         return (
-          <Badge className="bg-red-500/10 text-red-400 border-red-500/20 hover:bg-red-500/20">
-            <AlertCircle className="h-3 w-3 mr-1" />
-            Failed
+          <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30">
+            {variant}
           </Badge>
         )
       default:
@@ -103,7 +90,7 @@ export function TransactionsList({ initialCursor, searchHash, searchPage = 1 }: 
             <thead>
               <tr className="border-b border-border">
                 <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Txn Hash</th>
-                <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Status</th>
+                <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Variant</th>
                 <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Block</th>
                 <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Protocol</th>
                 <th className="text-center pr-24 p-4 text-sm font-semibold text-muted-foreground">Age</th>
@@ -119,17 +106,17 @@ export function TransactionsList({ initialCursor, searchHash, searchPage = 1 }: 
                         href={`/tx/${tx.hash}`}
                         className="text-blue-400 hover:text-blue-300 transition-colors font-mono text-sm"
                       >
-                        0x{tx.hash}
+                        {tx.hash}
                       </Link>
                     </td>
-                    <td className="p-4">{getStatusBadge(tx.status)}</td>
+                    <td className="p-4">{getVariantBadge(tx.variant)}</td>
                     <td className="p-4">
-                      {tx.blockHeight ? (
+                      {tx.blockId ? (
                         <Link
-                          href={`/block/${tx.blockHeight}`}
+                          href={`/block/${tx.blockId}`}
                           className="text-purple-400 hover:text-purple-300 transition-colors font-mono text-sm"
                         >
-                          #{tx.blockHeight}
+                          #{tx.blockId}
                         </Link>
                       ) : (
                         <span className="text-muted-foreground text-sm">Pending</span>
