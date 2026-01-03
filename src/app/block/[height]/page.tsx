@@ -4,13 +4,14 @@ import { Footer } from "@/components/footer"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { ChevronLeft, ChevronRight, ArrowLeft, Clock, CheckCircle2, AlertCircle } from "lucide-react"
+import { ChevronLeft, ChevronRight, ArrowLeft, Clock } from "lucide-react"
 import Link from "next/link"
 import { formatDistanceToNow } from "@/lib/utils"
-import { blockAPI, transactionAPI } from "@/lib/api"
-import { notFound, redirect } from "next/navigation"
+import { blockAPI } from "@/lib/api"
+import { notFound } from "next/navigation"
 import { CopyButton } from "@/components/ui/copy-button"
-import { Transaction } from "@/lib/types"
+import { BlockResponse } from "@/lib/transaction-types"
+import { BlockTransactionsList } from "@/components/block-transactions-list"
 
 interface PageProps {
   params: Promise<{ height: string }>
@@ -23,11 +24,11 @@ export const dynamic = "force-dynamic"
 export default async function BlockPage({ params }: PageProps) {
   // AWAIT params first
   const { height } = await params;
-  console.log('Fetching block with height/hash:', height);
+  console.log('Fetching block with height:', height);
 
   try {
     // Fetch block details from API
-    const data = await blockAPI.getBlock<{ block: { height: number; hash: string; timestamp: string | number; txCount: number } }>(height)
+    const data = await blockAPI.getBlock<BlockResponse>(height)
     console.log('Block data received:', data);
     
     if (!data.block) {
@@ -36,49 +37,12 @@ export default async function BlockPage({ params }: PageProps) {
     }
 
     const { block } = data
-    const blockHeight = block.height
 
-    // Fetch transactions for testnet
-    let transactions: Transaction[] = []
-    let hasMoreTransactions = false
-    
-    if (block.txCount > 0) {
-      try {
-        const txData = await blockAPI.getBlockTransactions<{ transactions: Transaction[] }>(height, { limit: 20 })
-        transactions = txData.transactions || []
-        hasMoreTransactions = block.txCount > 20
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      } catch (_error) {
-        console.error('Error fetching transactions:', _error)
-      }
-    }
-
-    const getStatusBadge = (status: string) => {
-      switch (status) {
-        case "success":
-          return (
-            <Badge className="bg-green-500/10 text-green-400 border-green-500/20">
-              <CheckCircle2 className="h-3 w-3 mr-1" />
-              Success
-            </Badge>
-          )
-        case "pending":
-          return (
-            <Badge className="bg-amber-500/10 text-amber-400 border-amber-500/20">
-              <Clock className="h-3 w-3 mr-1 animate-pulse" />
-              Pending
-            </Badge>
-          )
-        case "failed":
-          return (
-            <Badge className="bg-red-500/10 text-red-400 border-red-500/20">
-              <AlertCircle className="h-3 w-3 mr-1" />
-              Failed
-            </Badge>
-          )
-        default:
-          return null
-      }
+    // Convert ledger_parameters buffer to hex string
+    let ledgerParametersHex = ''
+    if (block.ledger_parameters && block.ledger_parameters.type === 'Buffer') {
+      const buffer = Buffer.from(block.ledger_parameters.data);
+      ledgerParametersHex = '0x' + buffer.toString('hex');
     }
 
     return (
@@ -107,14 +71,14 @@ export default async function BlockPage({ params }: PageProps) {
                       Back
                     </Button>
                   </Link>
-                  {blockHeight > 0 && (
-                    <Link href={`/block/${blockHeight - 1}`}>
+                  {block.height > 0 && (
+                    <Link href={`/block/${block.height - 1}`}>
                       <Button variant="outline" size="icon" className="border-border">
                         <ChevronLeft className="h-4 w-4" />
                       </Button>
                     </Link>
                   )}
-                  <Link href={`/block/${blockHeight + 1}`}>
+                  <Link href={`/block/${block.height + 1}`}>
                     <Button variant="outline" size="icon" className="border-border">
                       <ChevronRight className="h-4 w-4" />
                     </Button>
@@ -178,9 +142,31 @@ export default async function BlockPage({ params }: PageProps) {
                       <CopyButton text={block.hash} />
                     </div>
                   </div>
+                  <div className="flex items-start justify-between py-2 border-b border-border/50">
+                    <span className="text-muted-foreground">Parent Hash</span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-xs text-purple-400 break-all max-w-md text-right">
+                        {block.parent_hash}
+                      </span>
+                      <CopyButton text={block.parent_hash} />
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between py-2 border-b border-border/50">
+                    <span className="text-muted-foreground">Author</span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-xs text-green-400 break-all max-w-md text-right">
+                        {block.author}
+                      </span>
+                      <CopyButton text={block.author} />
+                    </div>
+                  </div>
                   <div className="flex items-center justify-between py-2 border-b border-border/50">
                     <span className="text-muted-foreground">Timestamp</span>
-                    <span className="font-medium">{new Date(block.timestamp).toLocaleString()}</span>
+                    <span className="font-medium">{new Date(Number(block.timestamp)).toLocaleString()}</span>
+                  </div>
+                  <div className="flex items-center justify-between py-2 border-b border-border/50">
+                    <span className="text-muted-foreground">Protocol Version</span>
+                    <span className="font-mono">v{block.protocol_version}</span>
                   </div>
                   <div className="flex items-center justify-between py-2">
                     <span className="text-muted-foreground">Transaction Count</span>
@@ -189,70 +175,47 @@ export default async function BlockPage({ params }: PageProps) {
                 </div>
               </Card>
 
-              {/* Transactions Testnet */}
-              {block.txCount > 0 && (
+              {/* Ledger Parameters */}
+              {ledgerParametersHex && (
                 <Card className="p-6 bg-card/50 border-border">
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-xl font-semibold text-purple-400">
-                      Transactions ({transactions.length}{hasMoreTransactions ? ` of ${block.txCount}` : ''})
-                    </h2>
-                    
-                    <Link
-                      href={`/block/${block.height}/txs`}
-                      className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
-                    >
-                      View All →
-                    </Link>
+                  <h2 className="text-xl font-semibold mb-4 text-purple-400">Ledger Parameters</h2>
+                  <div className="space-y-3">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 min-w-0 bg-background/50 rounded-lg p-4 max-h-[200px] overflow-y-auto">
+                        <p className="text-xs font-mono break-all text-muted-foreground leading-relaxed">
+                          {ledgerParametersHex}
+                        </p>
+                      </div>
+                      <CopyButton text={ledgerParametersHex} className="border-border flex-shrink-0" />
+                    </div>
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <span>Size: {ledgerParametersHex.length} characters ({Math.ceil((ledgerParametersHex.length - 2) / 2)} bytes)</span>
+                      <span className="text-muted-foreground/70">Scroll to view full data →</span>
+                    </div>
                   </div>
-                  
-                  {transactions.length > 0 ? (
-                    <div className="space-y-3">
-                      {transactions.map((tx, index) => (
-                        <Link
-                          key={`${tx.hash}-${index}`}
-                          href={`/tx/${tx.hash}`}
-                          className="block p-4 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors border border-border/50"
-                        >
-                          <div className="flex items-start justify-between gap-4">
-                            <div className="flex-1 min-w-0 space-y-2">
-                              <div className="flex items-center gap-2">
-                                <span className="text-sm font-mono text-blue-400 truncate">
-                                  {tx.hash}
-                                </span>
-                                {getStatusBadge(tx.status)}
-                              </div>
-                              
-                              <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                                {tx.timestamp && (
-                                  <span>
-                                    {formatDistanceToNow(new Date(tx.timestamp))} ago
-                                  </span>
-                                )}
-                                {tx.size && (
-                                  <span>{tx.size} bytes</span>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        </Link>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-8 text-muted-foreground">
-                      <p>Loading transactions...</p>
-                    </div>
-                  )}
                 </Card>
               )}
 
-              {block.txCount === 0 && (
-                <Card className="p-6 bg-card/50 border-border">
-                  <h2 className="text-xl font-semibold mb-4 text-purple-400">Transactions</h2>
+              {/* Transactions Info */}
+              <Card className="p-6 bg-card/50 border-border">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h2 className="text-xl font-semibold mb-2 text-purple-400">Transactions</h2>
+                    {block.txCount > 0 && (
+                      <Link href={`/block/${block.height}/txs`} className="text-sm text-blue-400 hover:text-blue-300">
+                        view all transactions
+                      </Link>
+                    )}
+                  </div>
+                </div>
+                {block.txCount === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
                     <p>No transactions in this block</p>
                   </div>
-                </Card>
-              )}
+                ) : (
+                  <BlockTransactionsList height={block.height} txCount={block.txCount} />
+                )}
+              </Card>
             </div>
           </main>
 
@@ -262,14 +225,6 @@ export default async function BlockPage({ params }: PageProps) {
     )
   } catch (_error) {
     console.error('Error fetching block:', _error)
-    
-    // Try transaction fallback
-    try {
-      await transactionAPI.getTransaction(height)
-      redirect(`/tx/${height}`)
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (_txError) {
-      notFound()
-    }
+    notFound()
   }
 }

@@ -15,25 +15,25 @@ export const TIME_RANGES = {
 } as const
 
 // Data type constants
-export const DATA_TYPE_SUCCESS = 'success' as const
-export const DATA_TYPE_UNSIGNED_EXTRINSICS = 'unsigned-extrinsics' as const
+export const DATA_TYPE_REGULAR = 'regular' as const
+export const DATA_TYPE_SYSTEM = 'system' as const
 export const DATA_TYPE_TRANSACTIONS = 'transactions' as const
 
 export const DATA_TYPES = {
-  SUCCESS: DATA_TYPE_SUCCESS,
-  UNSIGNED_EXTRINSICS: DATA_TYPE_UNSIGNED_EXTRINSICS,
+  REGULAR: DATA_TYPE_REGULAR,
+  SYSTEM: DATA_TYPE_SYSTEM,
   TRANSACTIONS: DATA_TYPE_TRANSACTIONS
 } as const
 
 // Color constants
-export const COLOR_SUCCESS = '#10b981' // green
+export const COLOR_REGULAR = '#10b981' // green
 export const COLOR_TRANSACTIONS = '#3b82f6' // blue
-export const COLOR_FAILED = '#ef4444' // red
+export const COLOR_SYSTEM = '#ef4444' // red
 
 export const CHART_COLORS = {
-  SUCCESS: COLOR_SUCCESS,
+  REGULAR: COLOR_REGULAR,
   TRANSACTIONS: COLOR_TRANSACTIONS,
-  FAILED: COLOR_FAILED
+  SYSTEM: COLOR_SYSTEM
 } as const
 
 // Label constants - Time range labels
