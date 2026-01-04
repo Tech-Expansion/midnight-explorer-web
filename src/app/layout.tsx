@@ -9,6 +9,8 @@ import { cn } from "@/lib/utils";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import { LoadingFallback } from "@/components/loading-fallback";
 import { HighlightNotification } from "@/components/highlight-notification";
+import { TokenProvider } from "@/components/token-provider";
+import { QueryProvider } from "@/components/query-provider";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.midnightexplorer.com"),
@@ -58,9 +60,13 @@ export default function RootLayout({
           `font-sans ${GeistSans.variable} ${GeistMono.variable} antialiased`
         )}
       >
-        <HighlightNotification />
-        <Suspense fallback={<LoadingFallback />}>{children}</Suspense>
-        <Analytics />
+        <QueryProvider>
+          <TokenProvider>
+            <HighlightNotification />
+            <Suspense fallback={<LoadingFallback />}>{children}</Suspense>
+            <Analytics />
+          </TokenProvider>
+        </QueryProvider>
       </body>
       <GoogleAnalytics gaId="G-QT1M3GG0MM" />
     </html>

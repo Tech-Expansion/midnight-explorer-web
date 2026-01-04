@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { fetchWithTokenRetry } from '@/lib/token-client'
 
 interface SideChainStatus {
   epoch: number
@@ -17,57 +18,38 @@ interface NetworkData {
   sidechainStatus: SideChainStatus | null
   latestBlock: Block | null
   totalTransactions: number | null
-  loading: boolean
-  error: string | null
 }
 
+/**
+ * Fetch network stats (sidechain status, latest block, tx count)
+ * Token is automatically handled by TokenProvider
+ */
 export function useNetworkStats() {
-  const [data, setData] = useState<NetworkData>({
-    sidechainStatus: null,
-    latestBlock: null,
-    totalTransactions: null,
-    loading: true,
-    error: null
-  })
+  return useQuery<NetworkData>({
+    queryKey: ['networkStats'],
+    queryFn: async () => {
+      // Fetch 3 APIs in parallel
+      const [statusRes, blocksRes, txCountRes] = await Promise.all([
+        fetchWithTokenRetry('/api/sidechainstatus'),
+        fetchWithTokenRetry('/api/blocks/recent'),
+        fetchWithTokenRetry('/api/transactions/count')
+      ])
 
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        // ✅ Fetch 3 APIs in parallel
-        const [statusRes, blocksRes, txCountRes] = await Promise.all([
-          fetch('/api/sidechainstatus'),
-          fetch('/api/blocks/recent'),
-          fetch('/api/transactions/count')
-        ])
-
-        if (!statusRes.ok || !blocksRes.ok || !txCountRes.ok) {
-          throw new Error('Failed to fetch data')
-        }
-
-        const statusData = await statusRes.json()
-        const blocksData = await blocksRes.json()
-        const txCountData = await txCountRes.json()
-
-        setData({
-          sidechainStatus: statusData.sidechain,
-          latestBlock: blocksData.blocks?.[0] || null,
-          totalTransactions: txCountData.count || null,
-          loading: false,
-          error: null
-        })
-      } catch (err) {
-        setData(prev => ({
-          ...prev,
-          loading: false,
-          error: 'Failed to load network data'
-        }))
-        console.error('Error fetching network stats:', err)
+      if (!statusRes.ok || !blocksRes.ok || !txCountRes.ok) {
+        throw new Error('Failed to fetch network stats')
       }
-    }
 
-    fetchData()
+      const statusData = await statusRes.json()
+      const blocksData = await blocksRes.json()
+      const txCountData = await txCountRes.json()
 
-  }, [])
-
-  return data
+      return {
+        sidechainStatus: statusData.sidechain,
+        latestBlock: blocksData.blocks?.[0] || null,
+        totalTransactions: txCountData.count || null,
+      }
+    },
+    refetchInterval: 30000, // Refresh every 30 seconds
+    staleTime: 10000,
+  })
 } 

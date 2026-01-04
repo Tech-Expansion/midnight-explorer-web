@@ -31,7 +31,8 @@ export function TransactionsList({ initialCursor, searchHash, searchPage = 1 }: 
   const [nextCursor, setNextCursor] = useState<string | undefined>()
   const [pagination, setPagination] = useState<{ page: number; pageSize: number; totalCount: number; totalPages: number } | null>(null)
   const [loading, setLoading] = useState(true)
-  const { totalTransactions } = useNetworkStats()
+  const { data } = useNetworkStats()
+  const totalTransactions = data?.totalTransactions
 
   const searchMode = !!searchHash
   const pageSize = 20

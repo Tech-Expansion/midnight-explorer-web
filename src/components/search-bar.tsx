@@ -51,6 +51,8 @@ export function SearchBar() {
         setSearchResults] = useState<SearchResult[]>([])
     const [showDropdown,
         setShowDropdown] = useState(false)
+    const [searchError,
+        setSearchError] = useState<string | null>(null)
     const dropdownRef = useRef<HTMLDivElement>(null)
     const router = useRouter()
 
@@ -70,10 +72,11 @@ export function SearchBar() {
         if (!searchQuery.trim())
             return
 
-        const cleanQuery = searchQuery.trim()
+        const cleanQuery = searchQuery.trim().replace(/,/g, '')
         setIsSearching(true)
         setSearchResults([])
         setShowDropdown(false)
+        setSearchError(null)
 
         try {
             const results: SearchResult[] = []
@@ -105,7 +108,7 @@ export function SearchBar() {
                         setShowDropdown(true)
                     }
                 } else {
-                    alert('Transaction not found')
+                    setSearchError('Transaction not found')
                 }
                 setIsSearching(false)
                 return
@@ -121,7 +124,7 @@ export function SearchBar() {
                     setSearchResults(results)
                     setShowDropdown(true)
                 } else {
-                    alert('Block not found')
+                    setSearchError('Block not found')
                 }
                 setIsSearching(false)
                 return
@@ -137,7 +140,7 @@ export function SearchBar() {
                     setSearchResults(results)
                     setShowDropdown(true)
                 } else {
-                    alert('Contract not found')
+                    setSearchError('Contract not found')
                 }
                 setIsSearching(false)
                 return
@@ -159,7 +162,7 @@ export function SearchBar() {
                     setSearchResults(results)
                     setShowDropdown(true)
                 } else {
-                    alert('Pool not found')
+                    setSearchError('Pool not found')
                 }
                 setIsSearching(false)
                 return
@@ -167,50 +170,17 @@ export function SearchBar() {
 
             // If "all" is selected, smart detection
             if (searchType === SEARCH_TYPE_ALL) {
-                // Check if it's a number (block height)
-                if (isBlockHeight(cleanQuery)) {
-                    const blockResult = await checkBlock(cleanQuery)
-                    if (blockResult.found && blockResult.data) {
-                        results.push({ type: RESULT_TYPE_BLOCK, block: blockResult.data })
-                    }
-                    if (results.length > 0) {
-                        setSearchResults(results)
-                        setShowDropdown(true)
-                    } else {
-                        alert('Block not found')
-                    }
-                    setIsSearching(false)
-                    return
-                }
-
-                // Check if it's a contract address (70 chars without 0x, or 72 chars with 0x)
-                if (isContractAddress(cleanQuery)) {
-                    const contractResult = await checkContract(cleanQuery)
-                    if (contractResult.found && contractResult.data) {
-                        results.push({ type: RESULT_TYPE_CONTRACT, contract: contractResult.data })
-                    }
-                    if (results.length > 0) {
-                        setSearchResults(results)
-                        setShowDropdown(true)
-                    } else {
-                        alert('Contract not found')
-                    }
-                    setIsSearching(false)
-                    return
-                }
-
-                // Check if it looks like a block/tx hash (64 chars)
+                // Check if it looks like a tx/block/contract hash (64 chars)
                 if (isHexHash(cleanQuery)) {
-                    // Check all types in parallel
-                    const [txResult,
-                        poolResult,
-                        blockResult] = await Promise.all([checkTransaction(cleanQuery), searchPool(cleanQuery), checkBlock(cleanQuery)])
+                    // Check all types in parallel: TX first, then Contract, then Block, then Pool
+                    const [txResult, poolResult, blockResult, contractResult] = await Promise.all([
+                        checkTransaction(cleanQuery),
+                        searchPool(cleanQuery),
+                        checkBlock(cleanQuery),
+                        checkContract(cleanQuery)
+                    ])
 
-                    if (blockResult.found && blockResult.data) {
-                        results.push({ type: RESULT_TYPE_BLOCK, block: blockResult.data })
-                    }
-
-                    // Handle multiple transactions
+                    // Check TRANSACTION first
                     if (txResult.found && txResult.results && txResult.results.length > 0) {
                         const totalCount = txResult.count || txResult.results.length
 
@@ -233,6 +203,7 @@ export function SearchBar() {
                         }
                     }
 
+                    // Check POOL second
                     if (poolResult.found && poolResult.results) {
                         // Show up to 5 pools in dropdown
                         const displayPools = poolResult
@@ -243,11 +214,53 @@ export function SearchBar() {
                         })
                     }
 
+                    // Check BLOCK third
+                    if (blockResult.found && blockResult.data) {
+                        results.push({ type: RESULT_TYPE_BLOCK, block: blockResult.data })
+                    }
+
+                    // Check CONTRACT fourth
+                    if (contractResult.found && contractResult.data) {
+                        results.push({ type: RESULT_TYPE_CONTRACT, contract: contractResult.data })
+                    }
+
                     if (results.length > 0) {
                         setSearchResults(results)
                         setShowDropdown(true)
                     } else {
-                        alert('Hash not found in blocks, transactions, or pools')
+                        setSearchError('Hash not found in transactions, contracts, blocks, or pools')
+                    }
+                    setIsSearching(false)
+                    return
+                }
+
+                // Check if it's a contract address (70 chars without 0x, or 72 chars with 0x)
+                if (isContractAddress(cleanQuery)) {
+                    const contractResult = await checkContract(cleanQuery)
+                    if (contractResult.found && contractResult.data) {
+                        results.push({ type: RESULT_TYPE_CONTRACT, contract: contractResult.data })
+                    }
+                    if (results.length > 0) {
+                        setSearchResults(results)
+                        setShowDropdown(true)
+                    } else {
+                        setSearchError('Contract not found')
+                    }
+                    setIsSearching(false)
+                    return
+                }
+
+                // Check if it's a number (block height)
+                if (isBlockHeight(cleanQuery)) {
+                    const blockResult = await checkBlock(cleanQuery)
+                    if (blockResult.found && blockResult.data) {
+                        results.push({ type: RESULT_TYPE_BLOCK, block: blockResult.data })
+                    }
+                    if (results.length > 0) {
+                        setSearchResults(results)
+                        setShowDropdown(true)
+                    } else {
+                        setSearchError('Block not found')
                     }
                     setIsSearching(false)
                     return
@@ -267,13 +280,13 @@ export function SearchBar() {
                     setSearchResults(results)
                     setShowDropdown(true)
                 } else {
-                    alert('No results found. Please enter a valid block height, transaction hash, contract address, or pool name/ticker')
+                    setSearchError('No results found. Please enter a valid block height, transaction hash, contract address, or pool name/ticker')
                 }
                 setIsSearching(false)
             }
         } catch (error) {
             console.error('Search error:', error)
-            alert('Search failed. Please try again.')
+            setSearchError('Search failed. Please try again.')
             setIsSearching(false)
         }
     }
@@ -458,7 +471,7 @@ export function SearchBar() {
                             type="text"
                             placeholder="Search by Hash / Height / Contract Address / Pool Name / AuraPubkey"
                             value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
+                            onChange={(e) => setSearchQuery(e.target.value.replace(/,/g, ''))}
                             className="pl-10 bg-card border-border"
                             suppressHydrationWarning
                         /> {/* Search Results Dropdown */}
@@ -494,6 +507,13 @@ export function SearchBar() {
 
                 </div>
             </form>
+
+            {/* Error Message */}
+            {searchError && (
+                <div className="mt-3 p-3 bg-red-500/10 border border-red-500/30 rounded-md">
+                    <p className="text-red-400 text-sm">{searchError}</p>
+                </div>
+            )}
         </div>
     )
 }

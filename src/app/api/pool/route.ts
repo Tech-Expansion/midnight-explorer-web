@@ -14,6 +14,6 @@ export async function GET(request: NextRequest) {
 
   return proxyToExternalAPI(
     request,
-    `/pool?${params.toString()}`
+    `/pools?${params.toString()}`
   )
 }

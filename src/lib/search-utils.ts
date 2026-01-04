@@ -39,13 +39,11 @@ export async function checkBlock(query: string): Promise<{
   height?: string
   data?: BlockResult
 }> {
-  const cleanQuery = query.startsWith("0x") ? query.slice(2) : query
-
   try {
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS)
 
-    const response = await fetch(`/api/blocks/${encodeURIComponent(cleanQuery)}`, {
+    const response = await fetch(`/api/blocks/verify?hash=${encodeURIComponent(query)}`, {
       signal: controller.signal,
       cache: 'no-store'
     })
@@ -57,33 +55,21 @@ export async function checkBlock(query: string): Promise<{
     }
 
     const data = await response.json()
-    const height = data.block?.height ?? data.height
-    const hash = data.block?.hash ?? data.hash
-    const isSearchingByHeight = /^\d+$/.test(query)
-
-    if (!isSearchingByHeight && hash) {
-      const normalizedSearchHash = cleanQuery.toLowerCase()
-      const normalizedReturnedHash = (hash.startsWith("0x") ? hash.slice(2) : hash).toLowerCase()
-
-      if (normalizedSearchHash !== normalizedReturnedHash) {
-        return { found: false }
-      }
+    
+    if (!data.found) {
+      return { found: false }
     }
 
-    if (height !== undefined) {
-      return {
-        found: true,
-        height: String(height),
-        data: {
-          hash: hash || query,
-          height: Number(height),
-          timestamp: data.block?.timestamp ?? data.timestamp,
-          txCount: data.block?.txCount ?? data.txCount
-        }
+    return {
+      found: true,
+      height: String(data.value),
+      data: {
+        hash: data.hash || query,
+        height: Number(data.value),
+        timestamp: undefined,
+        txCount: undefined
       }
     }
-
-    return { found: false }
   } catch (error) {
     if (error instanceof Error && error.name === 'AbortError') {
       console.log('⏱️ Block check timeout')

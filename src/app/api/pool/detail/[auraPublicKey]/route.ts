@@ -9,6 +9,6 @@ export async function GET(
 
   return proxyToExternalAPI(
     request,
-    `/pool/detail/${auraPublicKey}`
+    `/pools/detail/${auraPublicKey}`
   )
 }

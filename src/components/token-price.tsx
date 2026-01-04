@@ -6,7 +6,7 @@ import Image from "next/image"
 import { useNightToken } from "@/hooks/useNightToken"
 
 export function TokenPrice() {
-  const { data: tokenData, loading, mounted } = useNightToken()
+  const { data: tokenData, isLoading } = useNightToken()
   const [isFlipping, setIsFlipping] = useState(false)
   const previousDataRef = useRef<typeof tokenData | null>(null)
 
@@ -18,7 +18,7 @@ export function TokenPrice() {
     previousDataRef.current = tokenData
   }, [tokenData])
 
-  if (!mounted || loading || !tokenData) {
+  if (isLoading || !tokenData) {
     return (
       <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-card/50 border border-border animate-pulse">
         <div className="w-6 h-6 bg-muted rounded-full" />

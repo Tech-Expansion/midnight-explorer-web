@@ -29,17 +29,21 @@ export function BlocksList({ initialCursor, page = 1 }: BlocksListProps) {
   const [blocks, setBlocks] = useState<Block[]>([])
   const [nextCursor, setNextCursor] = useState<string | undefined>()
   const [loading, setLoading] = useState(true)
-  const { latestBlock } = useNetworkStats()
+  const { data } = useNetworkStats()
+  const latestBlock = data?.latestBlock
 
   const pageSize = 20
   // Calculate total pages from latest block height
   const totalPages = latestBlock ? Math.ceil(latestBlock.height / pageSize) : 0
 
+  // Calculate cursor from page number
+  const cursor = page > 1 && latestBlock ? latestBlock.height - (page - 1) * pageSize : initialCursor
+
   useEffect(() => {
     async function fetchData() {
       try {
         setLoading(true)
-        const response: { items: Block[]; nextCursor?: string } = await blockAPI.getBlocks(initialCursor)
+        const response: { items: Block[]; nextCursor?: string } = await blockAPI.getBlocks(cursor ? String(cursor) : undefined)
         setBlocks(response.items)
         setNextCursor(response.nextCursor)
       } catch (error) {
@@ -50,7 +54,7 @@ export function BlocksList({ initialCursor, page = 1 }: BlocksListProps) {
     }
 
     fetchData()
-  }, [initialCursor])
+  }, [cursor, latestBlock])
 
   if (loading) {
     return (

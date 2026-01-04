@@ -6,8 +6,12 @@ import { useNetworkStats } from "@/hooks/useNetworkStats"
 import { useEffect, useState } from "react"
 
 export function NetworkStats() {
-  const { sidechainStatus, latestBlock, totalTransactions, loading, error } = useNetworkStats()
+  const { data, isLoading, error } = useNetworkStats()
   const [timeUntilEpoch, setTimeUntilEpoch] = useState<string>('')
+
+  const sidechainStatus = data?.sidechainStatus
+  const latestBlock = data?.latestBlock
+  const totalTransactions = data?.totalTransactions
 
   // Calculate time until next epoch
   useEffect(() => {
@@ -54,38 +58,39 @@ export function NetworkStats() {
   const stats = [
     {
       label: "Current Epoch",
-      value: loading ? '...' : formatNumber(sidechainStatus?.epoch),
+      value: isLoading ? '...' : formatNumber(sidechainStatus?.epoch),
       trend: "neutral",
       icon: Calendar,
     },
     {
       label: "Current Slot",
-      value: loading ? '...' : formatNumber(sidechainStatus?.slot),
+      value: isLoading ? '...' : formatNumber(sidechainStatus?.slot),
       trend: "neutral",
       icon: Zap,
     },
     {
       label: "Total Blocks",
-      value: loading ? '...' : formatNumber(latestBlock?.height),
+      value: isLoading ? '...' : formatNumber(latestBlock?.height),
       change: latestBlock ? `#${latestBlock.height}` : 'Latest block',
       trend: "up",
       icon: Blocks,
     },
     {
       label: "Total Transactions",
-      value: loading ? '...' : formatNumber(totalTransactions),
+      value: isLoading ? '...' : formatNumber(totalTransactions),
       trend: "up",
       icon: Activity,
     },
     {
       label: "Next Epoch In",
-      value: loading ? '...' : timeUntilEpoch || 'N/A',
+      value: isLoading ? '...' : timeUntilEpoch || 'N/A',
       trend: "neutral",
       icon: Clock,
+      suppressHydration: true, // Time-based value
     },
     {
       label: "Avg Block Time",
-      value: loading ? '...' : calculateAvgBlockTime(),
+      value: isLoading ? '...' : calculateAvgBlockTime(),
       trend: "neutral",
       icon: TrendingUp,
     },
@@ -96,7 +101,7 @@ export function NetworkStats() {
       <section>
         <h2 className="text-2xl font-bold mb-4">Network Overview</h2>
         <Card className="p-8 text-center">
-          <p className="text-destructive">{error}</p>
+          <p className="text-destructive">{error.message}</p>
         </Card>
       </section>
     )
@@ -107,7 +112,7 @@ export function NetworkStats() {
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-2xl font-bold">Network Overview</h2>
         <div className="flex items-center gap-2">
-          {loading && (
+          {isLoading && (
             <span className="text-xs text-muted-foreground">Updating...</span>
           )}
           <span className="text-xs font-medium text-green-600 bg-green-100 px-3 py-1 rounded-full flex items-center gap-1">
@@ -132,7 +137,12 @@ export function NetworkStats() {
                 </div>
               </div>
               <div className="space-y-1">
-                <p className="text-2xl font-bold font-mono">{stat.value}</p>
+                <p 
+                  className="text-2xl font-bold font-mono"
+                  suppressHydrationWarning={stat.suppressHydration}
+                >
+                  {stat.value}
+                </p>
                 <p className="text-xs text-muted-foreground">{stat.label}</p>
                 {isNeutral && (
                   <p className="text-xs text-muted-foreground/70">{stat.change}</p>

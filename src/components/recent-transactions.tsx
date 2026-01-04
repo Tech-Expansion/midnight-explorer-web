@@ -121,7 +121,7 @@ export function RecentTransactions() {
                     </Badge>
                   )}
                   {tx.timestamp && (
-                    <span className="text-sm text-muted-foreground">
+                    <span className="text-sm text-muted-foreground" suppressHydrationWarning>
                       {formatDateTimeWithRelative(new Date(tx.timestamp))}
                     </span>
                   )}

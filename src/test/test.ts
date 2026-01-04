@@ -1,16 +1,53 @@
-// async function test(){
-//   try{
-//     const res = await fetch('http://localhost:3000/api/sidechainstatus', {
-//       method: 'GET',
-//       headers: {
-//         'Content-Type': 'application/json',
-//       }
-//     });
-//     const data = await res.json();
-//     console.log(data);
-//   }
-//   catch(e){
-//     console.error(e)
-//   }
-// }
-// test();
+
+interface SideChainStatus{
+    epoch: number,
+    slot: number,
+    nextEpochTimestamp: number
+}
+interface StatusResponse{
+    sidechain: SideChainStatus,
+    mainchain: MainchainStatus;
+}
+interface MainchainStatus {
+  epoch: number;
+  slot: number;
+  nextEpochTimestamp: number;
+}
+interface JsonRpcResponse {
+  id: number;
+  jsonrpc: string;
+  result: StatusResponse;
+}
+
+interface JsonRpcRequest {
+  jsonrpc: string;
+  id: number;
+  method: string;
+  params: string[];
+}
+async function main() {
+    const RPC_URL = 'https://rpc.preview.midnight.network/';
+    const requestBody: JsonRpcRequest = {
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'sidechain_getStatus',
+        params: []
+    };
+    try{
+        const res = await fetch(RPC_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(requestBody)
+        });
+        if (!res.ok) {
+            throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        const data: JsonRpcResponse = await res.json();
+        console.log('Sidechain Status:', data.result.sidechain);
+    } catch (error) {
+        console.error('Error fetching sidechain status:', error);
+    }
+}
+main();

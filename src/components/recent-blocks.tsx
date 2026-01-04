@@ -35,31 +35,42 @@ export function RecentBlocks({ blocks }: RecentBlocksProps) {
         <Link href={`/block/${block.height}`} className="block h-full">
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Badge variant="outline" className="font-mono">
+              <div className="flex items-center gap-2 flex-1 min-w-0">
+                <Badge variant="outline" className="font-mono flex-shrink-0">
                   #{block.height}
                 </Badge>
-                <span className="text-sm text-muted-foreground">
+                <span className="text-sm text-muted-foreground truncate" suppressHydrationWarning>
                   {formatDateTimeWithRelative(new Date(block.timestamp))}
                 </span>
               </div>
-              <span className="text-sm text-muted-foreground max-w-[160px] truncate mr-40">
+              <span className="text-sm text-muted-foreground flex-shrink-0 ml-2">
                 Author
               </span>
             </div>
 
-            <div className="flex items-center justify-between group/hash">
-              <p className="text-sm font-mono text-muted-foreground flex-1 select-all">
-                {`${block.hash.slice(0, 15)}...${block.hash.slice(-15)}`}
-              </p>
-              <span className="text-sm text-muted-foreground mr-10 max-w-[240px] truncate text-right flex-none">
-                {`${block.author.slice(0,15)}...${block.author.slice(-15)}`}
+            <div className="flex items-center justify-between group/hash gap-2">
+              {/* HASH + COPY */}
+              <div className="flex items-center gap-2 flex-1 min-w-0">
+                <p className="text-sm font-mono text-muted-foreground truncate">
+                  {`${block.hash.slice(0, 15)}...${block.hash.slice(-15)}`}
+                </p>
+                <div
+                  onClick={(e) => e.preventDefault()}
+                  className="opacity-50 group-hover/hash:opacity-100 transition-opacity flex-shrink-0"
+                >
+                  <CopyButton text={block.hash} className="h-5 w-5" />
+                </div>
+              </div>
+
+              {/* AUTHOR */}
+              <span className="text-sm text-muted-foreground truncate text-right flex-shrink-0 max-w-[100px] md:max-w-[240px]">
+                {`${block.author.slice(0, 15)}...${block.author.slice(-15)}`}
               </span>
-              <div 
+              <div
                 onClick={(e) => e.preventDefault()}
-                className="opacity-50 group-hover/hash:opacity-100 transition-opacity ml-2"
+                className="opacity-50 group-hover/hash:opacity-100 transition-opacity flex-shrink-0"
               >
-                <CopyButton text={block.hash} className="h-6 w-6" />
+                <CopyButton text={block.author} className="h-6 w-6" />
               </div>
             </div>
 

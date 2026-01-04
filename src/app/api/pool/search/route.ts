@@ -7,6 +7,6 @@ export async function GET(request: NextRequest) {
 
   return proxyToExternalAPI(
     request,
-    `/pool/search?q=${encodeURIComponent(q)}`
+    `/pools/search?q=${encodeURIComponent(q)}`
   )
 }

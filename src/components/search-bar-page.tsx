@@ -11,6 +11,7 @@ import { Card } from "@/components/ui/card"
 import {
   checkBlock,
   checkTransaction,
+  checkContract,
   searchPool,
   isContractAddress,
   isHexHash,
@@ -25,6 +26,7 @@ export function SearchBarPage({ searchType = "all" }: SearchBarProps) {
   const [selectedType, setSelectedType] = useState<typeof searchType>(searchType)
   const [searchQuery, setSearchQuery] = useState("")
   const [isSearching, setIsSearching] = useState(false)
+  const [searchError, setSearchError] = useState<string | null>(null)
   const router = useRouter()
 
   const getPlaceholder = () => {
@@ -47,9 +49,9 @@ export function SearchBarPage({ searchType = "all" }: SearchBarProps) {
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!searchQuery.trim()) return
-
-    const cleanQuery = searchQuery.trim()
+    const cleanQuery = searchQuery.trim().replace(/,/g, '')
     setIsSearching(true)
+    setSearchError(null)
 
     try {
       // If user selected Transaction
@@ -73,8 +75,7 @@ export function SearchBarPage({ searchType = "all" }: SearchBarProps) {
 
       // If user selected Contract
       if (selectedType === "contract") {
-        router.push(`/contracts/${cleanQuery}`)
-        setIsSearching(false)
+        await verifyAndNavigate(cleanQuery, 'contract')
         return
       }
 
@@ -86,41 +87,28 @@ export function SearchBarPage({ searchType = "all" }: SearchBarProps) {
 
       // If "all" is selected, smart detection
       if (selectedType === "all") {
-        // Check if it's a number (block height)
-        if (isBlockHeight(cleanQuery)) {
-          const result = await checkBlock(cleanQuery)
-          if (result.found) {
-            router.push(`/block/${result.height || cleanQuery}`)
+        // Check if it looks like a tx/block hash (64 hex chars)
+        if (isHexHash(cleanQuery)) {
+          // Check TRANSACTION first
+          const txResult = await checkTransaction(cleanQuery)
+          if (txResult.found) {
+            router.push(`/transactions?hash=${cleanQuery}`)
             setIsSearching(false)
             return
           }
-          alert('Block not found')
-          setIsSearching(false)
-          return
-        }
 
-        // Check if it's a contract address (70 chars without 0x, or 72 chars with 0x)
-        if (isContractAddress(cleanQuery)) {
-          router.push(`/contracts/${cleanQuery}`)
-          setIsSearching(false)
-          return
-        }
+          // Check CONTRACT second
+          const contractResult = await checkContract(cleanQuery)
+          if (contractResult.found) {
+            router.push(`/contracts/${cleanQuery}`)
+            setIsSearching(false)
+            return
+          }
 
-        // Check if it looks like a block/tx hash (64 chars)
-        if (isHexHash(cleanQuery)) {
-          // Check BLOCK first
+          // Check BLOCK third
           const blockResult = await checkBlock(cleanQuery)
           if (blockResult.found && blockResult.height) {
             router.push(`/block/${blockResult.height}`)
-            setIsSearching(false)
-            return
-          }
-
-          // Check transaction (now uses search API)
-          const txResult = await checkTransaction(cleanQuery)
-          if (txResult.found) {
-            // Navigate to transactions page to show all matching transactions
-            router.push(`/transactions?hash=${cleanQuery}`)
             setIsSearching(false)
             return
           }
@@ -133,7 +121,33 @@ export function SearchBarPage({ searchType = "all" }: SearchBarProps) {
             return
           }
 
-          alert('Hash not found in blocks, transactions, or pools')
+          setSearchError('Hash not found in transactions, contracts, blocks, or pools')
+          setIsSearching(false)
+          return
+        }
+
+        // Check if it's a contract address (70 chars without 0x, or 72 chars with 0x)
+        if (isContractAddress(cleanQuery)) {
+          const result = await checkContract(cleanQuery)
+          if (result.found) {
+            router.push(`/contracts/${cleanQuery}`)
+            setIsSearching(false)
+            return
+          }
+          setSearchError('Contract not found')
+          setIsSearching(false)
+          return
+        }
+
+        // Check if it's a number (block height)
+        if (isBlockHeight(cleanQuery)) {
+          const result = await checkBlock(cleanQuery)
+          if (result.found) {
+            router.push(`/block/${result.height || cleanQuery}`)
+            setIsSearching(false)
+            return
+          }
+          setSearchError('Block not found')
           setIsSearching(false)
           return
         }
@@ -150,23 +164,30 @@ export function SearchBarPage({ searchType = "all" }: SearchBarProps) {
           return
         }
 
-        alert('No results found. Please enter a valid block height, transaction hash, contract address, or pool name/ticker')
+        setSearchError('No results found. Please enter a valid block height, transaction hash, contract address, or pool name/ticker')
         setIsSearching(false)
       }
     } catch (error) {
       console.error('Search error:', error)
-      alert('Search failed. Please try again.')
+      setSearchError('Search failed. Please try again.')
       setIsSearching(false)
     }
   }
 
-  const verifyAndNavigate = async (query: string, type: 'tx' | 'block') => {
+  const verifyAndNavigate = async (query: string, type: 'tx' | 'block' | 'contract') => {
     if (type === 'block') {
       const result = await checkBlock(query)
       if (result.found && result.height) {
         router.push(`/block/${result.height}`)
       } else {
-        alert('Block not found')
+        setSearchError('Block not found')
+      }
+    } else if (type === 'contract') {
+      const result = await checkContract(query)
+      if (result.found) {
+        router.push(`/contracts/${query}`)
+      } else {
+        setSearchError('Contract not found')
       }
     } else {
       const result = await checkTransaction(query)
@@ -174,7 +195,7 @@ export function SearchBarPage({ searchType = "all" }: SearchBarProps) {
         // Always navigate to transactions page to show all matching transactions
         router.push(`/transactions?hash=${query}`)
       } else {
-        alert('Transaction not found')
+        setSearchError('Transaction not found')
       }
     }
     
@@ -196,7 +217,7 @@ export function SearchBarPage({ searchType = "all" }: SearchBarProps) {
         router.push(`/pool?q=${encodeURIComponent(query)}`)
       }
     } else {
-      alert('Pool not found')
+      setSearchError('Pool not found')
     }
     
     setIsSearching(false)
@@ -241,6 +262,13 @@ export function SearchBarPage({ searchType = "all" }: SearchBarProps) {
               {isSearching ? 'Searching...' : 'Search'}
             </Button>
           </div>
+
+          {/* Error Message */}
+          {searchError && (
+            <div className="mt-3 p-3 bg-red-500/10 border border-red-500/30 rounded-md">
+              <p className="text-red-400 text-sm">{searchError}</p>
+            </div>
+          )}
         </Card>
       </form>
   )

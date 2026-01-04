@@ -7,11 +7,11 @@ dotenv.config({ path: path.resolve(__dirname, "../../../../.env") });
 
 export async function GET(request: NextRequest) {
   try {
-    const response = await proxyToExternalAPI(request, "/api/token-price");
+    const response = await proxyToExternalAPI(request, "/tokens");
 
     if (!response.ok) {
       console.error(
-        `token-price API error: ${response.status} ${response.statusText}`
+        `token API error: ${response.status} ${response.statusText}`
       );
       return NextResponse.json(
         { error: "Failed to fetch token data", status: response.status },
