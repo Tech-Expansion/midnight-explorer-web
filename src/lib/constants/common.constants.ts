@@ -26,8 +26,8 @@ export const NETWORK_DOMAINS = {
 export const NETWORK_DISPLAY = {
   [NetworkType.PREVIEW]: {
     label: 'Preview',
-    color: 'text-purple-400',
-    iconColor: 'text-purple-400'
+    color: 'text-blue-400',
+    iconColor: 'text-blue-400'
   },
   [NetworkType.TESTNET]: {
     label: 'Testnet',
