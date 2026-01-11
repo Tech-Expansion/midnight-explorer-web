@@ -1,25 +1,23 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { useParams, notFound } from "next/navigation"
-import Link from "next/link"
-import Image from "next/image"
+import { Footer } from "@/components/footer"
 import { Header } from "@/components/header"
 import { Starfield } from "@/components/starfield"
-import { Footer } from "@/components/footer"
-import { TransactionDetail } from "@/lib/transaction-types"
-import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Copy, ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Card } from "@/components/ui/card"
 import { transactionAPI } from "@/lib/api"
+import { TransactionDetail } from "@/lib/transaction-types"
 import {
   copyToClipboard,
-  formatAddress,
-  formatValue,
   formatDate,
+  formatValue
 } from "@/lib/utils"
+import { ChevronDown, Copy } from "lucide-react"
+import Image from "next/image"
+import Link from "next/link"
+import { notFound, useParams } from "next/navigation"
+import { useEffect, useState } from "react"
 
 export default function TransactionPage() {
   const params = useParams()
@@ -106,13 +104,13 @@ export default function TransactionPage() {
                 <p className="font-mono text-sm break-all">{transaction.hash}</p>
               </div>
               <div className="flex items-center gap-3 flex-shrink-0">
-                {transaction.transaction_result && (
+                {transaction.transactionResult && (
                   <Badge className={`${
-                    transaction.transaction_result === 'Success'
+                    transaction.transactionResult === 'Success'
                       ? 'bg-emerald-600 hover:bg-emerald-700'
                       : 'bg-red-600 hover:bg-red-700'
                   }`}>
-                    {transaction.transaction_result}
+                    {transaction.transactionResult}
                   </Badge>
                 )}
                 <Button
@@ -277,7 +275,7 @@ export default function TransactionPage() {
                     <p className="text-xl font-mono font-semibold text-emerald-400">{totalOutput}</p>
                   </div>
                 </div>
-                {transaction.paid_fees && (
+                {transaction.paidFees && (
                   <div className="border-t border-slate-700 pt-3">
                     <p className="text-slate-400 text-sm mb-1">Paid Fees</p>
                     <div className="flex items-center justify-between">
@@ -285,11 +283,11 @@ export default function TransactionPage() {
                        
                         <span className="text-white text-sm font-semibold">DUST</span>
                       </div>
-                      <p className="text-xl font-mono font-semibold text-orange-400">{formatValue(transaction.paid_fees)}</p>
+                      <p className="text-xl font-mono font-semibold text-orange-400">{formatValue(transaction.paidFees)}</p>
                     </div>
                   </div>
                 )}
-                {transaction.estimated_fees && (
+                {transaction.estimatedFees && (
                   <div className="border-t border-slate-700 pt-3">
                     <p className="text-slate-400 text-sm mb-1">Estimated Fees</p>
                     <div className="flex items-center justify-between">
@@ -297,7 +295,7 @@ export default function TransactionPage() {
                         
                         <span className="text-white text-sm font-semibold">DUST</span>
                       </div>
-                      <p className="text-xl font-mono font-semibold text-yellow-400">{formatValue(transaction.estimated_fees)}</p>
+                      <p className="text-xl font-mono font-semibold text-yellow-400">{formatValue(transaction.estimatedFees)}</p>
                     </div>
                   </div>
                 )}

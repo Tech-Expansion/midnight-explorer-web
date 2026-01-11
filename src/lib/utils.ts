@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from 'clsx'
 import { twMerge } from 'tailwind-merge'
+import { TOKEN_DECIMALS } from './constants/common.constants'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -276,10 +277,12 @@ export function formatAddress(address: string) {
 
 /**
  * Format transaction value with decimals
+ * @param value The value in smallest unit (e.g., wei)
+ * @param decimals Number of decimals (default is TOKEN_DECIMALS.NIGHT)
+ * @returns Formatted value as string
  */
-export function formatValue(value: string) {
+export function formatValue(value: string, decimals: number = TOKEN_DECIMALS.NIGHT) {
   const num = BigInt(value)
-  const decimals = 6
   const divisor = BigInt(10 ** decimals)
   const integerPart = num / divisor
   const fractionalPart = num % divisor

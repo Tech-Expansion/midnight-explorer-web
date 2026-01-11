@@ -40,3 +40,7 @@ export const NETWORK_DISPLAY = {
     iconColor: 'text-green-400'
   }
 } as const
+
+export const TOKEN_DECIMALS = {
+  NIGHT: 6,
+} as const

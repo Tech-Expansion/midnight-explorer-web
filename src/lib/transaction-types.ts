@@ -3,200 +3,199 @@
  */
 
 export interface BufferData {
-  type: 'Buffer'
-  data: number[]
+  type: "Buffer";
+  data: number[];
 }
 
 export interface RegularTransaction {
-  transactionResult: string
-  merkleTreeRoot: string
-  startIndex: number
-  paidFees: string
-  estimatedFees: string
-  identifiers?: string[]
+  transactionResult: string;
+  merkleTreeRoot: string;
+  startIndex: number;
+  paidFees: string;
+  estimatedFees: string;
+  identifiers?: string[];
 }
 
 export interface MerklePathNode {
-  goes_left: boolean
-  sibling_hash: number[]
+  goesLeft: boolean;
+  siblingHash: number[];
 }
 
 export interface GenerationInfo {
-  ctime: number
-  dtime: number
-  nonce: string
-  owner: string
-  value: number
-  night_utxo_hash: string
+  ctime: number;
+  dtime: number;
+  nonce: string;
+  owner: string;
+  value: number;
+  nightUtxoHash: string;
 }
 
 export interface DustGenerationDtimeUpdate {
-  merkle_path: MerklePathNode[]
-  generation_info: GenerationInfo
-  generation_index: number
+  merklePath: MerklePathNode[];
+  generationInfo: GenerationInfo;
+  generationIndex: number;
 }
 
 export interface DustInitialUtxo {
   output: {
-    seq: number
-    ctime: number
-    nonce: string
-    owner: string
-    mt_index: number
-    backing_night: string
-    initial_value: number
-  }
-  generation_info: GenerationInfo
-  generation_index: number
+    seq: number;
+    ctime: number;
+    nonce: string;
+    owner: string;
+    mtIndex: number;
+    backingNight: string;
+    initialValue: number;
+  };
+  generationInfo: GenerationInfo;
+  generationIndex: number;
 }
 
 export interface LedgerEventAttribute {
-  DustInitialUtxo?: DustInitialUtxo
-  DustGenerationDtimeUpdate?: DustGenerationDtimeUpdate
+  DustInitialUtxo?: DustInitialUtxo;
+  DustGenerationDtimeUpdate?: DustGenerationDtimeUpdate;
 }
 
 export interface LedgerEvent {
-  variant: string
-  grouping: string
-  raw?: string
-  attributes?: LedgerEventAttribute
+  variant: string;
+  grouping: string;
+  raw?: string;
+  attributes?: LedgerEventAttribute;
 }
 
 export interface UnshieldedUtxo {
-  owner: string
-  tokenType?: string
-  value?: string
-  registeredForDustGeneration?: boolean
+  owner: string;
+  tokenType?: string;
+  value?: string;
+  registeredForDustGeneration?: boolean;
 }
 
 export interface ContractCall {
-  address: string
-  function: string
-  args?: unknown[]
-  result?: unknown
+  address: string;
+  function: string;
+  args?: unknown[];
+  result?: unknown;
 }
 
 export interface ContractDeploy {
-  address: string
-  bytecode?: string
-  constructor?: unknown
-  result?: unknown
+  address: string;
+  bytecode?: string;
+  constructor?: unknown;
+  result?: unknown;
 }
 
-export type ContractAction = 
-  | { variant: 'Call'; data: ContractCall }
-  | { variant: 'Deploy'; data: ContractDeploy }
+export type ContractAction =
+  | { variant: "Call"; data: ContractCall }
+  | { variant: "Deploy"; data: ContractDeploy };
 
 /**
  * Raw transaction from API response
  */
 export interface RawTransaction {
-  hash: string | BufferData
-  blockHeight: number | null
-  protocolVersion: number
-  variant: 'System' | 'Regular'
-  timestamp: number | string
-  size: number
+  hash: string | BufferData;
+  blockHeight: number | null;
+  protocolVersion: number;
+  variant: "System" | "Regular";
+  timestamp: number | string;
+  size: number;
 }
 
 /**
  * Normalized transaction for UI display (list views)
  */
 export interface Transaction {
-  id: string
-  hash: string
-  variant: 'System' | 'Regular'
-  transactionResult?: string
-  blockHeight?: number
-  blockId?: string
-  timestamp?: number
-  protocolVersion?: number
-  size?: number
+  id: string;
+  hash: string;
+  variant: "System" | "Regular";
+  transactionResult?: string;
+  blockHeight?: number;
+  blockId?: string;
+  timestamp?: number;
+  protocolVersion?: number;
+  size?: number;
 }
 
 /**
  * Detailed transaction for detail page
  */
-export type DetailedTransaction = RawTransaction
+export type DetailedTransaction = RawTransaction;
 
 export interface BlockInfo {
-  hash: string
-  height: number
-  timestamp: number | string
-  ledgerParameters: string | BufferData
+  hash: string;
+  height: number;
+  timestamp: number | string;
+  ledgerParameters: string | BufferData;
 }
 
 export interface UnshieldedBalance {
-  tokenType: string
-  amount: string
+  tokenType: string;
+  amount: string;
 }
 
 export interface ContractActionDetail {
-  address: string
-  state?: string
-  zswapState?: string
-  unshieldedBalances?: UnshieldedBalance[]
+  address: string;
+  state?: string;
+  zswapState?: string;
+  unshieldedBalances?: UnshieldedBalance[];
 }
 
 export interface UnshieldedOutput {
-  owner: string
-  tokenType: string
-  value: string
-  outputIndex: number
-  intentHash: string
-  ctime: number
-  initialNonce: string
-  registeredForDustGeneration: boolean
+  owner: string;
+  tokenType: string;
+  value: string;
+  outputIndex: number;
+  intentHash: string;
+  ctime: number;
+  initialNonce: string;
+  registeredForDustGeneration: boolean;
 }
 
 export interface ZswapLedgerEvent {
-  id: string
-  raw: string
-  maxId: string
+  id: string;
+  raw: string;
+  maxId: string;
 }
 
 export interface DustLedgerEvent {
-  id: string
-  raw: string
-  maxId: string
+  id: string;
+  raw: string;
+  maxId: string;
 }
 
 export interface TransactionDetail {
-  id: string
-  hash: string
-  protocolVersion: number
-  raw: string
-  block: BlockInfo
-  contractActions?: ContractActionDetail[]
-  unshieldedCreatedOutputs?: UnshieldedOutput[]
-  unshieldedSpentOutputs?: UnshieldedOutput[]
-  zswapLedgerEvents?: ZswapLedgerEvent[]
-  dustLedgerEvents?: DustLedgerEvent[]
-  transaction_result?: string | 'Success',
-  paid_fees: string,
-  estimated_fees: string, 
-  identifiers?: string[]
+  id: string;
+  hash: string;
+  protocolVersion: number;
+  raw: string;
+  block: BlockInfo;
+  contractActions?: ContractActionDetail[];
+  unshieldedCreatedOutputs?: UnshieldedOutput[];
+  unshieldedSpentOutputs?: UnshieldedOutput[];
+  zswapLedgerEvents?: ZswapLedgerEvent[];
+  dustLedgerEvents?: DustLedgerEvent[];
+  transactionResult?: string | "Success";
+  paidFees: string;
+  estimatedFees: string;
+  identifiers?: string[];
 }
 /**
  * Block types
  */
 export interface BlockBuffer {
-  type: 'Buffer'
-  data: number[]
+  type: "Buffer";
+  data: number[];
 }
 
 export interface Block {
-  height: number
-  hash: string
-  parent_hash: string
-  author: string
-  timestamp: number | string
-  protocol_version: number
-  ledger_parameters: BlockBuffer
-  txCount: number
+  height: number;
+  hash: string;
+  parentHash: string;
+  author: string;
+  timestamp: number | string;
+  protocolVersion: number;
+  ledgerParameters: BlockBuffer;
+  txCount: number;
 }
 
 export interface BlockResponse {
-  block: Block
+  block: Block;
 }
- 

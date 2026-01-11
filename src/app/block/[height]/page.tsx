@@ -38,10 +38,10 @@ export default async function BlockPage({ params }: PageProps) {
 
     const { block } = data
 
-    // Convert ledger_parameters buffer to hex string
+    // Convert ledgerParameters buffer to hex string
     let ledgerParametersHex = ''
-    if (block.ledger_parameters && block.ledger_parameters.type === 'Buffer') {
-      const buffer = Buffer.from(block.ledger_parameters.data);
+    if (block.ledgerParameters && block.ledgerParameters.type === 'Buffer') {
+      const buffer = Buffer.from(block.ledgerParameters.data);
       ledgerParametersHex = '0x' + buffer.toString('hex');
     }
 
@@ -146,9 +146,9 @@ export default async function BlockPage({ params }: PageProps) {
                     <span className="text-muted-foreground">Parent Hash</span>
                     <div className="flex items-center gap-2">
                       <span className="font-mono text-xs text-purple-400 break-all max-w-md text-right">
-                        {block.parent_hash}
+                        {block.parentHash}
                       </span>
-                      <CopyButton text={block.parent_hash} />
+                      <CopyButton text={block.parentHash} />
                     </div>
                   </div>
                   <div className="flex items-center justify-between py-2 border-b border-border/50">
@@ -166,7 +166,7 @@ export default async function BlockPage({ params }: PageProps) {
                   </div>
                   <div className="flex items-center justify-between py-2 border-b border-border/50">
                     <span className="text-muted-foreground">Protocol Version</span>
-                    <span className="font-mono">v{block.protocol_version}</span>
+                    <span className="font-mono">v{block.protocolVersion}</span>
                   </div>
                   <div className="flex items-center justify-between py-2">
                     <span className="text-muted-foreground">Transaction Count</span>
