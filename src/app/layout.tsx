@@ -11,6 +11,9 @@ import { LoadingFallback } from "@/components/loading-fallback";
 import { HighlightNotification } from "@/components/highlight-notification";
 import { TokenProvider } from "@/components/token-provider";
 import { QueryProvider } from "@/components/query-provider";
+import { Header } from "@/components/header";
+import { Footer } from "@/components/footer";
+import { Starfield } from "@/components/starfield";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.midnightexplorer.com"),
@@ -63,7 +66,18 @@ export default function RootLayout({
         <QueryProvider>
           <TokenProvider>
             <HighlightNotification />
-            <Suspense fallback={<LoadingFallback />}>{children}</Suspense>
+            <div className="min-h-screen bg-background relative">
+              <div className="fixed inset-0 z-0">
+                <Starfield />
+              </div>
+              <div className="relative z-10 flex flex-col min-h-screen">
+                <Header />
+                <main className="flex-1">
+                  <Suspense fallback={<LoadingFallback />}>{children}</Suspense>
+                </main>
+                <Footer />
+              </div>
+            </div>
             <Analytics />
           </TokenProvider>
         </QueryProvider>

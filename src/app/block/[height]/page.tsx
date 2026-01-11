@@ -1,6 +1,3 @@
-import { Header } from "@/components/header"
-import { Starfield } from "@/components/starfield"
-import { Footer } from "@/components/footer"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -82,32 +79,24 @@ export default async function BlockPage({ params }: PageProps) {
     }
 
     return (
-      <div className="min-h-screen bg-background relative">
-        <div className="fixed inset-0 z-0">
-          <Starfield />
-        </div>
-
-        <div className="relative z-10">
-          <Header />
-
-          <main className="container mx-auto px-4 py-8">
-            <div className="max-w-5xl mx-auto space-y-6">
-              {/* Header with Navigation */}
-              <div className="flex items-center justify-between">
-                <div className="space-y-2">
-                  <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                    Block #{block.height}
-                  </h1>
-                  <p className="text-muted-foreground text-lg">View detailed information about this block</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Link href="/blocks">
-                    <Button variant="outline" size="sm" className="border-border">
-                      <ArrowLeft className="h-4 w-4 mr-2" />
-                      Back
-                    </Button>
-                  </Link>
-                  {blockHeight > 0 && (
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-5xl mx-auto space-y-6">
+          {/* Header with Navigation */}
+          <div className="flex items-center justify-between">
+            <div className="space-y-2">
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                Block #{block.height}
+              </h1>
+              <p className="text-muted-foreground text-lg">View detailed information about this block</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Link href="/blocks">
+                <Button variant="outline" size="sm" className="border-border">
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back
+                </Button>
+              </Link>
+              {blockHeight > 0 && (
                     <Link href={`/block/${blockHeight - 1}`}>
                       <Button variant="outline" size="icon" className="border-border">
                         <ChevronLeft className="h-4 w-4" />
@@ -254,10 +243,6 @@ export default async function BlockPage({ params }: PageProps) {
                 </Card>
               )}
             </div>
-          </main>
-
-          <Footer />
-        </div>
       </div>
     )
   } catch (_error) {

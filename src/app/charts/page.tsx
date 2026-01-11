@@ -20,9 +20,6 @@ import {
   ResponsiveContainer,
 } from "recharts"
 import { TrendingUp, Activity, Zap, Users, DollarSign, Database } from "lucide-react"
-import { Header } from "@/components/header"
-import { Starfield } from "@/components/starfield"
-import { Footer } from "@/components/footer"
 
 // Define type cho dữ liệu PieChart để fix lỗi type của percent
 interface NetworkDistribution {
@@ -89,17 +86,9 @@ export default function ChartsPage() {
   ]
 
   return (
-    <div className="min-h-screen bg-background relative">
-      <div className="fixed inset-0 z-0">
-        <Starfield />
-      </div>
-
-      <div className="relative z-10">
-        <Header />
-
-        <main className="container mx-auto px-4 py-8 space-y-6">
-          {/* Header */}
-          <div className="space-y-2">
+    <div className="container mx-auto px-4 py-8 space-y-6">
+      {/* Header */}
+      <div className="space-y-2">
             <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
               Network Charts
             </h1>
@@ -462,9 +451,6 @@ export default function ChartsPage() {
               </Card>
             </TabsContent>
           </Tabs>
-        </main>
-        <Footer />
-      </div>
     </div>
   )
 }

@@ -1,6 +1,3 @@
-import { Header } from "@/components/header"
-import { Starfield } from "@/components/starfield"
-import { Footer } from "@/components/footer"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { CopyButton } from "@/components/ui/copy-button"
@@ -59,32 +56,24 @@ export default async function TransactionPage({ params }: PageProps) {
   }
 
   return (
-    <div className="min-h-screen bg-background relative">
-      <div className="fixed inset-0 z-0">
-        <Starfield />
-      </div>
-
-      <div className="relative z-10">
-        <Header />
-
-        <main className="container mx-auto px-4 py-8">
-          <div className="max-w-5xl mx-auto space-y-6">
-            {/* Header with Back Button */}
-            <div className="flex items-center justify-between">
-              <div className="space-y-2">
-                <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                  Transaction Details
-                </h1>
-                <p className="text-muted-foreground text-lg">View detailed information about this transaction</p>
-              </div>
-              <Link
-                href="/transactions"
-                className="px-4 py-2 bg-card/50 hover:bg-card/70 border border-border text-foreground rounded-md transition-colors inline-flex items-center gap-2"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Back
-              </Link>
-            </div>
+    <div className="container mx-auto px-4 py-8">
+      <div className="max-w-5xl mx-auto space-y-6">
+        {/* Header with Back Button */}
+        <div className="flex items-center justify-between">
+          <div className="space-y-2">
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+              Transaction Details
+            </h1>
+            <p className="text-muted-foreground text-lg">View detailed information about this transaction</p>
+          </div>
+          <Link
+            href="/transactions"
+            className="px-4 py-2 bg-card/50 hover:bg-card/70 border border-border text-foreground rounded-md transition-colors inline-flex items-center gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back
+          </Link>
+        </div>
 
             {/* Transaction Hash Card */}
             <Card className="p-6 bg-card/50 border-border">
@@ -250,10 +239,6 @@ export default async function TransactionPage({ params }: PageProps) {
               </div>
             </Card>
           </div>
-        </main>
-
-        <Footer />
-      </div>
     </div>
   )
 }
