@@ -8,12 +8,10 @@ import { Activity, ArrowRight } from "lucide-react"
 import Link from "next/link"
 import { formatDateTimeWithRelative } from '@/lib/utils'
 import { transactionAPI } from '@/lib/api'
-import { Transaction, RawTransaction, BufferData } from '@/lib/transaction-types'
-
-
+import { RawTransaction, BufferData } from '@/lib/transaction-types'
 
 export function RecentTransactions() {
-  const [txs, setTxs] = useState<Transaction[]>([])
+  const [txs, setTxs] = useState<RawTransaction[]>([])
   const [loading, setLoading] = useState(true)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const prevScrollTopRef = useRef(0)
@@ -22,10 +20,8 @@ export function RecentTransactions() {
     const fetchTransactions = async () => {
       try {
         const data: RawTransaction[] = await transactionAPI.getRecentTransactions<RawTransaction[]>()
-        // ✅ Normalize hash to string with 0x prefix
-        const normalizedData: Transaction[] = data.map((tx) => {
+        const normalizedData: RawTransaction[] = data.map((tx) => {
           let hashStr: string = ''
-          
           if (typeof tx.hash === 'string') {
             hashStr = tx.hash.startsWith('0x') ? tx.hash : `0x${tx.hash}`
           } else if (tx.hash && typeof tx.hash === 'object' && 'data' in tx.hash && Array.isArray((tx.hash as BufferData).data)) {
@@ -33,16 +29,13 @@ export function RecentTransactions() {
           }
 
           return {
-            id: tx.id || '',
             hash: hashStr,
-            variant: tx.variant || 'System',
-            transactionResult: tx.regularTransaction?.transactionResult,
-            blockHeight: tx.blockHeight ?? (tx.blockId ? parseInt(tx.blockId) : undefined),
-            blockId: tx.blockId,
+            variant: tx.variant || 'Regular',
+            blockHeight: tx.blockHeight,
             timestamp: tx.timestamp ? Number(tx.timestamp) : undefined,
             protocolVersion: tx.protocolVersion ? Number(tx.protocolVersion) : undefined,
             size: tx.size ? Number(tx.size) : undefined,
-          } as Transaction
+          } as RawTransaction
         })
         setTxs(normalizedData)
       } catch (error) {
@@ -66,9 +59,11 @@ export function RecentTransactions() {
     prevScrollTopRef.current = scrollContainerRef.current?.scrollTop || 0
 
     return txs.map((tx, index) => {
-      let txHash = tx.hash || ''
-      if (!txHash.startsWith('0x')) {
-        txHash = `0x${txHash}`
+      let txHash = ''
+      if (typeof tx.hash === 'string') {
+        txHash = tx.hash.startsWith('0x') ? tx.hash : `0x${tx.hash}`
+      } else if (tx.hash && typeof tx.hash === 'object' && 'data' in tx.hash && Array.isArray((tx.hash as BufferData).data)) {
+        txHash = '0x' + Buffer.from((tx.hash as BufferData).data).toString('hex')
       }
 
       return (
@@ -80,9 +75,9 @@ export function RecentTransactions() {
             <div className="space-y-2">
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
-                  {tx.blockId ? (
+                  {tx.blockHeight ? (
                     <Badge variant="outline" className="font-mono">
-                      #{tx.blockId}
+                      #{tx.blockHeight}
                     </Badge>
                   ) : (
                     <Badge variant="outline" className="font-mono">
