@@ -11,6 +11,7 @@
 
 import { fetchWithTokenRetry } from './token-client'
 import { fetchServerToken } from './server-token'
+import { EncryptionUtil } from './encryption.utils'
 
 const BACKEND_API_URL = process.env.API_URL || 'http://localhost:3002'
 const API_VERSION = 'v1'
@@ -85,51 +86,63 @@ export function getApiFetchConfig(): RequestInit {
  * Server-side: calls backend directly with server token
  * Client-side: calls through proxy with browser token
  */
-async function apiFetch<T>(endpoint: string, options?: RequestInit): Promise<T> {
-  const baseUrl = getApiBaseUrl()
-  const url = `${baseUrl}${endpoint}`
-  
+async function apiFetch<T>(
+  endpoint: string,
+  options?: RequestInit
+): Promise<T> {
+  const baseUrl = getApiBaseUrl();
+  const url = `${baseUrl}${endpoint}`;
+  const apiEncrytionKey = EncryptionUtil.generateAesKeyB64();
+
   let config: RequestInit = {
-    cache: 'no-store',
+    cache: "no-store",
     ...options,
     headers: {
       ...getApiHeaders(),
-      ...options?.headers
-    }
-  }
+      ...options?.headers,
+      "x-mek": apiEncrytionKey,
+    },
+  };
 
   // Server-side: add Authorization header with server token
-  if (typeof window === 'undefined') {
-    const token = await getServerToken()
+  if (typeof window === "undefined") {
+    const token = await getServerToken();
     if (!token) {
-      throw new Error('Failed to obtain server token')
+      throw new Error("Failed to obtain server token");
     }
-    
+
     config = {
       ...config,
       headers: {
         ...config.headers,
-        'Authorization': `Bearer ${token}`,
-      }
-    }
-    
-    const response = await fetch(url, config)
-    
+        Authorization: `Bearer ${token}`,
+      },
+    };
+
+    const response = await fetch(url, config);
+
     if (!response.ok) {
-      throw new Error(`API Error: ${response.status} ${response.statusText}`)
+      throw new Error(`API Error: ${response.status} ${response.statusText}`);
     }
-    
-    return response.json()
+
+    return response.json();
   }
 
   // Client-side: use fetchWithTokenRetry through Next.js proxy
-  const response = await fetchWithTokenRetry(url, config)
-  
+  const response = await fetchWithTokenRetry(url, config);
   if (!response.ok) {
-    throw new Error(`API Error: ${response.status} ${response.statusText}`)
+    throw new Error(`API Error: ${response.status} ${response.statusText}`);
   }
 
-  return response.json()
+  const data = await response.json();
+  // Check if response is encrypted => decrypt it
+  const isEncrypted = response.headers.get("x-ect") === "1";
+  console.log(`[API] Response encrypted: ${isEncrypted}`);
+  if (isEncrypted) {
+    return EncryptionUtil.decrypt(data, apiEncrytionKey);
+  }
+
+  return data;
 }
 
 /**

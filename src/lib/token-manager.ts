@@ -4,6 +4,8 @@
  * BFF only validates tokens, never auto-refreshes
  */
 
+import { ResultDto } from "./types"
+
 const BACKEND_AUTH_URL = process.env.API_URL || 'http://localhost:3002'
 const TOKEN_COOKIE_NAME = '__et'
 
@@ -59,7 +61,7 @@ export function getTokenExpiry(token: string): number | null {
  */
 export async function fetchNewToken(userAgent: string, acceptLanguage: string): Promise<string | null> {
   try {
-    console.log('[Token] Fetching new token from backend...')
+    console.log('[Token] Fetching new token from backend...');
     
     const response = await fetch(`${BACKEND_AUTH_URL}/api/v1/auth/token`, {
       method: 'POST',
@@ -72,19 +74,23 @@ export async function fetchNewToken(userAgent: string, acceptLanguage: string): 
         'Accept-Language': acceptLanguage,
       }),
       cache: 'no-store',
-    })
+    });
 
     if (!response.ok) {
-      console.error(`[Token] Failed to fetch token: ${response.status}`)
-      return null
+      console.error(`[Token] Failed to fetch token: ${response.status}`);
+      return null;
     }
 
-    const data: TokenResponse = await response.json()
+    const data : ResultDto<TokenResponse> = await response.json(); 
+    if(!data.isSuccess){
+      console.error(`[Token] Backend error: ${data.message}`);
+      return null;
+    }
     console.log('[Token] New token fetched successfully')
-    return data.token
+    return data.data?.token;
   } catch (error) {
-    console.error('[Token] Error fetching token:', error)
-    return null
+    console.error('[Token] Error fetching token:', error);
+    return null;
   }
 }
 
