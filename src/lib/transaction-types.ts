@@ -91,19 +91,12 @@ export type ContractAction =
  * Raw transaction from API response
  */
 export interface RawTransaction {
-  id: string
   hash: string | BufferData
+  blockHeight: number | null
+  protocolVersion: number
   variant: 'System' | 'Regular'
-  blockId?: string
-  blockHeight?: number | null
-  protocolVersion?: number
-  timestamp?: number | string
-  size?: number
-  raw?: string
-  regularTransaction?: RegularTransaction
-  ledgerEvents?: LedgerEvent
-  unshieldedUtxos?: UnshieldedUtxo
-  contractActions?: ContractAction[] | null
+  timestamp: number | string
+  size: number
 }
 
 /**
@@ -126,6 +119,64 @@ export interface Transaction {
  */
 export type DetailedTransaction = RawTransaction
 
+export interface BlockInfo {
+  hash: string
+  height: number
+  timestamp: number | string
+  ledgerParameters: string | BufferData
+}
+
+export interface UnshieldedBalance {
+  tokenType: string
+  amount: string
+}
+
+export interface ContractActionDetail {
+  address: string
+  state?: string
+  zswapState?: string
+  unshieldedBalances?: UnshieldedBalance[]
+}
+
+export interface UnshieldedOutput {
+  owner: string
+  tokenType: string
+  value: string
+  outputIndex: number
+  intentHash: string
+  ctime: number
+  initialNonce: string
+  registeredForDustGeneration: boolean
+}
+
+export interface ZswapLedgerEvent {
+  id: string
+  raw: string
+  maxId: string
+}
+
+export interface DustLedgerEvent {
+  id: string
+  raw: string
+  maxId: string
+}
+
+export interface TransactionDetail {
+  id: string
+  hash: string
+  protocolVersion: number
+  raw: string
+  block: BlockInfo
+  contractActions?: ContractActionDetail[]
+  unshieldedCreatedOutputs?: UnshieldedOutput[]
+  unshieldedSpentOutputs?: UnshieldedOutput[]
+  zswapLedgerEvents?: ZswapLedgerEvent[]
+  dustLedgerEvents?: DustLedgerEvent[]
+  transaction_result?: string | 'Success',
+  paid_fees: string,
+  estimated_fees: string, 
+  identifiers?: string[]
+}
 /**
  * Block types
  */

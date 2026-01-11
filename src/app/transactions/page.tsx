@@ -20,7 +20,7 @@ export default async function TransactionsPage({ searchParams }: PageProps) {
   const searchMode = !!searchHash
 
   return (
-    <div className="min-h-screen bg-background relative">
+    <div className="min-h-screen bg-black relative">
       <div className="fixed inset-0 z-0">
         <Starfield />
       </div>
