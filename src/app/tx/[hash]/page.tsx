@@ -6,14 +6,14 @@ import { Starfield } from "@/components/starfield"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
+import { CopyButton } from "@/components/ui/copy-button"
 import { transactionAPI } from "@/lib/api"
 import { TransactionDetail } from "@/lib/transaction-types"
 import {
-  copyToClipboard,
   formatDate,
   formatValue
 } from "@/lib/utils"
-import { ChevronDown, Copy } from "lucide-react"
+import { ChevronDown } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { notFound, useParams } from "next/navigation"
@@ -25,7 +25,6 @@ export default function TransactionPage() {
 
   const [transaction, setTransaction] = useState<TransactionDetail | null>(null)
   const [loading, setLoading] = useState(true)
-  const [copiedHash, setCopiedHash] = useState(false)
   const [expandedContractIndex, setExpandedContractIndex] = useState<number | null>(null)
   const [showRawData, setShowRawData] = useState(false)
   const [showBlockParams, setShowBlockParams] = useState(false)
@@ -45,12 +44,6 @@ export default function TransactionPage() {
 
     fetchTransaction()
   }, [hash])
-
-  const handleCopy = (text: string) => {
-    copyToClipboard(text)
-    setCopiedHash(true)
-    setTimeout(() => setCopiedHash(false), 2000)
-  }
 
   if (loading) {
     return (
@@ -113,14 +106,10 @@ export default function TransactionPage() {
                     {transaction.transactionResult}
                   </Badge>
                 )}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleCopy(transaction.hash)}
-                  className="text-slate-400 hover:text-slate-50"
-                >
-                  <Copy className="w-4 h-4" />
-                </Button>
+                <CopyButton 
+                  text={transaction.hash}
+                  className="text-slate-400 hover:text-slate-50 hover:bg-slate-800 transition-colors"
+                />
               </div>
             </div>
             {transaction.identifiers && transaction.identifiers.length > 0 && (
@@ -130,14 +119,10 @@ export default function TransactionPage() {
                   {transaction.identifiers.map((identifier, idx) => (
                     <div key={idx} className="flex items-center justify-between bg-slate-900 rounded p-2">
                       <p className="font-mono text-xs text-slate-300 break-all flex-1">{identifier}</p>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleCopy(identifier)}
-                        className="text-slate-400 hover:text-slate-50 flex-shrink-0 ml-2"
-                      >
-                        <Copy className="w-3 h-3" />
-                      </Button>
+                      <CopyButton 
+                        text={identifier}
+                        className="text-slate-400 hover:text-slate-50 hover:bg-slate-800 transition-colors ml-2"
+                      />
                     </div>
                   ))}
                 </div>
@@ -153,11 +138,11 @@ export default function TransactionPage() {
             <Card className="bg-black border-slate-700 p-6">
               <h2 className="text-lg font-semibold mb-4">Transaction Overview</h2>
               <div className="space-y-3">
-                <div className="flex justify-between">
+                <div className="flex flex-col md:flex-row md:justify-between gap-2 md:gap-0">
                   <span className="text-slate-400">Block Hash</span>
                   <Link 
                     href={`/block/${transaction.block.height}`}
-                    className="font-mono text-sm text-blue-400 hover:text-blue-300 hover:underline cursor-pointer"
+                    className="font-mono text-sm text-blue-400 hover:text-blue-300 hover:underline cursor-pointer break-all"
                   >
                     {transaction.block.hash}
                   </Link>
@@ -184,9 +169,9 @@ export default function TransactionPage() {
                   <span className="font-mono text-slate-300">#{transaction.id}</span>
                 </div>
                 {transaction.unshieldedSpentOutputs && transaction.unshieldedSpentOutputs.length > 0 && (
-                  <div className="flex justify-between border-t border-slate-700 pt-3">
+                  <div className="flex flex-col md:flex-row md:justify-between border-t border-slate-700 pt-3 gap-2 md:gap-0">
                     <span className="text-slate-400">From</span>
-                    <span className="font-mono text-xs text-slate-300">{transaction.unshieldedSpentOutputs[0].owner}</span>
+                    <span className="font-mono text-xs text-slate-300 break-all">{transaction.unshieldedSpentOutputs[0].owner}</span>
                   </div>
                 )}
                 {transaction.unshieldedCreatedOutputs && transaction.unshieldedCreatedOutputs.length > 0 && (
@@ -195,9 +180,9 @@ export default function TransactionPage() {
                       // If only 1 created output, use it directly as "To"
                       if (transaction.unshieldedCreatedOutputs.length === 1) {
                         return (
-                          <div className="flex justify-between">
+                          <div className="flex flex-col md:flex-row md:justify-between gap-2 md:gap-0">
                             <span className="text-slate-400">To</span>
-                            <span className="font-mono text-xs text-slate-300">{transaction.unshieldedCreatedOutputs[0].owner}</span>
+                            <span className="font-mono text-xs text-slate-300 break-all">{transaction.unshieldedCreatedOutputs[0].owner}</span>
                           </div>
                         );
                       }
@@ -209,9 +194,9 @@ export default function TransactionPage() {
                       
                       if (toAddresses.length === 1) {
                         return (
-                          <div className="flex justify-between">
+                          <div className="flex flex-col md:flex-row md:justify-between gap-2 md:gap-0">
                             <span className="text-slate-400">To</span>
-                            <span className="font-mono text-xs text-slate-300">{toAddresses[0].owner}</span>
+                            <span className="font-mono text-xs text-slate-300 break-all">{toAddresses[0].owner}</span>
                           </div>
                         );
                       }
@@ -221,7 +206,7 @@ export default function TransactionPage() {
                           <p className="text-slate-400 mb-2">To</p>
                           <div className="space-y-1">
                             {toAddresses.map((output, idx) => (
-                              <p key={idx} className="font-mono text-xs text-slate-300">{output.owner}</p>
+                              <p key={idx} className="font-mono text-xs text-slate-300 break-all">{output.owner}</p>
                             ))}
                           </div>
                         </>
@@ -307,53 +292,10 @@ export default function TransactionPage() {
 
         {/* Outputs Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          {/* Created Outputs */}
-          {transaction.unshieldedCreatedOutputs && transaction.unshieldedCreatedOutputs.length > 0 && (
-            <Card className="bg-black border-slate-700 p-6">
-              <h3 className="font-semibold mb-4">Created Outputs ({transaction.unshieldedCreatedOutputs.length})</h3>
-              <div className="space-y-3">
-                {transaction.unshieldedCreatedOutputs.map((output, index) => (
-                  <div key={index} className="bg-slate-700 rounded-lg p-4">
-                    <div className="flex items-start justify-between mb-2">
-                      <span className="text-sm font-mono text-slate-300">#{output.outputIndex}</span>
-                      {output.registeredForDustGeneration && (
-                        <div className="flex items-center gap-1">
-                          <Image 
-                            src="/images/token-night.png" 
-                            alt="NIGHT" 
-                            width={16} 
-                            height={16}
-                            className="rounded-full"
-                          />
-                          NIGHT
-                        </div>
-                      )}
-                    </div>
-                    <p className="text-sm text-slate-400 break-all mb-2 font-mono text-xs">{output.owner}</p>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Image 
-                          src="/images/token-night.png" 
-                          alt="NIGHT" 
-                          width={18} 
-                          height={18}
-                          className="rounded-full"
-                        />
-                        <span className="text-white text-xs font-semibold">NIGHT</span>
-                      </div>
-                      <p className="font-mono text-sm font-semibold text-emerald-400">{formatValue(output.value)}</p>
-                    </div>
-                    <p className="text-xs text-slate-500 mt-2">Time: {new Date(output.ctime * 1000).toLocaleString()}</p>
-                  </div>
-                ))}
-              </div>
-            </Card>
-          )}
-
           {/* Spent Outputs */}
           {transaction.unshieldedSpentOutputs && transaction.unshieldedSpentOutputs.length > 0 && (
             <Card className="bg-black border-slate-700 p-6">
-              <h3 className="font-semibold mb-4">Spent Outputs ({transaction.unshieldedSpentOutputs.length})</h3>
+              <h3 className="font-semibold mb-4">Input ({transaction.unshieldedSpentOutputs.length})</h3>
               <div className="space-y-3">
                 {transaction.unshieldedSpentOutputs.map((output, index) => (
                   <div key={index} className="bg-slate-700 rounded-lg p-4">
@@ -392,6 +334,49 @@ export default function TransactionPage() {
               </div>
             </Card>
           )}
+
+          {/* Created Outputs */}
+          {transaction.unshieldedCreatedOutputs && transaction.unshieldedCreatedOutputs.length > 0 && (
+            <Card className="bg-black border-slate-700 p-6">
+              <h3 className="font-semibold mb-4">Outputs ({transaction.unshieldedCreatedOutputs.length})</h3>
+              <div className="space-y-3">
+                {transaction.unshieldedCreatedOutputs.map((output, index) => (
+                  <div key={index} className="bg-slate-700 rounded-lg p-4">
+                    <div className="flex items-start justify-between mb-2">
+                      <span className="text-sm font-mono text-slate-300">#{output.outputIndex}</span>
+                      {output.registeredForDustGeneration && (
+                        <div className="flex items-center gap-1">
+                          <Image 
+                            src="/images/token-night.png" 
+                            alt="NIGHT" 
+                            width={16} 
+                            height={16}
+                            className="rounded-full"
+                          />
+                          NIGHT
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-sm text-slate-400 break-all mb-2 font-mono text-xs">{output.owner}</p>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Image 
+                          src="/images/token-night.png" 
+                          alt="NIGHT" 
+                          width={18} 
+                          height={18}
+                          className="rounded-full"
+                        />
+                        <span className="text-white text-xs font-semibold">NIGHT</span>
+                      </div>
+                      <p className="font-mono text-sm font-semibold text-emerald-400">{formatValue(output.value)}</p>
+                    </div>
+                    <p className="text-xs text-slate-500 mt-2">Time: {new Date(output.ctime * 1000).toLocaleString()}</p>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
         </div>
 
         {/* Contract Actions Section */}
@@ -415,17 +400,10 @@ export default function TransactionPage() {
                       <p className="text-slate-400 text-sm mb-1">Contract Address</p>
                       <p className="font-mono text-sm break-all text-slate-200">{action.address}</p>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleCopy(action.address)
-                      }}
+                    <CopyButton 
+                      text={action.address}
                       className="text-slate-400 hover:text-slate-50 flex-shrink-0"
-                    >
-                      <Copy className="w-4 h-4" />
-                    </Button>
+                    />
                   </div>
 
                   {/* Expandable Content */}
