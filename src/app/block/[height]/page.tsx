@@ -1,6 +1,3 @@
-import { Header } from "@/components/header"
-import { Starfield } from "@/components/starfield"
-import { Footer } from "@/components/footer"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -46,180 +43,169 @@ export default async function BlockPage({ params }: PageProps) {
     }
 
     return (
-      <div className="min-h-screen bg-background relative">
-        <div className="fixed inset-0 z-0">
-          <Starfield />
-        </div>
+      <div className="container mx-auto px-4 py-8">
+        {/* Header with Navigation */}
+        <div className="max-w-5xl mx-auto space-y-6">
+          {/* Header with Navigation */}
+          <div className="flex items-center justify-between">
+            <div className="space-y-2">
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                Block #{block.height}
+              </h1>
+              <p className="text-muted-foreground text-lg">View detailed information about this block</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Link href="/blocks">
+                <Button variant="outline" size="sm" className="border-border">
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back
+                </Button>
+              </Link>
+              {block.height > 0 && (
+                <Link href={`/block/${block.height - 1}`}>
+                  <Button variant="outline" size="icon" className="border-border">
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                </Link>
+              )}
+              <Link href={`/block/${block.height + 1}`}>
+                <Button variant="outline" size="icon" className="border-border">
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </Link>
+            </div>
+          </div>
 
-        <div className="relative z-10">
-          <Header />
-
-          <main className="container mx-auto px-4 py-8">
-            <div className="max-w-5xl mx-auto space-y-6">
-              {/* Header with Navigation */}
-              <div className="flex items-center justify-between">
-                <div className="space-y-2">
-                  <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                    Block #{block.height}
-                  </h1>
-                  <p className="text-muted-foreground text-lg">View detailed information about this block</p>
+          {/* Block Overview */}
+          <Card className="p-6 bg-card/50 border-border">
+            <h2 className="text-xl font-semibold mb-4 text-purple-400">Overview</h2>
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-muted-foreground mb-1">Block Height</p>
+                  <p className="text-lg font-semibold font-mono text-blue-400">#{block.height}</p>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Link href="/blocks">
-                    <Button variant="outline" size="sm" className="border-border">
-                      <ArrowLeft className="h-4 w-4 mr-2" />
-                      Back
-                    </Button>
-                  </Link>
-                  {block.height > 0 && (
-                    <Link href={`/block/${block.height - 1}`}>
-                      <Button variant="outline" size="icon" className="border-border">
-                        <ChevronLeft className="h-4 w-4" />
-                      </Button>
-                    </Link>
-                  )}
-                  <Link href={`/block/${block.height + 1}`}>
-                    <Button variant="outline" size="icon" className="border-border">
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
-                  </Link>
+                <div>
+                  <p className="text-sm text-muted-foreground mb-1">Timestamp</p>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-4 w-4 text-muted-foreground" />
+                      <p className="text-sm">{new Date(block.timestamp).toLocaleString()}</p>
+                    </div>
+                    <p className="text-xs text-muted-foreground ml-6">
+                      ({formatDistanceToNow(new Date(block.timestamp))} ago)
+                    </p>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground mb-1">Transactions</p>
+                  <Badge className="text-base px-3 py-1 bg-green-500/10 text-green-400 border-green-500/20">
+                    {block.txCount} txns
+                  </Badge>
                 </div>
               </div>
 
-              {/* Block Overview */}
-              <Card className="p-6 bg-card/50 border-border">
-                <h2 className="text-xl font-semibold mb-4 text-purple-400">Overview</h2>
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-1">Block Height</p>
-                      <p className="text-lg font-semibold font-mono text-blue-400">#{block.height}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-1">Timestamp</p>
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <Clock className="h-4 w-4 text-muted-foreground" />
-                          <p className="text-sm">{new Date(block.timestamp).toLocaleString()}</p>
-                        </div>
-                        <p className="text-xs text-muted-foreground ml-6">
-                          ({formatDistanceToNow(new Date(block.timestamp))} ago)
-                        </p>
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-1">Transactions</p>
-                      <Badge className="text-base px-3 py-1 bg-green-500/10 text-green-400 border-green-500/20">
-                        {block.txCount} txns
-                      </Badge>
-                    </div>
-                  </div>
-
-                  <div className="pt-4 border-t border-border">
-                    <p className="text-sm text-muted-foreground mb-2">Block Hash</p>
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm font-mono break-all flex-1 text-blue-400">{block.hash}</p>
-                      <CopyButton text={block.hash} />
-                    </div>
-                  </div>
+              <div className="pt-4 border-t border-border">
+                <p className="text-sm text-muted-foreground mb-2">Block Hash</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-mono break-all flex-1 text-blue-400">{block.hash}</p>
+                  <CopyButton text={block.hash} />
                 </div>
-              </Card>
-
-              {/* Block Information */}
-              <Card className="p-6 bg-card/50 border-border">
-                <h2 className="text-xl font-semibold mb-4 text-purple-400">Block Information</h2>
-                <div className="space-y-4 text-sm">
-                  <div className="flex items-center justify-between py-2 border-b border-border/50">
-                    <span className="text-muted-foreground">Height</span>
-                    <span className="font-mono text-blue-400">#{block.height}</span>
-                  </div>
-                  <div className="flex items-start justify-between py-2 border-b border-border/50">
-                    <span className="text-muted-foreground">Hash</span>
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono text-xs text-blue-400 break-all max-w-md text-right">
-                        {block.hash}
-                      </span>
-                      <CopyButton text={block.hash} />
-                    </div>
-                  </div>
-                  <div className="flex items-start justify-between py-2 border-b border-border/50">
-                    <span className="text-muted-foreground">Parent Hash</span>
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono text-xs text-purple-400 break-all max-w-md text-right">
-                        {block.parentHash}
-                      </span>
-                      <CopyButton text={block.parentHash} />
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between py-2 border-b border-border/50">
-                    <span className="text-muted-foreground">Author</span>
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono text-xs text-green-400 break-all max-w-md text-right">
-                        {block.author}
-                      </span>
-                      <CopyButton text={block.author} />
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between py-2 border-b border-border/50">
-                    <span className="text-muted-foreground">Timestamp</span>
-                    <span className="font-medium">{new Date(Number(block.timestamp)).toLocaleString()}</span>
-                  </div>
-                  <div className="flex items-center justify-between py-2 border-b border-border/50">
-                    <span className="text-muted-foreground">Protocol Version</span>
-                    <span className="font-mono">v{block.protocolVersion}</span>
-                  </div>
-                  <div className="flex items-center justify-between py-2">
-                    <span className="text-muted-foreground">Transaction Count</span>
-                    <span className="font-medium text-green-400">{block.txCount}</span>
-                  </div>
-                </div>
-              </Card>
-
-              {/* Ledger Parameters */}
-              {ledgerParametersHex && (
-                <Card className="p-6 bg-card/50 border-border">
-                  <h2 className="text-xl font-semibold mb-4 text-purple-400">Ledger Parameters</h2>
-                  <div className="space-y-3">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1 min-w-0 bg-background/50 rounded-lg p-4 max-h-[200px] overflow-y-auto">
-                        <p className="text-xs font-mono break-all text-muted-foreground leading-relaxed">
-                          {ledgerParametersHex}
-                        </p>
-                      </div>
-                      <CopyButton text={ledgerParametersHex} className="border-border flex-shrink-0" />
-                    </div>
-                    <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <span>Size: {ledgerParametersHex.length} characters ({Math.ceil((ledgerParametersHex.length - 2) / 2)} bytes)</span>
-                      <span className="text-muted-foreground/70">Scroll to view full data →</span>
-                    </div>
-                  </div>
-                </Card>
-              )}
-
-              {/* Transactions Info */}
-              <Card className="p-6 bg-card/50 border-border">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <h2 className="text-xl font-semibold mb-2 text-purple-400">Transactions</h2>
-                    {block.txCount > 0 && (
-                      <Link href={`/block/${block.height}/txs`} className="text-sm text-blue-400 hover:text-blue-300">
-                        view all transactions
-                      </Link>
-                    )}
-                  </div>
-                </div>
-                {block.txCount === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <p>No transactions in this block</p>
-                  </div>
-                ) : (
-                  <BlockTransactionsList height={block.height} txCount={block.txCount} />
-                )}
-              </Card>
+              </div>
             </div>
-          </main>
+          </Card>
 
-          <Footer />
+          {/* Block Information */}
+          <Card className="p-6 bg-card/50 border-border">
+            <h2 className="text-xl font-semibold mb-4 text-purple-400">Block Information</h2>
+            <div className="space-y-4 text-sm">
+              <div className="flex items-center justify-between py-2 border-b border-border/50">
+                <span className="text-muted-foreground">Height</span>
+                <span className="font-mono text-blue-400">#{block.height}</span>
+              </div>
+              <div className="flex items-start justify-between py-2 border-b border-border/50">
+                <span className="text-muted-foreground">Hash</span>
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-xs text-blue-400 break-all max-w-md text-right">
+                    {block.hash}
+                  </span>
+                  <CopyButton text={block.hash} />
+                </div>
+              </div>
+              <div className="flex items-start justify-between py-2 border-b border-border/50">
+                <span className="text-muted-foreground">Parent Hash</span>
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-xs text-purple-400 break-all max-w-md text-right">
+                    {block.parentHash}
+                  </span>
+                  <CopyButton text={block.parentHash} />
+                </div>
+              </div>
+              <div className="flex items-center justify-between py-2 border-b border-border/50">
+                <span className="text-muted-foreground">Author</span>
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-xs text-green-400 break-all max-w-md text-right">
+                    {block.author}
+                  </span>
+                  <CopyButton text={block.author} />
+                </div>
+              </div>
+              <div className="flex items-center justify-between py-2 border-b border-border/50">
+                <span className="text-muted-foreground">Timestamp</span>
+                <span className="font-medium">{new Date(Number(block.timestamp)).toLocaleString()}</span>
+              </div>
+              <div className="flex items-center justify-between py-2 border-b border-border/50">
+                <span className="text-muted-foreground">Protocol Version</span>
+                <span className="font-mono">v{block.protocolVersion}</span>
+              </div>
+              <div className="flex items-center justify-between py-2">
+                <span className="text-muted-foreground">Transaction Count</span>
+                <span className="font-medium text-green-400">{block.txCount}</span>
+              </div>
+            </div>
+          </Card>
+
+          {/* Ledger Parameters */}
+          {ledgerParametersHex && (
+            <Card className="p-6 bg-card/50 border-border">
+              <h2 className="text-xl font-semibold mb-4 text-purple-400">Ledger Parameters</h2>
+              <div className="space-y-3">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1 min-w-0 bg-background/50 rounded-lg p-4 max-h-[200px] overflow-y-auto">
+                    <p className="text-xs font-mono break-all text-muted-foreground leading-relaxed">
+                      {ledgerParametersHex}
+                    </p>
+                  </div>
+                  <CopyButton text={ledgerParametersHex} className="border-border flex-shrink-0" />
+                </div>
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <span>Size: {ledgerParametersHex.length} characters ({Math.ceil((ledgerParametersHex.length - 2) / 2)} bytes)</span>
+                  <span className="text-muted-foreground/70">Scroll to view full data →</span>
+                </div>
+              </div>
+            </Card>
+          )}
+
+          {/* Transactions Info */}
+          <Card className="p-6 bg-card/50 border-border">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-xl font-semibold mb-2 text-purple-400">Transactions</h2>
+                {block.txCount > 0 && (
+                  <Link href={`/block/${block.height}/txs`} className="text-sm text-blue-400 hover:text-blue-300">
+                    view all transactions
+                  </Link>
+                )}
+              </div>
+            </div>
+            {block.txCount === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <p>No transactions in this block</p>
+              </div>
+            ) : (
+              <BlockTransactionsList height={block.height} txCount={block.txCount} />
+            )}
+          </Card>
         </div>
       </div>
     )
