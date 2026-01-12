@@ -295,7 +295,7 @@ export default function TransactionPage() {
           {/* Spent Outputs */}
           {transaction.unshieldedSpentOutputs && transaction.unshieldedSpentOutputs.length > 0 && (
             <Card className="bg-black border-slate-700 p-6">
-              <h3 className="font-semibold mb-4">Input ({transaction.unshieldedSpentOutputs.length})</h3>
+              <h3 className="font-semibold mb-4">Inputs ({transaction.unshieldedSpentOutputs.length})</h3>
               <div className="space-y-3">
                 {transaction.unshieldedSpentOutputs.map((output, index) => (
                   <div key={index} className="bg-slate-700 rounded-lg p-4">
