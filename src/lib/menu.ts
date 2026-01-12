@@ -23,10 +23,6 @@ export const getMenu = (): MenuItem[] => {
       href: "/contracts",
     },
     {
-      title: "Pool",
-      href: "/pool",
-    },
-    {
       title: "Feedback",
       href: "https://docs.google.com/forms/d/e/1FAIpQLSfBguf59QpRRgVVFZCWt8S2D6W9aGlB8QEpxIfVJrrwH3fjUw/viewform?usp=publish-editor",
       external: true,
