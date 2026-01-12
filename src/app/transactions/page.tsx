@@ -48,8 +48,8 @@ export default async function TransactionsPage({ searchParams }: PageProps) {
           {/* Transactions List */}
           <TransactionsList
             initialCursor={cursor}
-            searchHash={searchHash}
-            searchPage={searchPage}
+            initialSearchHash={searchHash}
+            initialSearchPage={searchPage}
           />
         </main>
 

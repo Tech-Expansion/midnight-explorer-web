@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -12,15 +13,21 @@ import { Transaction } from "@/lib/transaction-types"
 
 interface TransactionsListProps {
   initialCursor?: string
-  searchHash?: string
-  searchPage?: number
+  initialSearchHash?: string
+  initialSearchPage?: number
 }
 
-export function TransactionsList({ initialCursor, searchHash, searchPage = 1 }: TransactionsListProps) {
+export function TransactionsList({ initialCursor, initialSearchHash, initialSearchPage = 1 }: TransactionsListProps) {
+  const searchParams = useSearchParams()
+  const cursor = searchParams.get('cursor') || undefined
+  const searchHash = searchParams.get('hash') || undefined
+  const searchPage = searchParams.get('page') ? parseInt(searchParams.get('page')!, 10) : 1
+  
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [nextCursor, setNextCursor] = useState<string | undefined>()
   const [pagination, setPagination] = useState<{ page: number; pageSize: number; totalCount: number; totalPages: number } | null>(null)
   const [loading, setLoading] = useState(true)
+  const [cursorMap, setCursorMap] = useState<Record<number, string | undefined>>({ 1: undefined })
   const { data } = useNetworkStats()
   const totalTransactions = data?.totalTransactions
 
@@ -40,10 +47,17 @@ export function TransactionsList({ initialCursor, searchHash, searchPage = 1 }: 
           setTransactions(response.data)
           setPagination(response.pagination || null)
         } else {
-          // Normal mode with cursor
-          const response: { items: Transaction[]; nextCursor?: string } = await transactionAPI.getTransactions(initialCursor)
+          // Normal mode with cursor - use cursor from cursorMap for current page
+          const cursorForPage = cursorMap[searchPage]
+          const response: { items: Transaction[]; nextCursor?: string } = await transactionAPI.getTransactions(cursorForPage)
+          console.log('[TransactionsList] Fetched page', searchPage, 'with cursor:', cursorForPage, 'nextCursor:', response.nextCursor)
           setTransactions(response.items)
           setNextCursor(response.nextCursor)
+          
+          // Save cursor for next page
+          if (response.nextCursor) {
+            setCursorMap(prev => ({ ...prev, [searchPage + 1]: response.nextCursor }))
+          }
         }
       } catch (error) {
         console.error('Failed to fetch transactions:', error)
@@ -53,7 +67,7 @@ export function TransactionsList({ initialCursor, searchHash, searchPage = 1 }: 
     }
 
     fetchData()
-  }, [initialCursor, searchHash, searchPage])
+  }, [searchHash, searchPage])
 
   const getVariantBadge = (variant?: Transaction['variant']) => {
     switch (variant) {
@@ -161,22 +175,14 @@ export function TransactionsList({ initialCursor, searchHash, searchPage = 1 }: 
             buildUrl={(page) => `/transactions?hash=${searchHash}&page=${page}`}
             className="mt-4"
           />
-        ) : totalPages > 0 ? (
+        ) : totalPages > 1 ? (
           <Pagination
             currentPage={searchPage}
             totalPages={totalPages}
             buildUrl={(page) => `/transactions?page=${page}`}
             className="mt-4"
           />
-        ) : (
-          <SimplePagination
-            hasPrev={!!initialCursor}
-            hasNext={!!nextCursor}
-            prevUrl="/transactions"
-            nextUrl={nextCursor ? `/transactions?cursor=${nextCursor}` : undefined}
-            className="mt-4"
-          />
-        )}
+        ) : null}
       </div>
     </>
   )
