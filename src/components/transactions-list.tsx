@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { formatDateTime } from "@/lib/utils"
 import { transactionAPI } from "@/lib/api"
-import { Pagination, SimplePagination } from "@/components/pagination"
+import { Pagination } from "@/components/pagination"
 import { useNetworkStats } from "@/hooks/useNetworkStats"
 import { Transaction } from "@/lib/transaction-types"
 
@@ -17,14 +17,13 @@ interface TransactionsListProps {
   initialSearchPage?: number
 }
 
-export function TransactionsList({ initialCursor, initialSearchHash, initialSearchPage = 1 }: TransactionsListProps) {
+export function TransactionsList({  }: TransactionsListProps) {
   const searchParams = useSearchParams()
-  const cursor = searchParams.get('cursor') || undefined
   const searchHash = searchParams.get('hash') || undefined
   const searchPage = searchParams.get('page') ? parseInt(searchParams.get('page')!, 10) : 1
   
   const [transactions, setTransactions] = useState<Transaction[]>([])
-  const [nextCursor, setNextCursor] = useState<string | undefined>()
+  const [, setNextCursor] = useState<string | undefined>()
   const [pagination, setPagination] = useState<{ page: number; pageSize: number; totalCount: number; totalPages: number } | null>(null)
   const [loading, setLoading] = useState(true)
   const [cursorMap, setCursorMap] = useState<Record<number, string | undefined>>({ 1: undefined })

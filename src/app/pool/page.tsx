@@ -50,7 +50,7 @@ export default async function PoolPage({ searchParams }: PageProps) {
             href="/pool" 
             className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
           >
-            ΓåÉ Clear search and show all pools
+            ← Clear search and show all pools
           </Link>
         </div>
       )}

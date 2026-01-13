@@ -50,9 +50,9 @@ export function RecentBlocks({ blocks }: RecentBlocksProps) {
 
             <div className="flex items-center justify-between gap-2">
               {/* HASH + COPY */}
-              <div className="flex items-center gap-2 flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-shrink-0">
                 <p className="text-sm font-mono text-muted-foreground truncate">
-                  {`${block.hash.slice(0, 15)}...${block.hash.slice(-15)}`}
+                  {`${block.hash.slice(0, 12)}...${block.hash.slice(-12)}`}
                 </p>
                 <div
                   onClick={(e) => e.preventDefault()}
@@ -63,9 +63,9 @@ export function RecentBlocks({ blocks }: RecentBlocksProps) {
               </div>
 
               {/* AUTHOR */}
-              <div className="flex items-center gap-2 flex-shrink-0">
+              <div className="flex items-center gap-2 flex-shrink-0 flex-1 min-w-0">
                 <span className="text-sm text-muted-foreground truncate text-right max-w-[100px] md:max-w-[240px]">
-                  {`${block.author.slice(0, 15)}...${block.author.slice(-15)}`}
+                  {`${block.author.slice(0, 12)}...${block.author.slice(-12)}`}
                 </span>
                 <div
                   onClick={(e) => e.preventDefault()}

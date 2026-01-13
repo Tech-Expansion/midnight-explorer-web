@@ -10,7 +10,6 @@ import { useRouter } from "next/navigation"
 import {
   checkBlock,
   checkTransaction,
-  verifyTransaction,
   checkContract,
   searchPool,
   isContractAddress,

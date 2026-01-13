@@ -44,7 +44,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
             <h3 className="font-semibold text-lg text-foreground">Something went wrong</h3>
             {/* Generic error message for users */}
             <p className="text-sm text-muted-foreground max-w-[300px]">
-              We couldn't load this section at the moment.
+              We couldn&apos;t load this section at the moment.
             </p>
           </div>
           <Button 
