@@ -1,6 +1,6 @@
 # Midnight Explorer Web
 
-Next.js blockchain explorer application.
+Next.js blockchain explorer application. 
 
 ## Development
 

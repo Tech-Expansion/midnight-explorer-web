@@ -13,7 +13,7 @@ import { NetworkType, NETWORK_DOMAINS, NETWORK_DISPLAY } from "@/lib/constants/c
 
 // Helper function to detect network from domain
 function getNetworkFromDomain(): NetworkType {
-  if (typeof window === "undefined") return NetworkType.TESTNET
+  if (typeof window === "undefined") return NetworkType.PREVIEW
   
   const hostname = window.location.hostname
   
@@ -23,7 +23,7 @@ function getNetworkFromDomain(): NetworkType {
     return NetworkType.TESTNET
   } else if (hostname.includes(NETWORK_DOMAINS[NetworkType.MAINNET])) {
     // mainnet domain -> default to testnet since mainnet doesn't exist yet
-    return NetworkType.TESTNET
+    return NetworkType.PREVIEW
   }
   
   // Default for localhost and other domains
@@ -31,7 +31,7 @@ function getNetworkFromDomain(): NetworkType {
 }
 
 export function NetworkToggle() {
-  const [network, setNetwork] = useState<NetworkType>(NetworkType.TESTNET)
+  const [network, setNetwork] = useState<NetworkType>(NetworkType.PREVIEW)
   
   // Detect network on mount based on domain
   useEffect(() => {

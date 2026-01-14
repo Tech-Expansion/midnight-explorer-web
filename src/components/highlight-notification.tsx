@@ -27,7 +27,7 @@ export function HighlightNotification() {
         </AlertTitle>
         <AlertDescription>
           <p className="mb-2 text-yellow-100/90 break-words">
-            This site is displaying data from the Testnet. The Mainnet is planned to launch in Q1/2026.
+            This site is displaying data from the Preview. The Mainnet is planned to launch in Q1/2026.
             <br />
             The NIGHT token has already been minted on Cardano, you guys can view it here:{" "}
             <br />
