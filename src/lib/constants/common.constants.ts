@@ -26,7 +26,7 @@ export const NETWORK_DOMAINS = {
 export const NETWORK_DISPLAY = {
   [NetworkType.PREVIEW]: {
     label: 'Preview',
-    color: 'text-blue-400',
+    color: 'text-blue-400', 
     iconColor: 'text-blue-400'
   },
   [NetworkType.TESTNET]: {
@@ -39,4 +39,8 @@ export const NETWORK_DISPLAY = {
     color: 'text-green-400',
     iconColor: 'text-green-400'
   }
+} as const
+
+export const TOKEN_DECIMALS = {
+  NIGHT: 6,
 } as const

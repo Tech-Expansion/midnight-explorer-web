@@ -87,26 +87,21 @@ export function SearchBar() {
                 if (txResult.found && txResult.results && txResult.results.length > 0) {
                     const totalCount = txResult.count || txResult.results.length
 
-                    if (totalCount === 1) {
-                        // Only one result, navigate directly
-                        router.push(`/tx/${cleanQuery}`)
-                    } else {
-                        // Multiple results - show up to 5 in dropdown
-                        const displayResults = txResult
-                            .results
-                            .slice(0, 5)
-                        displayResults.forEach(tx => {
-                            results.push({ type: RESULT_TYPE_TRANSACTION, transaction: tx })
-                        })
+                    // Show up to 5 in dropdown
+                    const displayResults = txResult
+                        .results
+                        .slice(0, 5)
+                    displayResults.forEach(tx => {
+                        results.push({ type: RESULT_TYPE_TRANSACTION, transaction: tx })
+                    })
 
-                        // Add "View All" option if more than 5 results available
-                        if (totalCount > 5) {
-                            results.push({ type: RESULT_TYPE_VIEW_ALL, count: totalCount, searchHash: cleanQuery })
-                        }
-
-                        setSearchResults(results)
-                        setShowDropdown(true)
+                    // Add "View All" option if more than 5 results available
+                    if (totalCount > 5) {
+                        results.push({ type: RESULT_TYPE_VIEW_ALL, count: totalCount, searchHash: cleanQuery })
                     }
+
+                    setSearchResults(results)
+                    setShowDropdown(true)
                 } else {
                     setSearchError('Transaction not found')
                 }
@@ -170,66 +165,66 @@ export function SearchBar() {
 
             // If "all" is selected, smart detection
             if (searchType === SEARCH_TYPE_ALL) {
-                // Check if it looks like a tx/block/contract hash (64 chars)
+                // Check if it looks like a tx/block/contract hash (64 or 66 chars)
                 if (isHexHash(cleanQuery)) {
-                    // Check all types in parallel: TX first, then Contract, then Block, then Pool
-                    const [txResult, poolResult, blockResult, contractResult] = await Promise.all([
-                        checkTransaction(cleanQuery),
-                        searchPool(cleanQuery),
-                        checkBlock(cleanQuery),
-                        checkContract(cleanQuery)
-                    ])
-
-                    // Check TRANSACTION first
+                    // Check TRANSACTION first using search API (same as transaction mode)
+                    const txResult = await checkTransaction(cleanQuery)
                     if (txResult.found && txResult.results && txResult.results.length > 0) {
                         const totalCount = txResult.count || txResult.results.length
 
-                        if (totalCount === 1) {
-                            // Only one transaction, add to dropdown
-                            results.push({ type: RESULT_TYPE_TRANSACTION, transaction: txResult.results[0] })
-                        } else {
-                            // Multiple transactions - show up to 5 in dropdown
-                            const displayResults = txResult
-                                .results
-                                .slice(0, 5)
-                            displayResults.forEach(tx => {
-                                results.push({ type: RESULT_TYPE_TRANSACTION, transaction: tx })
-                            })
-
-                            // Add "View All" option if more than 5 results available
-                            if (totalCount > 5) {
-                                results.push({ type: RESULT_TYPE_VIEW_ALL, count: totalCount, searchHash: cleanQuery })
-                            }
-                        }
-                    }
-
-                    // Check POOL second
-                    if (poolResult.found && poolResult.results) {
-                        // Show up to 5 pools in dropdown
-                        const displayPools = poolResult
+                        // Show up to 5 in dropdown
+                        const displayResults = txResult
                             .results
                             .slice(0, 5)
+                        displayResults.forEach(tx => {
+                            results.push({ type: RESULT_TYPE_TRANSACTION, transaction: tx })
+                        })
+
+                        // Add "View All" option if more than 5 results available
+                        if (totalCount > 5) {
+                            results.push({ type: RESULT_TYPE_VIEW_ALL, count: totalCount, searchHash: cleanQuery })
+                        }
+
+                        setSearchResults(results)
+                        setShowDropdown(true)
+                        setIsSearching(false)
+                        return
+                    }
+
+                    // Check CONTRACT second
+                    const contractResult = await checkContract(cleanQuery)
+                    if (contractResult.found && contractResult.data) {
+                        results.push({ type: RESULT_TYPE_CONTRACT, contract: contractResult.data })
+                        setSearchResults(results)
+                        setShowDropdown(true)
+                        setIsSearching(false)
+                        return
+                    }
+
+                    // Check POOL third
+                    const poolResult = await searchPool(cleanQuery)
+                    if (poolResult.found && poolResult.results) {
+                        const displayPools = poolResult.results.slice(0, 5)
                         displayPools.forEach(pool => {
                             results.push({ type: RESULT_TYPE_POOL, pool })
                         })
-                    }
-
-                    // Check BLOCK third
-                    if (blockResult.found && blockResult.data) {
-                        results.push({ type: RESULT_TYPE_BLOCK, block: blockResult.data })
-                    }
-
-                    // Check CONTRACT fourth
-                    if (contractResult.found && contractResult.data) {
-                        results.push({ type: RESULT_TYPE_CONTRACT, contract: contractResult.data })
-                    }
-
-                    if (results.length > 0) {
                         setSearchResults(results)
                         setShowDropdown(true)
-                    } else {
-                        setSearchError('Hash not found in transactions, contracts, blocks, or pools')
+                        setIsSearching(false)
+                        return
                     }
+
+                    // Check BLOCK fourth
+                    const blockResult = await checkBlock(cleanQuery)
+                    if (blockResult.found && blockResult.data) {
+                        results.push({ type: RESULT_TYPE_BLOCK, block: blockResult.data })
+                        setSearchResults(results)
+                        setShowDropdown(true)
+                        setIsSearching(false)
+                        return
+                    }
+
+                    setSearchError('Hash not found in transactions, contracts, blocks, or pools')
                     setIsSearching(false)
                     return
                 }

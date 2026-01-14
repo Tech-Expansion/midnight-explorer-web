@@ -157,10 +157,10 @@ export const blockAPI = {
   /**
    * Get transactions for a specific block
    */
-  getBlockTransactions: <T = unknown>(height: string | number, params?: { limit?: number; offset?: string }) => {
+  getBlockTransactions: <T = unknown>(height: string | number, limit?: number, offset?: number) => {
     const queryParams = new URLSearchParams()
-    if (params?.limit) queryParams.append('limit', params.limit.toString())
-    if (params?.offset) queryParams.append('offset', params.offset)
+    if (limit) queryParams.append('limit', limit.toString())
+    if (offset !== undefined) queryParams.append('offset', offset.toString())
     const query = queryParams.toString()
     return apiFetch<T>(`/blocks/${height}/transactions${query ? `?${query}` : ''}`)
   }
@@ -177,6 +177,14 @@ export const transactionAPI = {
    */
   getTransaction: <T = unknown>(hash: string) =>
     apiFetch<T>(`/transactions/${hash}`),
+
+  /**
+   * Verify if a transaction exists by hash (fast verification)
+   * Returns found status, type, txHash, and txId
+   * More efficient than full search for existence checks
+   */
+  verifyTransaction: <T = unknown>(hash: string) =>
+    apiFetch<T>(`/transactions/verify?hash=${encodeURIComponent(hash)}`),
 
   /**
    * Search transactions by hash (partial or full)

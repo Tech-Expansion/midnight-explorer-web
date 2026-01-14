@@ -96,10 +96,12 @@ export function PoolsList({ initialPage = 1, pageSize = 20, searchQuery = '' }: 
       return pool.poolOffchainData.name
     }
     // Fallback to shortened auraPublicKey if no name
+    if (!pool.auraPublicKey) return 'Unknown Pool'
     return `${pool.auraPublicKey.slice(0, 12)}...${pool.auraPublicKey.slice(-8)}`
   }
 
   const getAuraPublicKey = (pool: Pool): string => {
+    if (!pool.auraPublicKey) return 'N/A'
     return `${pool.auraPublicKey.slice(0, 12)}...${pool.auraPublicKey.slice(-8)}`
   }
 

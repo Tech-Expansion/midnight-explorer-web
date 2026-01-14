@@ -1,6 +1,3 @@
-import { Header } from "@/components/header"
-import { Starfield } from "@/components/starfield"
-import { Footer } from "@/components/footer"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -42,33 +39,25 @@ export default async function ContractPage({ params }: PageProps) {
   }
 
   return (
-      <div className="min-h-screen bg-background relative">
-        <div className="fixed inset-0 z-0">
-          <Starfield />
-        </div>
-
-        <div className="relative z-10">
-          <Header />
-
-          <main className="container mx-auto px-4 py-8">
-            <div className="max-w-5xl mx-auto space-y-6">
-              {/* Header */}
-              <div className="flex items-center justify-between">
-                <div className="space-y-2">
-                  <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                    Contract Details
-                  </h1>
-                  <p className="text-muted-foreground text-lg">
-                    View contract state and information
-                  </p>
-                </div>
-                <Link href="/contracts">
-                  <Button variant="outline" size="sm" className="border-border">
-                    <ArrowLeft className="h-4 w-4 mr-2" />
-                    Back
-                  </Button>
-                </Link>
-              </div>
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-5xl mx-auto space-y-6">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div className="space-y-2">
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                Contract Details
+              </h1>
+              <p className="text-muted-foreground text-lg">
+                View contract state and information
+              </p>
+            </div>
+            <Link href="/contracts">
+              <Button variant="outline" size="sm" className="border-border">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back
+              </Button>
+            </Link>
+          </div>
 
               {/* Overview */}
               <Card className="p-6 bg-card/50 border-border">
@@ -162,10 +151,6 @@ export default async function ContractPage({ params }: PageProps) {
                 </Card>
               )}
             </div>
-          </main>
-
-          <Footer />
-        </div>
       </div>
   )
 }
