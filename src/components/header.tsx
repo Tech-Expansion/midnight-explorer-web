@@ -3,8 +3,10 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Menu, Sparkles } from "lucide-react";
+import { Fragment } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { getMenu } from "@/lib/menu";
 import { NetworkToggle } from "@/components/network-toggle";
 import { TokenPrice } from "@/components/token-price";
 
@@ -40,53 +42,17 @@ export function Header() {
 
           {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center flex-1 justify-center gap-6 mx-2">
-            <Link
-              href="/"
-              className="text-sm font-medium transition-colors hover:text-primary"
-            >
-              Home
-            </Link>
-            <Link
-              href="/blocks"
-              className="text-sm font-medium transition-colors hover:text-primary"
-            >
-              Blocks
-            </Link>
-            <Link
-              href="/transactions"
-              className="text-sm font-medium transition-colors hover:text-primary"
-            >
-              Transactions
-            </Link>
-            <Link
-              href="/contracts"
-              className="text-sm font-medium transition-colors hover:text-primary"
-            >
-              Contracts
-            </Link>
-            {/* <Link
-              href="/pool"
-              className="text-sm font-medium transition-colors hover:text-primary"
-            >
-              Pool
-            </Link> */}
-            <Link
-              href="https://docs.google.com/forms/d/e/1FAIpQLSfBguf59QpRRgVVFZCWt8S2D6W9aGlB8QEpxIfVJrrwH3fjUw/viewform?usp=publish-editor"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm font-medium transition-colors hover:text-primary"
-            >
-              Feedback
-            </Link>
-
-            <Link
-              href="https://projectcatalyst.io/funds/15/cardano-use-cases-prototype-and-launch/midnight-explorer-a-privacy-preserving-blockchain-explorer"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm font-medium transition-colors hover:text-primary"
-            >
-              Project Catalyst
-            </Link>
+            {getMenu().map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                target={item.external ? "_blank" : undefined}
+                rel={item.external ? "noopener noreferrer" : undefined}
+                className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+              >
+                {item.title}
+              </Link>
+            ))}
           </nav>
 
           <div className="hidden lg:flex items-center gap-3">
@@ -119,55 +85,27 @@ export function Header() {
                 </div>
 
                 <nav className="flex flex-col gap-1">
-                  <Link
-                    href="/"
-                    className="px-4 py-3 text-base font-medium hover:text-primary hover:bg-accent rounded-lg transition-all"
-                  >
-                    Home
-                  </Link>
-                  <Link
-                    href="/blocks"
-                    className="px-4 py-3 text-base font-medium hover:text-primary hover:bg-accent rounded-lg transition-all"
-                  >
-                    Blocks
-                  </Link>
-                  <Link
-                    href="/transactions"
-                    className="px-4 py-3 text-base font-medium hover:text-primary hover:bg-accent rounded-lg transition-all"
-                  >
-                    Transactions
-                  </Link>
-                  <Link
-                    href="/contracts"
-                    className="px-4 py-3 text-base font-medium hover:text-primary hover:bg-accent rounded-lg transition-all"
-                  >
-                    Contracts
-                  </Link>
-                  <Link
-                    href="/pool"
-                    className="px-4 py-3 text-base font-medium hover:text-primary hover:bg-accent rounded-lg transition-all"
-                  >
-                    Pool
-                  </Link>
-
-                  <div className="my-2 border-t border-border" />
-
-                  <Link
-                    href="https://docs.google.com/forms/d/e/1FAIpQLSfBguf59QpRRgVVFZCWt8S2D6W9aGlB8QEpxIfVJrrwH3fjUw/viewform?usp=publish-editor"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-4 py-3 text-base font-medium hover:text-primary hover:bg-accent rounded-lg transition-all"
-                  >
-                    Feedback
-                  </Link>
-                  <Link
-                    href="https://reviews.projectcatalyst.io/proposal/2042"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-4 py-3 text-base font-medium hover:text-primary hover:bg-accent rounded-lg transition-all"
-                  >
-                    Project Catalyst
-                  </Link>
+                  {getMenu().map((item, index, array) => {
+                    const showSeparator =
+                      item.external &&
+                      array[index - 1] &&
+                      !array[index - 1].external;
+                    return (
+                      <Fragment key={item.href}>
+                        {showSeparator && (
+                          <div className="my-2 border-t border-border" />
+                        )}
+                        <Link
+                          href={item.href}
+                          target={item.external ? "_blank" : undefined}
+                          rel={item.external ? "noopener noreferrer" : undefined}
+                          className="px-4 py-3 text-base font-medium text-muted-foreground transition-colors hover:text-foreground hover:bg-accent rounded-md"
+                        >
+                          {item.title}
+                        </Link>
+                      </Fragment>
+                    );
+                  })}
                 </nav>
               </SheetContent>
             </Sheet>

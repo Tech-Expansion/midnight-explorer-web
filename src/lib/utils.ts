@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from 'clsx'
 import { twMerge } from 'tailwind-merge'
+import { TOKEN_DECIMALS } from './constants/common.constants'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -253,4 +254,54 @@ export function formatTokenValue(value: string, decimals: number = 18): string {
   } catch {
     return value
   }
+}
+
+/**
+ * Copy text to clipboard
+ */
+export function copyToClipboard(text: string) {
+  if (typeof window !== 'undefined') {
+    navigator.clipboard.writeText(text)
+  }
+}
+
+/**
+ * Format blockchain address for display
+ */
+export function formatAddress(address: string) {
+  if (address.length > 20) {
+    return address.slice(0, 10) + "..." + address.slice(-10)
+  }
+  return address
+}
+
+/**
+ * Format transaction value with decimals
+ * @param value The value in smallest unit (e.g., wei)
+ * @param decimals Number of decimals (default is TOKEN_DECIMALS.NIGHT)
+ * @returns Formatted value as string
+ */
+export function formatValue(value: string, decimals: number = TOKEN_DECIMALS.NIGHT) {
+  const num = BigInt(value)
+  const divisor = BigInt(10 ** decimals)
+  const integerPart = num / divisor
+  const fractionalPart = num % divisor
+
+  return `${integerPart}.${fractionalPart.toString().padStart(decimals, "0")}`
+}
+
+/**
+ * Format date/timestamp
+ */
+export function formatDate(timestamp: number | string) {
+  const ts = typeof timestamp === 'string' ? parseInt(timestamp) : timestamp
+  return new Date(ts).toLocaleString()
+}
+
+/**
+ * Truncate hex string
+ */
+export function truncateHex(hex: string, length = 20) {
+  if (hex.length <= length) return hex
+  return hex.slice(0, Math.floor(length / 2)) + "..." + hex.slice(-Math.floor(length / 2))
 }
