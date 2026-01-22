@@ -17,6 +17,7 @@ import {
   COLOR_SYSTEM,
   TIME_LABELS,
   X_AXIS_INTERVALS,
+  X_AXIS_INTERVALS_MOBILE,
   CHART_HEIGHTS,
   type TimeRange,
   type DataType,
@@ -40,29 +41,46 @@ export function NetworkCharts() {
   const [loading, setLoading] = useState(true)
   const [timeRange, setTimeRange] = useState<TimeRange>(TIME_RANGE_1D)
   const [dataType, setDataType] = useState<DataType>(DATA_TYPE_TRANSACTIONS)
+  const [isMobile, setIsMobile] = useState(false)
+  const [timezoneMode, setTimezoneMode] = useState<'local' | 'utc'>('local')
+
+  // Detect screen size for responsive interval adjustment
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 640) // sm breakpoint
+    }
+    
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   // Format timestamp thành ngày giờ dễ đọc
   const formatDate = (timestamp: number, range: TimeRange) => {
     const date = new Date(timestamp * 1000)
+    const options: Intl.DateTimeFormatOptions = timezoneMode === 'utc' ? { timeZone: 'UTC' } : {}
     
     if (range === TIME_RANGE_1D) {
       // 24h format: "14:00" (giờ:phút)
       return date.toLocaleTimeString('en-US', { 
         hour: '2-digit', 
         minute: '2-digit',
-        hour12: false 
+        hour12: false,
+        ...options
       })
     } else if (range === TIME_RANGE_7D) {
       // 7 days format: "Dec 20" (tháng ngày)
       return date.toLocaleDateString('en-US', { 
         month: 'short', 
-        day: 'numeric' 
+        day: 'numeric',
+        ...options
       })
     } else {
       // 1 month format: "12/20" (tháng/ngày)
       return date.toLocaleDateString('en-US', { 
         month: 'numeric', 
-        day: 'numeric' 
+        day: 'numeric',
+        ...options
       })
     }
   }
@@ -70,14 +88,17 @@ export function NetworkCharts() {
   // Format đầy đủ cho tooltip
   const formatFullDate = (timestamp: number) => {
     const date = new Date(timestamp * 1000)
-    return date.toLocaleString('en-US', { 
+    const options: Intl.DateTimeFormatOptions = {
       month: 'short', 
       day: 'numeric', 
       year: 'numeric',
       hour: '2-digit', 
       minute: '2-digit',
-      hour12: false
-    })
+      hour12: false,
+      ...(timezoneMode === 'utc' ? { timeZone: 'UTC' } : {})
+    }
+    const formattedDate = date.toLocaleString('en-US', options)
+    return timezoneMode === 'utc' ? `${formattedDate} UTC` : formattedDate
   }
 
   useEffect(() => {
@@ -114,7 +135,7 @@ export function NetworkCharts() {
     }
 
     fetchTransactionData()
-  }, [timeRange, dataType])
+  }, [timeRange, dataType, timezoneMode])
 
   const getChartTitle = () => {
     const timeLabel = TIME_LABELS[timeRange]
@@ -142,9 +163,8 @@ export function NetworkCharts() {
     return null
   }
 
-  // Quyết định có nên hiển thị tất cả labels hay không
   const getXAxisInterval = () => {
-    return X_AXIS_INTERVALS[timeRange]
+    return isMobile ? X_AXIS_INTERVALS_MOBILE[timeRange] : X_AXIS_INTERVALS[timeRange]
   }
 
   return (
@@ -167,7 +187,7 @@ export function NetworkCharts() {
             <div>
               <h3 className="text-lg font-semibold mb-1">Chain Status</h3>
               <p className="text-sm text-muted-foreground">
-                {loading ? "Loading..." : getChartTitle()}
+                {loading ? "Loading..." : `${getChartTitle()} (${timezoneMode === 'utc' ? 'UTC+0' : 'Local Time'})`} 
               </p>
             </div>
             
@@ -244,6 +264,32 @@ export function NetworkCharts() {
                   suppressHydrationWarning
                 >
                   1M
+                </button>
+              </div>
+
+              {/* Timezone Toggle */}
+              <div className="flex gap-1 bg-muted p-1 rounded-lg">
+                <button
+                  onClick={() => setTimezoneMode('local')}
+                  className={`px-3 py-1.5 text-xs font-medium rounded transition-colors whitespace-nowrap ${
+                    timezoneMode === 'local'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                  suppressHydrationWarning
+                >
+                  Your Local Time
+                </button>
+                <button
+                  onClick={() => setTimezoneMode('utc')}
+                  className={`px-3 py-1.5 text-xs font-medium rounded transition-colors whitespace-nowrap ${
+                    timezoneMode === 'utc'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                  suppressHydrationWarning
+                >
+                  UTC Time
                 </button>
               </div>
             </div>

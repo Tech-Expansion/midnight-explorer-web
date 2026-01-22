@@ -50,6 +50,13 @@ export const X_AXIS_INTERVALS = {
   [TIME_RANGE_1M]: 2   // Show every 3 days
 } as const
 
+// Mobile-specific axis intervals for better readability on small screens
+export const X_AXIS_INTERVALS_MOBILE = {
+  [TIME_RANGE_1D]: 3,  // Show fewer labels on mobile for 24h view
+  [TIME_RANGE_7D]: 1,  // Show every other day
+  [TIME_RANGE_1M]: 4   // Show every 5 days on mobile
+} as const
+
 // Chart height constants - Responsive heights
 export const CHART_HEIGHTS = {
   [TIME_RANGE_1D]: 300,

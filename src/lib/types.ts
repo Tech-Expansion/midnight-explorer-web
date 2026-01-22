@@ -52,6 +52,7 @@ export interface Transaction {
  * Represents a contract on the Midnight blockchain
  */
 export interface Contract {
+  id: string;
   /** Contract address */
   address: string;
   /** Transaction ID that deployed the contract */
@@ -109,7 +110,7 @@ export interface Pool {
   /** Number of blocks minted by this pool */
   blocksMinted: number;
   /** Mainchain public key (optional) */
-  mainchainPublicKey?: string;
+  mainchainPubKey?: string;
   /** Offchain pool metadata (optional) */
   poolOffchainData?: PoolOffchainData;
 }

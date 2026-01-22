@@ -7,6 +7,7 @@ interface PageProps {
   searchParams: Promise<{
     cursor?: string
     page?: string
+    search?: string
   }>
 }
 
@@ -14,6 +15,7 @@ export default async function ContractsPage({ searchParams }: PageProps) {
   const resolvedSearchParams = await searchParams
   const cursor = resolvedSearchParams?.cursor
   const page = resolvedSearchParams?.page ? parseInt(resolvedSearchParams.page) : 1
+  const search = resolvedSearchParams?.search
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-6">
@@ -30,8 +32,12 @@ export default async function ContractsPage({ searchParams }: PageProps) {
       {/* Search Bar */}
       <SearchBarPage searchType="contract" />
 
-      {/* Contracts List */}
-      <ContractsList initialCursor={cursor} page={page} />
+      {/* Contracts List or Search Results */}
+      {search ? (
+        <ContractsList searchAddress={search} page={page} />
+      ) : (
+        <ContractsList initialCursor={cursor} page={page} />
+      )}
     </div>
   )
 }

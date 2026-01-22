@@ -21,7 +21,7 @@ interface PoolDetail {
   type: string
   blocksMinted: number
   sidechainAccountId: string
-  mainchainPublicKey: string
+  mainchainPubKey: string
   crossChainPublicKey: string
   sidechainSignature: string
   mainchainSignature: string
@@ -195,9 +195,9 @@ export default async function PoolDetailPage({ params }: PageProps) {
                     <p className="text-sm text-muted-foreground mb-2">Mainchain Public Key</p>
                     <div className="flex items-center gap-2">
                       <p className="text-xs font-mono break-all flex-1 text-blue-400">
-                        {pool.mainchainPublicKey}
+                        {pool.mainchainPubKey}
                       </p>
-                      <CopyButton text={pool.mainchainPublicKey} />
+                      <CopyButton text={pool.mainchainPubKey} />
                     </div>
                   </div>
                   <div>

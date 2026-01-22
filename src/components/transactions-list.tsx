@@ -49,7 +49,7 @@ export function TransactionsList({  }: TransactionsListProps) {
           // Normal mode with cursor - use cursor from cursorMap for current page
           const cursorForPage = cursorMap[searchPage]
           const response: { items: Transaction[]; nextCursor?: string } = await transactionAPI.getTransactions(cursorForPage)
-          console.log('[TransactionsList] Fetched page', searchPage, 'with cursor:', cursorForPage, 'nextCursor:', response.nextCursor)
+          //console.log('[TransactionsList] Fetched page', searchPage, 'with cursor:', cursorForPage, 'nextCursor:', response.nextCursor)
           setTransactions(response.items)
           setNextCursor(response.nextCursor)
           

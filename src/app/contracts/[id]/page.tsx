@@ -1,3 +1,4 @@
+import { Starfield } from "@/components/starfield"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -5,59 +6,67 @@ import { ArrowLeft, FileCode, ExternalLink } from "lucide-react"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import { CopyButton } from "@/components/ui/copy-button"
-import { contractAPI, transactionAPI } from "@/lib/api"
+import { contractAPI } from "@/lib/api"
 import { Contract } from "@/lib/types"
 
 interface PageProps {
-  params: Promise<{ address: string }>
+  params: Promise<{ id: string }>
 }
 
 export const dynamic = "force-dynamic"
 
+interface ContractApiResponse {
+  contract?: Contract
+}
 
 export default async function ContractPage({ params }: PageProps) {
-  const { address } = await params
+  const { id } = await params
   
   let contract: Contract
   try {
-    const data = await contractAPI.getContract<{ contract: Contract }>(address)
-    contract = data.contract
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  } catch (_error) {
+    const data = await contractAPI.getContract<ContractApiResponse | Contract>(id)
+    // Handle both wrapped and unwrapped responses
+    contract = (data as ContractApiResponse).contract || (data as Contract)
+    if (!contract || !contract.address) {
+      console.error('Invalid contract data:', data)
+      notFound()
+    }
+  } catch (error) {
+    console.error('Failed to fetch contract:', error)
     notFound()
   }
 
-  // Fetch transaction hash from ID
-  let transactionHash = null
-  if (contract.transactionId) {
-    try {
-      const txData = await transactionAPI.getTransactionById<{ hash: string }>(contract.transactionId)
-      transactionHash = txData.hash
-    } catch (error) {
-      console.error('Failed to fetch transaction hash:', error)
-    }
-  }
+  // Use transaction hash from API response
+  const transactionHash = contract.transactionHash || null
 
   return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-5xl mx-auto space-y-6">
-          {/* Header */}
-          <div className="flex items-center justify-between">
-            <div className="space-y-2">
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                Contract Details
-              </h1>
-              <p className="text-muted-foreground text-lg">
-                View contract state and information
-              </p>
-            </div>
-            <Link href="/contracts">
-              <Button variant="outline" size="sm" className="border-border">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back
-              </Button>
-            </Link>
-          </div>
+      <div className="min-h-screen bg-background relative">
+        <div className="fixed inset-0 z-0">
+          <Starfield />
+        </div>
+
+        <div className="relative z-10">
+    
+
+          <main className="container mx-auto px-4 py-8">
+            <div className="max-w-5xl mx-auto space-y-6">
+              {/* Header */}
+              <div className="flex items-center justify-between">
+                <div className="space-y-2">
+                  <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                    Contract Details
+                  </h1>
+                  <p className="text-muted-foreground text-lg">
+                    View contract state and information
+                  </p>
+                </div>
+                <Link href="/contracts">
+                  <Button variant="outline" size="sm" className="border-border">
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    Back
+                  </Button>
+                </Link>
+              </div>
 
               {/* Overview */}
               <Card className="p-6 bg-card/50 border-border">
@@ -84,7 +93,7 @@ export default async function ContractPage({ params }: PageProps) {
                       {transactionHash ? (
                         <Link
                           href={`/tx/${transactionHash}`}
-                          className="text-blue-400 hover:text-blue-300 transition-colors font-mono text-sm flex items-center gap-2"
+                          className="text-blue-400 hover:text-blue-300 transition-colors font-mono break-all text-sm flex items-center gap-2"
                         >
                           {transactionHash.slice(0, 32)}...{transactionHash.slice(-16)}
                           <ExternalLink className="h-3 w-3" />
@@ -151,6 +160,8 @@ export default async function ContractPage({ params }: PageProps) {
                 </Card>
               )}
             </div>
+          </main>
+        </div>
       </div>
   )
 }

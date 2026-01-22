@@ -9,7 +9,7 @@ import { fetchNewToken, createTokenCookie, getTokenExpiry } from '@/lib/token-ma
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('[Auth] Token refresh requested')
+    //console.log('[Auth] Token refresh requested')
     
     // Get browser fingerprint from headers
     const userAgent = request.headers.get('user-agent') || 'unknown'
@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
     })
     
     response.headers.set('Set-Cookie', createTokenCookie(token))
-    console.log('[Auth] Token refreshed successfully')
+    //console.log('[Auth] Token refreshed successfully')
     
     return response
   } catch (error) {

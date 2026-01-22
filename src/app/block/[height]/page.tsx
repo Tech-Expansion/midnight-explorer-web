@@ -21,12 +21,12 @@ export const dynamic = "force-dynamic"
 export default async function BlockPage({ params }: PageProps) {
   // AWAIT params first
   const { height } = await params;
-  console.log('Fetching block with height:', height);
+  //console.log('Fetching block with height:', height);
 
   try {
     // Fetch block details from API
     const data = await blockAPI.getBlock<BlockResponse>(height)
-    console.log('Block data received:', data);
+    //console.log('Block data received:', data);
     
     if (!data.block) {
       console.error('No block data in response');

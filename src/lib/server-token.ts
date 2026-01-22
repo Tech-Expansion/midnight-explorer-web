@@ -11,7 +11,7 @@ const BACKEND_API_URL = process.env.API_URL || 'http://localhost:3002'
  */
 export async function fetchServerToken(): Promise<string | null> {
   try {
-    console.log('[ServerToken] Fetching token for SSR...')
+    //console.log('[ServerToken] Fetching token for SSR...')
     
     const response = await fetch(`${BACKEND_API_URL}/api/v1/auth/token`, {
       method: 'POST',
@@ -28,7 +28,7 @@ export async function fetchServerToken(): Promise<string | null> {
     }
 
     const data = await response.json()
-    console.log('[ServerToken] Token fetched successfully')
+    //console.log('[ServerToken] Token fetched successfully')
     return data.token
   } catch (error) {
     console.error('[ServerToken] Error fetching token:', error)

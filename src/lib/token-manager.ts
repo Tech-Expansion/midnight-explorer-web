@@ -59,7 +59,7 @@ export function getTokenExpiry(token: string): number | null {
  */
 export async function fetchNewToken(userAgent: string, acceptLanguage: string): Promise<string | null> {
   try {
-    console.log('[Token] Fetching new token from backend...')
+    //console.log('[Token] Fetching new token from backend...')
     
     const response = await fetch(`${BACKEND_AUTH_URL}/api/v1/auth/token`, {
       method: 'POST',
@@ -80,7 +80,7 @@ export async function fetchNewToken(userAgent: string, acceptLanguage: string): 
     }
 
     const data: TokenResponse = await response.json()
-    console.log('[Token] New token fetched successfully')
+    //console.log('[Token] New token fetched successfully')
     return data.token
   } catch (error) {
     console.error('[Token] Error fetching token:', error)
@@ -147,15 +147,15 @@ export function validateToken(request: Request): string | null {
   const token = getTokenFromCookie(cookieHeader)
   
   if (!token) {
-    console.log('[Token] No token found in cookie')
+    //console.log('[Token] No token found in cookie')
     return null
   }
   
   if (!isTokenValid(token)) {
-    console.log('[Token] Token is expired')
+    //console.log('[Token] Token is expired')
     return null
   }
   
-  console.log('[Token] Token is valid')
+  //console.log('[Token] Token is valid')
   return token
 }

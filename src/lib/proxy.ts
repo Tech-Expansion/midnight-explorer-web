@@ -38,7 +38,7 @@ export async function proxyToExternalAPI(
       ? `${API_BASE_URL}/api/${API_VERSION}${endpoint}`
       : `${API_BASE_URL}/api/${API_VERSION}${endpoint}${queryString}`
 
-    console.log(`[Proxy] Forwarding request to: ${fullUrl}`)
+    //console.log(`[Proxy] Forwarding request to: ${fullUrl}`)
 
     // 2. Forward request with token
     const response = await fetch(fullUrl, {

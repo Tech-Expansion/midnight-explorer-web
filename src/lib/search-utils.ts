@@ -2,7 +2,7 @@
 export interface PoolResult {
   auraPublicKey: string
   blocksMinted: number
-  mainchainPublicKey?: string
+  mainchainPubKey?: string
   poolOffchainData?: {
     name: string
     ticker: string
@@ -25,6 +25,7 @@ export interface TransactionResult {
 }
 
 export interface ContractResult {
+  id: string | number
   address: string
   variant?: string
 }
@@ -72,7 +73,7 @@ export async function checkBlock(query: string): Promise<{
     }
   } catch (error) {
     if (error instanceof Error && error.name === 'AbortError') {
-      console.log('⏱️ Block check timeout')
+      //console.log('⏱️ Block check timeout')
     }
     return { found: false }
   }
@@ -166,7 +167,7 @@ export async function checkTransaction(query: string): Promise<{
     return { found: false }
   } catch (error) {
     if (error instanceof Error && error.name === 'AbortError') {
-      console.log('⏱️ Transaction check timeout')
+      //console.log('⏱️ Transaction check timeout')
     }
     return { found: false }
   }
@@ -183,7 +184,7 @@ export async function searchPool(query: string): Promise<{
   results?: Array<{
     auraPublicKey: string
     blocksMinted: number
-    mainchainPublicKey?: string
+    mainchainPubKey?: string
     poolOffchainData?: {
       name: string
       ticker: string
@@ -198,7 +199,7 @@ export async function searchPool(query: string): Promise<{
     const data = await poolAPI.searchPools<Array<{
       auraPublicKey: string
       blocksMinted: number
-      mainchainPublicKey?: string
+      mainchainPubKey?: string
       poolOffchainData?: {
         name: string
         ticker: string
@@ -253,7 +254,8 @@ export async function checkContract(query: string): Promise<{
         found: true,
         data: {
           address: data.contract?.address ?? data.address ?? query,
-          variant: data.contract?.variant ?? data.variant
+          variant: data.contract?.variant ?? data.variant,
+          id: data.contract?.id ??data.id??null
         }
       }
     }
@@ -261,18 +263,18 @@ export async function checkContract(query: string): Promise<{
     return { found: false }
   } catch (error) {
     if (error instanceof Error && error.name === 'AbortError') {
-      console.log('⏱️ Contract check timeout')
+      //console.log('⏱️ Contract check timeout')
     }
     return { found: false }
   }
 }
 
 /**
- * Helper function to determine if a string is a contract address (70 hex chars)
+ * Helper function to determine if a string is a contract address (64 hex chars without 0x, or 66 with 0x)
  */
 export function isContractAddress(query: string): boolean {
   const cleanHash = query.startsWith("0x") ? query.slice(2) : query
-  return /^[a-fA-F0-9]{70}$/.test(cleanHash)
+  return /^[a-fA-F0-9]{64}$/.test(cleanHash)
 }
 
 /**

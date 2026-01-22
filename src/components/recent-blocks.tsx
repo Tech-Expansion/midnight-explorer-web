@@ -1,6 +1,7 @@
 ﻿'use client'
 
 import { useMemo, useRef, useLayoutEffect } from 'react'
+import Image from 'next/image'
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { CopyButton } from "@/components/ui/copy-button"
@@ -43,7 +44,7 @@ export function RecentBlocks({ blocks }: RecentBlocksProps) {
                   {formatDateTimeWithRelative(new Date(block.timestamp))}
                 </span>
               </div>
-              <span className="text-sm text-muted-foreground flex-shrink-0 ml-2">
+              <span className="text-sm text-muted-foreground flex-shrink-0 ml-auto pr-23">
                 Author
               </span>
             </div>
@@ -51,6 +52,7 @@ export function RecentBlocks({ blocks }: RecentBlocksProps) {
             <div className="flex items-center justify-between gap-2">
               {/* HASH + COPY */}
               <div className="flex items-center gap-2 flex-1 min-w-0">
+                
                 <p className="text-sm font-mono text-muted-foreground truncate">
                   {`${block.hash.slice(0, 15)}...${block.hash.slice(-15)}`}
                 </p>
@@ -64,6 +66,7 @@ export function RecentBlocks({ blocks }: RecentBlocksProps) {
 
               {/* AUTHOR */}
               <div className="flex items-center justify-end gap-2 flex-1 min-w-0">
+                <Image src="/images/author.svg" alt="Author" width={25} height={25} />
                 <span className="text-sm text-muted-foreground truncate">
                   {`${block.author.slice(0, 12)}...${block.author.slice(-12)}`}
                 </span>

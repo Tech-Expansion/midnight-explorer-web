@@ -12,13 +12,13 @@
 //   if (currentEpoch !== undefined) {
 //     // Query committee for the current epoch
 //     const committee = await api.rpc.sidechain.getEpochCommittee(currentEpoch);
-//     console.log(`Epoch Hiện Tại: ${currentEpoch}`);
-//     console.log('Ủy Ban Xác Thực:');
+//     //console.log(`Epoch Hiện Tại: ${currentEpoch}`);
+//     //console.log('Ủy Ban Xác Thực:');
 //     committee.committee.forEach((member: any) => {
-//       console.log(`- Khóa Công Khai: ${member.sidechainPubKey}`);
+//       //console.log(`- Khóa Công Khai: ${member.sidechainPubKey}`);
 //     });
 //   } else {
-//     console.log('Không thể lấy epoch hiện tại.');
+//     //console.log('Không thể lấy epoch hiện tại.');
 //   }
 
 //   await api.disconnect();

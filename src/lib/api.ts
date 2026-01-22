@@ -26,7 +26,7 @@ async function getServerToken(): Promise<string | null> {
   
   // Return cached token if still valid (with 10s buffer)
   if (serverTokenCache && serverTokenCache.expiresAt > now + 10000) {
-    console.log('[API] Using cached server token')
+    //console.log('[API] Using cached server token')
     return serverTokenCache.token
   }
   
@@ -223,16 +223,22 @@ export const transactionAPI = {
  */
 export const contractAPI = {
   /**
-   * Get a contract by address
+   * Get a contract by id
    */
-  getContract: <T = unknown>(address: string) =>
-    apiFetch<T>(`/contracts/${address}`),
+  getContract: <T = unknown>(id: string | number) =>
+    apiFetch<T>(`/contracts/${id}?Id=${id}`),
 
   /**
    * Get contracts with pagination
    */
   getContracts: <T = unknown>(cursor?: string) =>
-    apiFetch<T>(`/contracts${cursor ? `?cursor=${cursor}` : ''}`)
+    apiFetch<T>(`/contracts${cursor ? `?cursor=${cursor}` : ''}`),
+
+  /**
+   * Search contracts by address
+   */
+  searchContractsByAddress: <T = unknown>(address: string) =>
+    apiFetch<T>(`/contracts/contract_actions?address=${encodeURIComponent(address)}`)
 }
 
 /**
