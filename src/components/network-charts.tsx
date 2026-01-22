@@ -192,12 +192,12 @@ export function NetworkCharts() {
             </div>
             
             {/* Toggle Controls */}
-            <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
-              {/* Data Type Toggle */}
-              <div className="flex flex-wrap gap-1 bg-muted p-1 rounded-lg">
+            <div className="flex flex-col lg:flex-row gap-3 w-full lg:w-auto">
+              {/* Data Type Toggle - Full width on mobile */}
+              <div className="flex gap-1 bg-muted p-1 rounded-lg w-full lg:w-auto">
                 <button
                   onClick={() => setDataType(DATA_TYPE_TRANSACTIONS)}
-                  className={`px-3 py-1.5 text-xs font-medium rounded transition-colors ${
+                  className={`flex-1 lg:flex-none px-3 py-1.5 text-xs font-medium rounded transition-colors ${
                     dataType === DATA_TYPE_TRANSACTIONS
                       ? 'bg-blue-500 text-white'
                       : 'text-muted-foreground hover:text-foreground'
@@ -208,89 +208,92 @@ export function NetworkCharts() {
                 </button>
                 <button
                   onClick={() => setDataType(DATA_TYPE_REGULAR)}
-                  className={`px-3 py-1.5 text-xs font-medium rounded transition-colors ${
+                  className={`flex-1 lg:flex-none px-3 py-1.5 text-xs font-medium rounded transition-colors ${
                     dataType === DATA_TYPE_REGULAR
                       ? 'bg-green-600 text-white'
                       : 'text-muted-foreground hover:text-foreground'
                   }`}
                   suppressHydrationWarning
                 >
-                  Regular Network
+                  Regular
                 </button>
                 <button
                   onClick={() => setDataType(DATA_TYPE_SYSTEM)}
-                  className={`px-3 py-1.5 text-xs font-medium rounded transition-colors whitespace-nowrap ${
+                  className={`flex-1 lg:flex-none px-3 py-1.5 text-xs font-medium rounded transition-colors whitespace-nowrap ${
                     dataType === DATA_TYPE_SYSTEM
                       ? 'bg-red-500 text-white'
                       : 'text-muted-foreground hover:text-foreground'
                   }`}
                   suppressHydrationWarning
                 >
-                  System Network
+                  System
                 </button>
               </div>
 
-              {/* Time Range Toggle */}
-              <div className="flex gap-1 bg-muted p-1 rounded-lg">
-                <button
-                  onClick={() => setTimeRange(TIME_RANGE_1D)}
-                  className={`px-3 py-1.5 text-xs font-medium rounded transition-colors ${
-                    timeRange === TIME_RANGE_1D
-                      ? 'bg-primary text-primary-foreground'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                  suppressHydrationWarning
-                >
-                  1D
-                </button>
-                <button
-                  onClick={() => setTimeRange(TIME_RANGE_7D)}
-                  className={`px-3 py-1.5 text-xs font-medium rounded transition-colors ${
-                    timeRange === TIME_RANGE_7D
-                      ? 'bg-primary text-primary-foreground'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                  suppressHydrationWarning
-                >
-                  7D
-                </button>
-                <button
-                  onClick={() => setTimeRange(TIME_RANGE_1M)}
-                  className={`px-3 py-1.5 text-xs font-medium rounded transition-colors ${
-                    timeRange === TIME_RANGE_1M
-                      ? 'bg-primary text-primary-foreground'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                  suppressHydrationWarning
-                >
-                  1M
-                </button>
-              </div>
+              {/* Time Range & Timezone Toggle - Side by side on all screens */}
+              <div className="flex gap-3 w-full lg:w-auto">
+                {/* Time Range Toggle */}
+                <div className="flex gap-1 bg-muted p-1 rounded-lg flex-1 lg:flex-none">
+                  <button
+                    onClick={() => setTimeRange(TIME_RANGE_1D)}
+                    className={`flex-1 lg:flex-none px-3 py-1.5 text-xs font-medium rounded transition-colors ${
+                      timeRange === TIME_RANGE_1D
+                        ? 'bg-primary text-primary-foreground'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                    suppressHydrationWarning
+                  >
+                    1D
+                  </button>
+                  <button
+                    onClick={() => setTimeRange(TIME_RANGE_7D)}
+                    className={`flex-1 lg:flex-none px-3 py-1.5 text-xs font-medium rounded transition-colors ${
+                      timeRange === TIME_RANGE_7D
+                        ? 'bg-primary text-primary-foreground'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                    suppressHydrationWarning
+                  >
+                    7D
+                  </button>
+                  <button
+                    onClick={() => setTimeRange(TIME_RANGE_1M)}
+                    className={`flex-1 lg:flex-none px-3 py-1.5 text-xs font-medium rounded transition-colors ${
+                      timeRange === TIME_RANGE_1M
+                        ? 'bg-primary text-primary-foreground'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                    suppressHydrationWarning
+                  >
+                    1M
+                  </button>
+                </div>
 
-              {/* Timezone Toggle */}
-              <div className="flex gap-1 bg-muted p-1 rounded-lg">
-                <button
-                  onClick={() => setTimezoneMode('local')}
-                  className={`px-3 py-1.5 text-xs font-medium rounded transition-colors whitespace-nowrap ${
-                    timezoneMode === 'local'
-                      ? 'bg-primary text-primary-foreground'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                  suppressHydrationWarning
-                >
-                  Your Local Time
-                </button>
-                <button
-                  onClick={() => setTimezoneMode('utc')}
-                  className={`px-3 py-1.5 text-xs font-medium rounded transition-colors whitespace-nowrap ${
-                    timezoneMode === 'utc'
-                      ? 'bg-primary text-primary-foreground'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                  suppressHydrationWarning
-                >
-                  UTC Time
-                </button>
+                {/* Timezone Toggle */}
+                <div className="flex gap-1 bg-muted p-1 rounded-lg flex-1 lg:flex-none">
+                  <button
+                    onClick={() => setTimezoneMode('local')}
+                    className={`flex-1 lg:flex-none px-2 py-1.5 text-xs font-medium rounded transition-colors whitespace-nowrap ${
+                      timezoneMode === 'local'
+                        ? 'bg-primary text-primary-foreground'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                    suppressHydrationWarning
+                  >
+                    Local
+                  </button>
+                  <button
+                    onClick={() => setTimezoneMode('utc')}
+                    className={`flex-1 lg:flex-none px-2 py-1.5 text-xs font-medium rounded transition-colors whitespace-nowrap ${
+                      timezoneMode === 'utc'
+                        ? 'bg-primary text-primary-foreground'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                    suppressHydrationWarning
+                  >
+                    UTC
+                  </button>
+                </div>
               </div>
             </div>
           </div>
