@@ -58,13 +58,13 @@ export function NetworkStats() {
   const stats = [
     {
       label: "Current Epoch",
-      value: isLoading ? '...' : formatNumber(sidechainStatus?.epoch),
+      value: isLoading ? '...' : formatNumber(sidechainStatus?.sidechainCurrentEpoch),
       trend: "neutral",
       icon: Calendar,
     },
     {
       label: "Current Slot",
-      value: isLoading ? '...' : formatNumber(sidechainStatus?.slot),
+      value: isLoading ? '...' : formatNumber(sidechainStatus?.sidechainSlot),
       trend: "neutral",
       icon: Zap,
     },
