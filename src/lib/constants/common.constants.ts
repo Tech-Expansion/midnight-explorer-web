@@ -1,51 +1,46 @@
 /**
+ * Common constants shared across the application
+ */
+
+/**
  * Network types enum
  */
 export enum NetworkType {
-  PREVIEW = "preview",
-  TESTNET = "testnet",
-  PREPROD = "preprod",
-  MAINNET = "mainnet",
+  PREVIEW = 'preview',
+  TESTNET = 'testnet',
+  MAINNET = 'mainnet'
 }
 
 /**
- * Unified network configuration - add new networks here only
+ * Network domain mappings
  */
-export const NETWORKS = {
+export const NETWORK_DOMAINS = {
+  [NetworkType.PREVIEW]: 'preview.midnightexplorer.com',
+  [NetworkType.TESTNET]: 'testnet.midnightexplorer.com',
+  [NetworkType.MAINNET]: 'midnightexplorer.com'
+} as const
+
+/**
+ * Network display configurations
+ */
+export const NETWORK_DISPLAY = {
   [NetworkType.PREVIEW]: {
-    label: "Preview",
-    domain: "preview.midnightexplorer.com",
-    color: "text-blue-400",
-    iconColor: "text-blue-400",
-    enabled: true,
-    message: undefined,
+    label: 'Preview',
+    color: 'text-blue-400', 
+    iconColor: 'text-blue-400'
   },
   [NetworkType.TESTNET]: {
-    label: "Testnet",
-    domain: "testnet.midnightexplorer.com",
-    color: "text-amber-400",
-    iconColor: "text-amber-400",
-    enabled: true,
-    message: undefined,
-  },
-  [NetworkType.PREPROD]: {
-    label: "Preprod",
-    domain: "preprod.midnightexplorer.com",
-    color: "text-purple-400",
-    iconColor: "text-purple-400",
-    enabled: true,
-    message: undefined,
+    label: 'Testnet',
+    color: 'text-amber-400',
+    iconColor: 'text-amber-400'
   },
   [NetworkType.MAINNET]: {
-    label: "Mainnet",
-    domain: "midnightexplorer.com",
-    color: "text-green-400",
-    iconColor: "text-green-400",
-    enabled: false,
-    message: "Upcoming",
-  },
-} as const;
+    label: 'Mainnet',
+    color: 'text-green-400',
+    iconColor: 'text-green-400'
+  }
+} as const
 
 export const TOKEN_DECIMALS = {
   NIGHT: 6,
-} as const;
+} as const
