@@ -17,9 +17,9 @@ function getNetworkFromDomain(): NetworkType {
   
   const hostname = window.location.hostname
   
-  // Check each network domain
+  // Check each network's domains array
   for (const [networkType, config] of Object.entries(NETWORKS)) {
-    if (hostname.includes(config.domain)) {
+    if (config.domains.some(domain => hostname.includes(domain))) {
       return networkType as NetworkType
     }
   }
