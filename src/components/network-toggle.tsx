@@ -9,7 +9,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { NetworkType, NETWORK_DOMAINS, NETWORK_DISPLAY } from "@/lib/constants/common.constants"
+import { NetworkType, NETWORKS } from "@/lib/constants/common.constants"
 
 // Helper function to detect network from domain
 function getNetworkFromDomain(): NetworkType {
@@ -17,13 +17,11 @@ function getNetworkFromDomain(): NetworkType {
   
   const hostname = window.location.hostname
   
-  if (hostname.includes(NETWORK_DOMAINS[NetworkType.PREVIEW])) {
-    return NetworkType.PREVIEW
-  } else if (hostname.includes(NETWORK_DOMAINS[NetworkType.TESTNET])) {
-    return NetworkType.TESTNET
-  } else if (hostname.includes(NETWORK_DOMAINS[NetworkType.MAINNET])) {
-    // mainnet domain -> default to testnet since mainnet doesn't exist yet
-    return NetworkType.PREVIEW
+  // Check each network domain
+  for (const [networkType, config] of Object.entries(NETWORKS)) {
+    if (hostname.includes(config.domain)) {
+      return networkType as NetworkType
+    }
   }
   
   // Default for localhost and other domains
@@ -38,7 +36,10 @@ export function NetworkToggle() {
     setNetwork(getNetworkFromDomain())
   }, [])
 
-  const currentDisplay = NETWORK_DISPLAY[network]
+  const currentDisplay = NETWORKS[network]
+
+  // Get all available networks in order
+  const networks = Object.values(NetworkType)
 
   return (
     <DropdownMenu>
@@ -57,53 +58,34 @@ export function NetworkToggle() {
 
       {/* Menu xổ xuống */}
       <DropdownMenuContent align="end" className="w-[210px]">
-        {/* Preview item */}
-        <DropdownMenuItem
-          onClick={() => window.open(`https://${NETWORK_DOMAINS[NetworkType.PREVIEW]}`, '_blank')}
-          className="cursor-pointer flex flex-col items-start"
-        >
-          <div className="flex items-center">
-            <Globe className={`h-4 w-4 mr-2 ${NETWORK_DISPLAY[NetworkType.PREVIEW].iconColor}`} />
-            <span className={`${NETWORK_DISPLAY[NetworkType.PREVIEW].color} font-medium`}>
-              {NETWORK_DISPLAY[NetworkType.PREVIEW].label}
-            </span>
-            {network === NetworkType.PREVIEW && <span className="ml-2 text-xs">✓</span>}
-          </div>
-          <span className="text-xs text-muted-foreground ml-6">
-            {NETWORK_DOMAINS[NetworkType.PREVIEW]}
-          </span>
-        </DropdownMenuItem>
+        {networks.map((networkType) => {
+          const config = NETWORKS[networkType]
+          const isCurrentNetwork = network === networkType
 
-        {/* Testnet item */}
-        <DropdownMenuItem
-          onClick={() => window.open(`https://${NETWORK_DOMAINS[NetworkType.TESTNET]}`, '_blank')}
-          className="cursor-pointer flex flex-col items-start"
-        >
-          <div className="flex items-center">
-            <Globe className={`h-4 w-4 mr-2 ${NETWORK_DISPLAY[NetworkType.TESTNET].iconColor}`} />
-            <span className={`${NETWORK_DISPLAY[NetworkType.TESTNET].color} font-medium`}>
-              {NETWORK_DISPLAY[NetworkType.TESTNET].label}
-            </span>
-            {network === NetworkType.TESTNET && <span className="ml-2 text-xs">✓</span>}
-          </div>
-          <span className="text-xs text-muted-foreground ml-6">
-            {NETWORK_DOMAINS[NetworkType.TESTNET]}
-          </span>
-        </DropdownMenuItem>
-
-        {/* Mainnet item */}
-        <DropdownMenuItem
-          disabled
-          className="opacity-50 cursor-not-allowed flex flex-col items-start"
-        >
-          <div className="flex items-center">
-            <Globe className={`h-4 w-4 mr-2 ${NETWORK_DISPLAY[NetworkType.MAINNET].iconColor}`} />
-            <span className={`${NETWORK_DISPLAY[NetworkType.MAINNET].color} font-medium`}>
-              {NETWORK_DISPLAY[NetworkType.MAINNET].label}
-            </span>
-          </div>
-          <span className="text-xs text-muted-foreground ml-6">Upcoming</span>
-        </DropdownMenuItem>
+          return (
+            <DropdownMenuItem
+              key={networkType}
+              onClick={() => config.enabled && window.open(`https://${config.domain}`, '_blank')}
+              disabled={!config.enabled}
+              className={
+                config.enabled
+                  ? "cursor-pointer flex flex-col items-start"
+                  : "opacity-50 cursor-not-allowed flex flex-col items-start"
+              }
+            >
+              <div className="flex items-center">
+                <Globe className={`h-4 w-4 mr-2 ${config.iconColor}`} />
+                <span className={`${config.color} font-medium`}>
+                  {config.label}
+                </span>
+                {isCurrentNetwork && <span className="ml-2 text-xs">✓</span>}
+              </div>
+              <span className="text-xs text-muted-foreground ml-6">
+                {config.enabled ? config.domain : config.message || "Coming soon"}
+              </span>
+            </DropdownMenuItem>
+          )
+        })}
       </DropdownMenuContent>
     </DropdownMenu>
   )
