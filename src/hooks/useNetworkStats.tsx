@@ -1,9 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
 import { fetchWithTokenRetry } from '@/lib/token-client'
-
+import {networkAPI} from '@/lib/api'
 interface SideChainStatus {
-  epoch: number
-  slot: number
+  sidechainCurrentEpoch: number
+  sidechainSlot: number
   nextEpochTimestamp: number
 }
 
@@ -29,22 +29,21 @@ export function useNetworkStats() {
     queryKey: ['networkStats'],
     queryFn: async () => {
       // Fetch 3 APIs in parallel
-      const [statusRes, blocksRes, txCountRes] = await Promise.all([
-        fetchWithTokenRetry('/api/sidechainstatus'),
+      const [blocksRes, txCountRes] = await Promise.all([
         fetchWithTokenRetry('/api/blocks/recent'),
         fetchWithTokenRetry('/api/transactions/count')
       ])
 
-      if (!statusRes.ok || !blocksRes.ok || !txCountRes.ok) {
+      if(!blocksRes.ok || !txCountRes.ok) {
         throw new Error('Failed to fetch network stats')
       }
 
-      const statusData = await statusRes.json()
+      const statusData: SideChainStatus = await networkAPI.getSidechainStatus()
       const blocksData = await blocksRes.json()
       const txCountData = await txCountRes.json()
 
       return {
-        sidechainStatus: statusData.sidechain,
+        sidechainStatus: statusData,
         latestBlock: blocksData.blocks?.[0] || null,
         totalTransactions: txCountData.count || null,
       }

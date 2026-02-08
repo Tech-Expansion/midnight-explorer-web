@@ -250,7 +250,10 @@ export const networkAPI = {
    * @param range - '1D' (1 day), '7D' (7 days), or '1M' (1 month) - defaults to '1D'
    */
   getChart: <T = unknown>(range: '1D' | '7D' | '1M' = '1D') =>
-    apiFetch<T>(`/network/chart?range=${range}`)
+    apiFetch<T>(`/network/chart?range=${range}`),
+  
+  getSidechainStatus: <T = unknown> () => 
+    apiFetch<T>('/network/sidechainStatus') 
 }
 
 /**
