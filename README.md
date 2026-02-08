@@ -1,7 +1,7 @@
 # Midnight Explorer Web
 
 Next.js blockchain explorer application. 
-
+ 
 ## Development
 
 ```bash

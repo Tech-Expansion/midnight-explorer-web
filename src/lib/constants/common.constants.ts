@@ -1,46 +1,71 @@
 /**
- * Common constants shared across the application
- */
-
-/**
  * Network types enum
  */
 export enum NetworkType {
-  PREVIEW = 'preview',
-  TESTNET = 'testnet',
-  MAINNET = 'mainnet'
+  PREVIEW = "preview",
+  TESTNET = "testnet",
+  PREPROD = "preprod",
+  MAINNET = "mainnet",
 }
 
 /**
- * Network domain mappings
+ * Unified network configuration - add new networks here only
  */
-export const NETWORK_DOMAINS = {
-  [NetworkType.PREVIEW]: 'preview.midnightexplorer.com',
-  [NetworkType.TESTNET]: 'testnet.midnightexplorer.com',
-  [NetworkType.MAINNET]: 'midnightexplorer.com'
-} as const
-
-/**
- * Network display configurations
- */
-export const NETWORK_DISPLAY = {
+export const NETWORKS = {
   [NetworkType.PREVIEW]: {
-    label: 'Preview',
-    color: 'text-blue-400', 
-    iconColor: 'text-blue-400'
+    label: "Preview",
+    domain: "preview.midnightexplorer.com",
+    domains: [
+      "preview.midnightexplorer.com",
+      "preview.dev.midnightexplorer.com",
+      "preview.test.midnightexplorer.com",
+    ],
+    color: "text-blue-400",
+    iconColor: "text-blue-400",
+    enabled: true,
+    message: undefined,
   },
   [NetworkType.TESTNET]: {
-    label: 'Testnet',
-    color: 'text-amber-400',
-    iconColor: 'text-amber-400'
+    label: "Testnet",
+    domain: "testnet.midnightexplorer.com",
+    domains: [
+      "testnet.midnightexplorer.com",
+      "testnet.dev.midnightexplorer.com",
+      "testnet.test.midnightexplorer.com",
+    ],
+    color: "text-amber-400",
+    iconColor: "text-amber-400",
+    enabled: true,
+    message: undefined,
+  },
+  [NetworkType.PREPROD]: {
+    label: "Preprod",
+    domain: "preprod.midnightexplorer.com",
+    domains: [
+      "preprod.midnightexplorer.com",
+      "preprod.dev.midnightexplorer.com",
+      "preprod.test.midnightexplorer.com",
+    ],
+    color: "text-purple-400",
+    iconColor: "text-purple-400",
+    enabled: true,
+    message: undefined,
   },
   [NetworkType.MAINNET]: {
-    label: 'Mainnet',
-    color: 'text-green-400',
-    iconColor: 'text-green-400'
-  }
-} as const
+    label: "Mainnet",
+    domain: "midnightexplorer.com",
+    domains: [
+      "midnightexplorer.com",
+      "mainnet.dev.midnightexplorer.com",
+      "mainnet.test.midnightexplorer.com",
+    ],
+    color: "text-green-400",
+    iconColor: "text-green-400",
+    enabled: false,
+    message: "Upcoming",
+  },
+} as const;
 
 export const TOKEN_DECIMALS = {
   NIGHT: 6,
-} as const
+} as const;
