@@ -21,9 +21,11 @@ function getNetworkFromDomain(): NetworkType {
     return NetworkType.PREVIEW
   } else if (hostname.includes(NETWORK_DOMAINS[NetworkType.TESTNET])) {
     return NetworkType.TESTNET
+  } else if (hostname.includes(NETWORK_DOMAINS[NetworkType.PREPROD])) {
+    return NetworkType.PREPROD
   } else if (hostname.includes(NETWORK_DOMAINS[NetworkType.MAINNET])) {
     // mainnet domain -> default to testnet since mainnet doesn't exist yet
-    return NetworkType.TESTNET
+    return NetworkType.PREVIEW
   }
   
   // Default for localhost and other domains
@@ -88,6 +90,24 @@ export function NetworkToggle() {
           </div>
           <span className="text-xs text-muted-foreground ml-6">
             {NETWORK_DOMAINS[NetworkType.TESTNET]}
+          </span>
+        </DropdownMenuItem>
+
+        
+        {/* Preprod item */}
+        <DropdownMenuItem
+          onClick={() => window.open(`https://${NETWORK_DOMAINS[NetworkType.PREPROD]}`, '_blank')}
+          className="cursor-pointer flex flex-col items-start"
+        >
+          <div className="flex items-center">
+            <Globe className={`h-4 w-4 mr-2 ${NETWORK_DISPLAY[NetworkType.PREPROD].iconColor}`} />
+            <span className={`${NETWORK_DISPLAY[NetworkType.PREPROD].color} font-medium`}>
+              {NETWORK_DISPLAY[NetworkType.PREPROD].label}
+            </span>
+            {network === NetworkType.PREPROD && <span className="ml-2 text-xs">✓</span>}
+          </div>
+          <span className="text-xs text-muted-foreground ml-6">
+            {NETWORK_DOMAINS[NetworkType.PREPROD]}
           </span>
         </DropdownMenuItem>
 
