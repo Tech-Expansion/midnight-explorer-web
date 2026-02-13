@@ -25,7 +25,7 @@ function getNetworkFromDomain(): NetworkType {
     return NetworkType.PREPROD
   } else if (hostname.includes(NETWORK_DOMAINS[NetworkType.MAINNET])) {
     // mainnet domain -> default to testnet since mainnet doesn't exist yet
-    return NetworkType.PREVIEW
+    return NetworkType.TESTNET
   }
   
   // Default for localhost and other domains
