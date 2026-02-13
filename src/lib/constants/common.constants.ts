@@ -6,9 +6,10 @@
  * Network types enum
  */
 export enum NetworkType {
-  PREVIEW = 'preview',
-  TESTNET = 'testnet',
-  MAINNET = 'mainnet'
+  PREVIEW = "preview",
+  TESTNET = "testnet",
+  PREPROD = "preprod",
+  MAINNET = "mainnet",
 }
 
 /**
@@ -17,6 +18,7 @@ export enum NetworkType {
 export const NETWORK_DOMAINS = {
   [NetworkType.PREVIEW]: 'preview.midnightexplorer.com',
   [NetworkType.TESTNET]: 'testnet.midnightexplorer.com',
+  [NetworkType.PREPROD]: 'preprod.midnightexplorer.com',
   [NetworkType.MAINNET]: 'midnightexplorer.com'
 } as const
 
@@ -33,6 +35,11 @@ export const NETWORK_DISPLAY = {
     label: 'Testnet',
     color: 'text-amber-400',
     iconColor: 'text-amber-400'
+  },
+  [NetworkType.PREPROD]: {
+    label: 'Preprod',
+    color: 'text-purple-400',
+    iconColor: 'text-purple-400'
   },
   [NetworkType.MAINNET]: {
     label: 'Mainnet',
