@@ -129,64 +129,110 @@ export function PoolsList({ initialPage = 1, pageSize = 20, searchQuery = '' }: 
     <>
       {pools.length > 0 ? (
         <>
-          <Card className="bg-card/50 border-border">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-border">
-                    <th className="text-left p-4 text-sm font-semibold text-muted-foreground">
-                      Pool Name
-                    </th>
-                    <th className="text-left p-4 text-sm font-semibold text-muted-foreground ml-0">
-                      Aura Public Key
-                    </th>
-                    <th className="text-left p-4 text-sm font-semibold text-muted-foreground ml-0">
-                    Blocks Minted
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {pools.map((pool: Pool) => {
-                    return (
-                      <tr 
-                        key={pool.auraPublicKey} 
-                        className="border-b border-border/50 hover:bg-accent/5 transition-colors cursor-pointer"
-                        onClick={() => router.push(`/pool/${pool.auraPublicKey}`)}
-                      >
-                        <td className="p-4">
-                          <div className="space-y-1">
-                            <div className="text-sm font-medium text-blue-400">
-                              <span>{getPoolName(pool)}</span>
-                              {pool.poolOffchainData?.ticker && (
-                                <Badge variant="outline" className="ml-2 bg-cyan-500/10 text-cyan-400 border-cyan-500/20 text-xs">
-                                  [{pool.poolOffchainData.ticker}]
-                                </Badge>
+          {/* Pools Table - Desktop */}
+          <div className="hidden md:block">
+            <Card className="bg-card/50 border-border">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-border">
+                      <th className="text-left p-4 text-sm font-semibold text-muted-foreground">
+                        Pool Name
+                      </th>
+                      <th className="text-left p-4 text-sm font-semibold text-muted-foreground ml-0">
+                        Aura Public Key
+                      </th>
+                      <th className="text-left p-4 text-sm font-semibold text-muted-foreground ml-0">
+                      Blocks Minted
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pools.map((pool: Pool) => {
+                      return (
+                        <tr 
+                          key={pool.auraPublicKey} 
+                          className="border-b border-border/50 hover:bg-accent/5 transition-colors cursor-pointer"
+                          onClick={() => router.push(`/pool/${pool.auraPublicKey}`)}
+                        >
+                          <td className="p-4">
+                            <div className="space-y-1">
+                              <div className="text-sm font-medium text-blue-400">
+                                <span>{getPoolName(pool)}</span>
+                                {pool.poolOffchainData?.ticker && (
+                                  <Badge variant="outline" className="ml-2 bg-cyan-500/10 text-cyan-400 border-cyan-500/20 text-xs">
+                                    [{pool.poolOffchainData.ticker}]
+                                  </Badge>
+                                )}
+                              </div>
+                              {pool.poolOffchainData?.description && (
+                                <p className="text-xs text-muted-foreground">
+                                  {limitWords(pool.poolOffchainData.description, 10)}
+                                </p>
                               )}
                             </div>
-                            {pool.poolOffchainData?.description && (
-                              <p className="text-xs text-muted-foreground">
-                                {limitWords(pool.poolOffchainData.description, 10)}
-                              </p>
-                            )}
-                          </div>
-                        </td>
-                        <td className="p-4 text-left ml-0">
-                          <Badge variant="outline" className="bg-purple-500/10 text-purple-400 border-purple-500/20 font-mono text-xs">
-                            {getAuraPublicKey(pool)}
-                          </Badge>
-                        </td>
-                        <td className="p-4 text-left ml-0">
-                          <Badge variant="outline" className="bg-green-500/10 text-green-400 border-green-500/20 font-mono">
-                            {getBlocksMinted(pool)}
-                          </Badge>
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </Card>
+                          </td>
+                          <td className="p-4 text-left ml-0">
+                            <Badge variant="outline" className="bg-purple-500/10 text-purple-400 border-purple-500/20 font-mono text-xs">
+                              {getAuraPublicKey(pool)}
+                            </Badge>
+                          </td>
+                          <td className="p-4 text-left ml-0">
+                            <Badge variant="outline" className="bg-green-500/10 text-green-400 border-green-500/20 font-mono">
+                              {getBlocksMinted(pool)}
+                            </Badge>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+          </div>
+
+          {/* Pools Grid - Mobile */}
+          <div className="md:hidden space-y-3">
+            {pools.map((pool: Pool) => (
+              <Card 
+                key={pool.auraPublicKey} 
+                className="bg-card/50 border-border p-4 cursor-pointer hover:bg-accent/5 transition-colors"
+                onClick={() => router.push(`/pool/${pool.auraPublicKey}`)}
+              >
+                <div className="space-y-3">
+                  <div>
+                    <div className="text-sm font-medium text-blue-400">
+                      <span>{getPoolName(pool)}</span>
+                      {pool.poolOffchainData?.ticker && (
+                        <Badge variant="outline" className="ml-2 bg-cyan-500/10 text-cyan-400 border-cyan-500/20 text-xs">
+                          [{pool.poolOffchainData.ticker}]
+                        </Badge>
+                      )}
+                    </div>
+                    {pool.poolOffchainData?.description && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {limitWords(pool.poolOffchainData.description, 10)}
+                      </p>
+                    )}
+                  </div>
+                  <div className="border-t border-border/50 pt-2 space-y-2">
+                    <div>
+                      <span className="text-xs text-muted-foreground">Aura Public Key:</span>
+                      <Badge variant="outline" className="mt-1 bg-purple-500/10 text-purple-400 border-purple-500/20 font-mono text-xs block w-fit">
+                        {getAuraPublicKey(pool)}
+                      </Badge>
+                    </div>
+                    <div>
+                      <span className="text-xs text-muted-foreground">Blocks Minted:</span>
+                      <Badge variant="outline" className="mt-1 bg-green-500/10 text-green-400 border-green-500/20 font-mono block w-fit">
+                        {getBlocksMinted(pool)}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
 
           {/* Pagination */}
           <div className="space-y-4 pb-8">
