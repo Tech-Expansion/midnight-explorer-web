@@ -3,7 +3,7 @@
  */
 export enum NetworkType {
   PREVIEW = "preview",
-  TESTNET = "testnet",
+  // TESTNET = "testnet", // sunset
   PREPROD = "preprod",
   MAINNET = "mainnet",
 }
@@ -25,19 +25,19 @@ export const NETWORKS = {
     enabled: true,
     message: undefined,
   },
-  [NetworkType.TESTNET]: {
-    label: "Testnet",
-    domain: "testnet.midnightexplorer.com",
-    domains: [
-      "testnet.midnightexplorer.com",
-      "testnet.dev.midnightexplorer.com",
-      "testnet.test.midnightexplorer.com",
-    ],
-    color: "text-amber-400",
-    iconColor: "text-amber-400",
-    enabled: true,
-    message: undefined,
-  },
+  // [NetworkType.TESTNET]: {
+  //   label: "Testnet",
+  //   domain: "testnet.midnightexplorer.com",
+  //   domains: [
+  //     "testnet.midnightexplorer.com",
+  //     "testnet.dev.midnightexplorer.com",
+  //     "testnet.test.midnightexplorer.com",
+  //   ],
+  //   color: "text-amber-400",
+  //   iconColor: "text-amber-400",
+  //   enabled: true,
+  //   message: undefined,
+  // },
   [NetworkType.PREPROD]: {
     label: "Preprod",
     domain: "preprod.midnightexplorer.com",
