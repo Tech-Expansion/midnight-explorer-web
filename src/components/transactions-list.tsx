@@ -97,73 +97,124 @@ export function TransactionsList({  }: TransactionsListProps) {
 
   return (
     <>
-      {/* Transactions Table */}
-      <Card className="bg-card/50 border-border">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-border">
-                <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Txn Hash</th>
-                <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Variant</th>
-                <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Block</th>
-                <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Protocol</th>
-                <th className="text-center pr-24 p-4 text-sm font-semibold text-muted-foreground">Age</th>
-                <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Size</th>
-              </tr>
-            </thead>
-            <tbody>
-              {transactions.length > 0 ? (
-                transactions.map((tx: Transaction, index: number) => (
-                  <tr key={tx.id || `${tx.hash}-${index}`} className="border-b border-border/50 hover:bg-accent/5 transition-colors">
-                    <td className="p-4">
-                      <Link
-                        href={`/tx/${tx.hash}`}
-                        className="text-blue-400 hover:text-blue-300 transition-colors font-mono text-sm"
-                      >
-                        {tx.hash}
-                      </Link>
-                    </td>
-                    <td className="p-4">{getVariantBadge(tx.variant)}</td>
-                    <td className="p-4">
-                      {tx.blockId ? (
+      {/* Transactions Table - Desktop */}
+      <div className="hidden md:block">
+        <Card className="bg-card/50 border-border">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-border">
+                  <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Txn Hash</th>
+                  <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Variant</th>
+                  <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Block</th>
+                  <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Protocol</th>
+                  <th className="text-center pr-24 p-4 text-sm font-semibold text-muted-foreground">Age</th>
+                  <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Size</th>
+                </tr>
+              </thead>
+              <tbody>
+                {transactions.length > 0 ? (
+                  transactions.map((tx: Transaction, index: number) => (
+                    <tr key={tx.id || `${tx.hash}-${index}`} className="border-b border-border/50 hover:bg-accent/5 transition-colors">
+                      <td className="p-4">
                         <Link
-                          href={`/block/${tx.blockId}`}
-                          className="text-purple-400 hover:text-purple-300 transition-colors font-mono text-sm"
+                          href={`/tx/${tx.hash}`}
+                          className="text-blue-400 hover:text-blue-300 transition-colors font-mono text-sm"
                         >
-                          #{tx.blockId}
+                          {tx.hash}
                         </Link>
-                      ) : (
-                        <span className="text-muted-foreground text-sm">Pending</span>
-                      )}
-                    </td>
-                    <td className="p-4">
-                      <span className="text-sm text-muted-foreground font-mono">
-                        v{tx.protocolVersion}
-                      </span>
-                    </td>
-                    <td className="p-4">
-                      <span className="text-sm text-muted-foreground">
-                        {tx.timestamp ? formatDateTime(new Date(parseInt(String(tx.timestamp)))) : "N/A"}
-                      </span>
-                    </td>
-                    <td className="p-4">
-                      <span className="text-sm text-muted-foreground">
-                        {tx.size ? `${tx.size} B` : "N/A"}
-                      </span>
+                      </td>
+                      <td className="p-4">{getVariantBadge(tx.variant)}</td>
+                      <td className="p-4">
+                        {tx.blockId ? (
+                          <Link
+                            href={`/block/${tx.blockId}`}
+                            className="text-purple-400 hover:text-purple-300 transition-colors font-mono text-sm"
+                          >
+                            #{tx.blockId}
+                          </Link>
+                        ) : (
+                          <span className="text-muted-foreground text-sm">Pending</span>
+                        )}
+                      </td>
+                      <td className="p-4">
+                        <span className="text-sm text-muted-foreground font-mono">
+                          v{tx.protocolVersion}
+                        </span>
+                      </td>
+                      <td className="p-4">
+                        <span className="text-sm text-muted-foreground">
+                          {tx.timestamp ? formatDateTime(new Date(parseInt(String(tx.timestamp)))) : "N/A"}
+                        </span>
+                      </td>
+                      <td className="p-4">
+                        <span className="text-sm text-muted-foreground">
+                          {tx.size ? `${tx.size} B` : "N/A"}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={6} className="p-8 text-center text-muted-foreground">
+                      No transactions found
                     </td>
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={6} className="p-8 text-center text-muted-foreground">
-                    No transactions found
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </Card>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      </div>
+
+      {/* Transactions Grid - Mobile */}
+      <div className="md:hidden space-y-3">
+        {transactions.length > 0 ? (
+          transactions.map((tx: Transaction, index: number) => (
+            <Card key={tx.id || `${tx.hash}-${index}`} className="bg-card/50 border-border p-4">
+              <div className="space-y-3">
+                <Link
+                  href={`/tx/${tx.hash}`}
+                  className="text-blue-400 hover:text-blue-300 transition-colors font-mono text-sm font-semibold break-all"
+                >
+                  {tx.hash}
+                </Link>
+                <div className="flex flex-wrap items-center gap-2">
+                  {getVariantBadge(tx.variant)}
+                  {tx.blockId && (
+                    <Link
+                      href={`/block/${tx.blockId}`}
+                      className="text-purple-400 hover:text-purple-300 transition-colors font-mono text-xs"
+                    >
+                      Block #{tx.blockId}
+                    </Link>
+                  )}
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div>
+                    <span className="text-muted-foreground">Protocol:</span>
+                    <div className="text-foreground font-mono mt-1">v{tx.protocolVersion}</div>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Size:</span>
+                    <div className="text-foreground mt-1">{tx.size ? `${tx.size} B` : "N/A"}</div>
+                  </div>
+                </div>
+                <div className="border-t border-border/50 pt-2">
+                  <span className="text-muted-foreground text-xs">Age:</span>
+                  <div className="text-foreground mt-1 text-xs">
+                    {tx.timestamp ? formatDateTime(new Date(parseInt(String(tx.timestamp)))) : "N/A"}
+                  </div>
+                </div>
+              </div>
+            </Card>
+          ))
+        ) : (
+          <Card className="bg-card/50 border-border p-8">
+            <p className="text-center text-muted-foreground">No transactions found</p>
+          </Card>
+        )}
+      </div>
 
       {/* Pagination */}
       <div className="pb-8">
