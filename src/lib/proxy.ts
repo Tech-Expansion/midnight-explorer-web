@@ -8,7 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { validateToken } from './token-manager'
 
-const API_BASE_URL = process.env.API_URL || 'https://testnet-service.midnightexplorer.com'
+const API_BASE_URL = process.env.API_URL
 const API_VERSION = 'v1'
 /**
  * Proxy a request to the external API

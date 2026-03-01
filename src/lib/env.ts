@@ -20,7 +20,7 @@ export enum Environment {
 export const APP_ENVIRONMENT = (process.env.NEXT_PUBLIC_ENVIRONMENT as Environment) || Environment.DEVELOPMENT;
 
 /**
- * URL for the Midnight testnet indexer API
+ * URL for the Midnight indexer API
  * Set via NEXT_PUBLIC_INDEXER_URL environment variable
  */
 export const INDEXER_URL = process.env.NEXT_PUBLIC_INDEXER_URL || "";
