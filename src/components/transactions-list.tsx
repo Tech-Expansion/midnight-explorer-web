@@ -126,12 +126,12 @@ export function TransactionsList({  }: TransactionsListProps) {
                       </td>
                       <td className="p-4">{getVariantBadge(tx.variant)}</td>
                       <td className="p-4">
-                        {tx.blockId ? (
+                        {tx.blockHeight ? (
                           <Link
-                            href={`/block/${tx.blockId}`}
+                            href={`/block/${tx.blockHeight}`}
                             className="text-purple-400 hover:text-purple-300 transition-colors font-mono text-sm"
                           >
-                            #{tx.blockId}
+                            #{tx.blockHeight}
                           </Link>
                         ) : (
                           <span className="text-muted-foreground text-sm">Pending</span>
@@ -181,14 +181,16 @@ export function TransactionsList({  }: TransactionsListProps) {
                 </Link>
                 <div className="flex flex-wrap items-center gap-2">
                   {getVariantBadge(tx.variant)}
-                  {tx.blockId && (
-                    <Link
-                      href={`/block/${tx.blockId}`}
-                      className="text-purple-400 hover:text-purple-300 transition-colors font-mono text-xs"
-                    >
-                      Block #{tx.blockId}
-                    </Link>
-                  )}
+                  {tx.blockHeight ? (
+                          <Link
+                            href={`/block/${tx.blockId || tx.blockHeight}`}
+                            className="text-purple-400 hover:text-purple-300 transition-colors font-mono text-sm"
+                          >
+                            #{tx.blockHeight}
+                          </Link>
+                        ) : (
+                          <span className="text-muted-foreground text-sm">Pending</span>
+                    )}
                 </div>
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   <div>
