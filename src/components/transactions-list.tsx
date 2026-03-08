@@ -183,7 +183,7 @@ export function TransactionsList({  }: TransactionsListProps) {
                   {getVariantBadge(tx.variant)}
                   {tx.blockHeight ? (
                           <Link
-                            href={`/block/${tx.blockId || tx.blockHeight}`}
+                            href={`/block/${tx.blockHeight}`}
                             className="text-purple-400 hover:text-purple-300 transition-colors font-mono text-sm"
                           >
                             #{tx.blockHeight}
