@@ -19,7 +19,11 @@ const TableHeader = React.forwardRef<
     HTMLTableSectionElement,
     React.HTMLAttributes<HTMLTableSectionElement>
 >(({ className, ...props }, ref) => (
-    <thead ref={ref} className={cn("[&_tr]:border-b bg-muted/50", className)} {...props} />
+    <thead
+        ref={ref}
+        className={cn("[&_tr]:border-b bg-muted/50", className)}
+        {...props}
+    />
 ))
 TableHeader.displayName = "TableHeader"
 
@@ -71,14 +75,18 @@ const TableCell = React.forwardRef<
 >(({ className, ...props }, ref) => (
     <td
         ref={ref}
-        className={cn("p-4 align-middle [&:has([role=checkbox])]:pr-0 h-[48px] py-2", className)}
+        className={cn(
+            "p-4 align-middle [&:has([role=checkbox])]:pr-0 h-[48px] py-2",
+            className
+        )}
         {...props}
     />
 ))
 TableCell.displayName = "TableCell"
 
 interface Column<T> {
-    header: string
+    id: string
+    header: React.ReactNode
     accessor: (item: T) => React.ReactNode
     className?: string
 }
@@ -86,10 +94,16 @@ interface Column<T> {
 interface DataTableProps<T> {
     data: T[]
     columns: Column<T>[]
+    getRowKey: (item: T) => string | number
     emptyMessage?: string
 }
 
-export function DataTable<T>({ data, columns, emptyMessage = "No results" }: DataTableProps<T>) {
+export function DataTable<T>({
+    data,
+    columns,
+    getRowKey,
+    emptyMessage = "No results",
+}: DataTableProps<T>) {
     if (!data?.length) {
         return (
             <div className="flex h-24 items-center justify-center border rounded-sm text-sm text-muted-foreground bg-card">
@@ -102,18 +116,19 @@ export function DataTable<T>({ data, columns, emptyMessage = "No results" }: Dat
         <Table>
             <TableHeader>
                 <TableRow>
-                    {columns.map((col, idx) => (
-                        <TableHead key={idx} className={col.className}>
+                    {columns.map((col) => (
+                        <TableHead key={col.id} className={col.className}>
                             {col.header}
                         </TableHead>
                     ))}
                 </TableRow>
             </TableHeader>
+
             <TableBody>
-                {data.map((item, idx) => (
-                    <TableRow key={idx}>
-                        {columns.map((col, cIdx) => (
-                            <TableCell key={cIdx} className={col.className}>
+                {data.map((item) => (
+                    <TableRow key={getRowKey(item)}>
+                        {columns.map((col) => (
+                            <TableCell key={col.id} className={col.className}>
                                 {col.accessor(item)}
                             </TableCell>
                         ))}
@@ -122,4 +137,13 @@ export function DataTable<T>({ data, columns, emptyMessage = "No results" }: Dat
             </TableBody>
         </Table>
     )
+}
+
+export {
+    Table,
+    TableHeader,
+    TableBody,
+    TableRow,
+    TableHead,
+    TableCell,
 }

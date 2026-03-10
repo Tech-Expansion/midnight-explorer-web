@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { Card } from "@/components/ui/card"
@@ -26,7 +26,7 @@ export function TransactionsList({  }: TransactionsListProps) {
   const [, setNextCursor] = useState<string | undefined>()
   const [pagination, setPagination] = useState<{ page: number; pageSize: number; totalCount: number; totalPages: number } | null>(null)
   const [loading, setLoading] = useState(true)
-  const [cursorMap, setCursorMap] = useState<Record<number, string | undefined>>({ 1: undefined })
+  const cursorMapRef = useRef<Record<number, string | undefined>>({ 1: undefined })
   const { data } = useNetworkStats()
   const totalTransactions = data?.totalTransactions
 
@@ -47,7 +47,7 @@ export function TransactionsList({  }: TransactionsListProps) {
           setPagination(response.pagination || null)
         } else {
           // Normal mode with cursor - use cursor from cursorMap for current page
-          const cursorForPage = cursorMap[searchPage]
+          const cursorForPage = cursorMapRef.current[searchPage]
           const response: { items: Transaction[]; nextCursor?: string } = await transactionAPI.getTransactions(cursorForPage)
           //console.log('[TransactionsList] Fetched page', searchPage, 'with cursor:', cursorForPage, 'nextCursor:', response.nextCursor)
           setTransactions(response.items)
@@ -55,7 +55,7 @@ export function TransactionsList({  }: TransactionsListProps) {
           
           // Save cursor for next page
           if (response.nextCursor) {
-            setCursorMap(prev => ({ ...prev, [searchPage + 1]: response.nextCursor }))
+            cursorMapRef.current[searchPage + 1] = response.nextCursor
           }
         }
       } catch (error) {

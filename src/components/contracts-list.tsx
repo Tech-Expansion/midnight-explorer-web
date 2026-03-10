@@ -27,7 +27,7 @@ interface ContractsListProps {
 
 export function ContractsList({ initialCursor, page = 1, searchAddress }: ContractsListProps) {
   const searchParams = useSearchParams()
-  const [contracts, setContracts] = useState<Contract[]>([])
+  const [, setContracts] = useState<Contract[]>([])
   const [loading, setLoading] = useState(true)
   const [totalContracts, setTotalContracts] = useState<number>(0)
   const [displayedContracts, setDisplayedContracts] = useState<Contract[]>([])

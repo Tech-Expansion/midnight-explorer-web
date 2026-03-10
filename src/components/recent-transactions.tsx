@@ -49,6 +49,7 @@ export function RecentTransactions() {
 
   const columns = [
     {
+      id: "txHash",
       header: "Tx Hash",
       accessor: (tx: RawTransaction) => (
         <HashLink hash={tx.hash as string} type="tx" truncate showCopy={false} />
@@ -56,6 +57,7 @@ export function RecentTransactions() {
       className: "w-[120px]"
     },
     {
+      id: "method",
       header: "Method",
       accessor: (tx: RawTransaction) => (
         <StatBadge variant={tx.variant === "Regular" ? "outline" : "secondary"}>
@@ -64,6 +66,7 @@ export function RecentTransactions() {
       ),
     },
     {
+      id: "block",
       header: "Block",
       accessor: (tx: RawTransaction) => (
         tx.blockHeight ? (
@@ -74,6 +77,7 @@ export function RecentTransactions() {
       ),
     },
     {
+      id: "age",
       header: "Age",
       accessor: (tx: RawTransaction) => (
         tx.timestamp ? (
@@ -84,14 +88,17 @@ export function RecentTransactions() {
       ),
     },
     {
+      id: "from",
       header: "From",
       accessor: () => <AddressLink address="-" />,
     },
     {
+      id: "to",
       header: "To",
       accessor: () => <AddressLink address="-" />,
     },
     {
+      id: "value",
       header: "Value",
       accessor: () => <span className="text-muted-foreground">0 MID</span>,
       className: "text-right whitespace-nowrap"
@@ -122,7 +129,7 @@ export function RecentTransactions() {
             ))}
           </div>
         ) : (
-          <DataTable data={txs} columns={columns} />
+          <DataTable data={txs} columns={columns} getRowKey={(tx) => tx.hash as string} />
         )}
       </div>
     </Card>

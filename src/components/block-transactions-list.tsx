@@ -56,18 +56,21 @@ export function BlockTransactionsList({ height, txCount }: BlockTransactionsList
 
   const columns = [
     {
+      id: "txHash",
       header: "Tx Hash",
       accessor: (tx: Transaction) => (
         <HashLink hash={tx.hash} type="tx" truncate showCopy={false} />
       ),
     },
     {
+      id: "size",
       header: "Size",
       accessor: (tx: Transaction) => (
         <span className="font-mono text-muted-foreground">{tx.size} B</span>
       ),
     },
     {
+      id: "action",
       header: "Action",
       accessor: (tx: Transaction) => (
         <CopyButton text={tx.hash} className="h-4 w-4 text-muted-foreground" />
@@ -111,7 +114,7 @@ export function BlockTransactionsList({ height, txCount }: BlockTransactionsList
 
   return (
     <div className="space-y-4">
-      <DataTable data={transactions} columns={columns} emptyMessage="No transactions found" />
+      <DataTable data={transactions} columns={columns} emptyMessage="No transactions found" getRowKey={(tx) => tx.hash} />
 
       {totalPages > 1 && (
         <div className="flex flex-col gap-3">

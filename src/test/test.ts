@@ -1,23 +1,5 @@
 
-interface SideChainStatus{
-    epoch: number,
-    slot: number,
-    nextEpochTimestamp: number
-}
-interface StatusResponse{
-    sidechain: SideChainStatus,
-    mainchain: MainchainStatus;
-}
-interface MainchainStatus {
-  epoch: number;
-  slot: number;
-  nextEpochTimestamp: number;
-}
-interface JsonRpcResponse {
-  id: number;
-  jsonrpc: string;
-  result: StatusResponse;
-}
+
 
 interface JsonRpcRequest {
   jsonrpc: string;
@@ -44,7 +26,7 @@ async function main() {
         if (!res.ok) {
             throw new Error(`HTTP error! status: ${res.status}`);
         }
-        const data: JsonRpcResponse = await res.json();
+        await res.json();
         //console.log('Sidechain Status:', data.result.sidechain);
     } catch (error) {
         console.error('Error fetching sidechain status:', error);

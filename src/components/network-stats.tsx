@@ -3,46 +3,14 @@
 import { Card } from "@/components/ui/card"
 import { Blocks, Activity, Clock, Zap } from "lucide-react"
 import { useNetworkStats } from "@/hooks/useNetworkStats"
-import { useEffect, useState } from "react"
 import { cn } from "@/lib/utils"
 
 export function NetworkStats() {
   const { data, isLoading, error } = useNetworkStats()
-  const [timeUntilEpoch, setTimeUntilEpoch] = useState<string>('')
 
   const sidechainStatus = data?.sidechainStatus
   const latestBlock = data?.latestBlock
   const totalTransactions = data?.totalTransactions
-
-  useEffect(() => {
-    if (!sidechainStatus?.nextEpochTimestamp) return
-
-    const updateTimer = () => {
-      const now = Date.now()
-      const diff = sidechainStatus.nextEpochTimestamp - now
-
-      if (diff <= 0) {
-        setTimeUntilEpoch('Transitioning...')
-        return
-      }
-
-      const days = Math.floor(diff / (1000 * 60 * 60 * 24))
-      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
-      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
-      const seconds = Math.floor((diff % (1000 * 60)) / 1000)
-
-      if (days > 0) {
-        setTimeUntilEpoch(`${days}d ${hours}h ${minutes}m`)
-      } else {
-        setTimeUntilEpoch(`${hours}h ${minutes}m ${seconds}s`)
-      }
-    }
-
-    updateTimer()
-    const interval = setInterval(updateTimer, 1000)
-
-    return () => clearInterval(interval)
-  }, [sidechainStatus?.nextEpochTimestamp])
 
   const formatNumber = (num: number | undefined | null) => {
     if (num === undefined || num === null) return 'N/A'
@@ -57,23 +25,23 @@ export function NetworkStats() {
   const stats = [
     {
       label: "Latest Block",
-      value: isLoading ? '...' : formatNumber(latestBlock?.height),
+      value: isLoading ? "..." : formatNumber(latestBlock?.height),
       icon: Blocks,
     },
     {
       label: "Total Transactions",
-      value: isLoading ? '...' : formatNumber(totalTransactions),
+      value: isLoading ? "..." : formatNumber(totalTransactions),
       icon: Activity,
     },
     {
       label: "Avg Block Time",
-      value: isLoading ? '...' : calculateAvgBlockTime(),
+      value: isLoading ? "..." : calculateAvgBlockTime(),
       icon: Clock,
     },
     {
       label: "Network Status",
-      value: error ? "Offline" : "Live",
-      isLive: !error && !isLoading,
+      value: isLoading ? "Checking..." : error ? "Offline" : "Live",
+      isLive: !isLoading && !error,
       icon: Zap,
     },
   ]

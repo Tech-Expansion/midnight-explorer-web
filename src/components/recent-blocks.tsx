@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { Card } from "@/components/ui/card"
 import { Blocks, ArrowRight } from "lucide-react"
@@ -6,7 +6,6 @@ import Link from "next/link"
 import { formatDateTimeWithRelative } from '@/lib/utils'
 import { Block } from '@/lib/types'
 import { DataTable } from '@/components/ui/data-table'
-import { HashLink } from '@/components/ui/hash-link'
 import { Badge } from "@/components/ui/badge"
 
 interface RecentBlocksProps {
@@ -16,15 +15,17 @@ interface RecentBlocksProps {
 export function RecentBlocks({ blocks }: RecentBlocksProps) {
   const columns = [
     {
+      id: "block",
       header: "Block",
       accessor: (block: Block) => (
-        <Link href={`/block/${block.height}`} className="font-mono text-primary hover:underline group">
+        <Link href={`/block/${block.height}`} className="font-mono text-primary hover:underline">
           {block.height}
         </Link>
       ),
       className: "w-[120px]"
     },
     {
+      id: "age",
       header: "Age",
       accessor: (block: Block) => (
         <span className="text-muted-foreground whitespace-nowrap" suppressHydrationWarning>
@@ -33,6 +34,7 @@ export function RecentBlocks({ blocks }: RecentBlocksProps) {
       ),
     },
     {
+      id: "txCount",
       header: "Tx Count",
       accessor: (block: Block) => (
         <Badge variant="secondary" className="font-mono bg-muted/50 text-foreground border-transparent rounded-[4px]">
@@ -41,14 +43,18 @@ export function RecentBlocks({ blocks }: RecentBlocksProps) {
       ),
     },
     {
+      id: "proposer",
       header: "Proposer",
       accessor: (block: Block) => (
-        <HashLink hash={block.author} type="tx" truncate showCopy={false} className="group" />
+        <span className="font-mono text-muted-foreground">
+          {block.author.slice(0, 8)}...{block.author.slice(-6)}
+        </span>
       ),
     },
     {
+      id: "size",
       header: "Size",
-      accessor: (block: Block) => (
+      accessor: () => (
         <span className="text-muted-foreground">-</span>
       ),
       className: "text-right"
@@ -79,7 +85,11 @@ export function RecentBlocks({ blocks }: RecentBlocksProps) {
             ))}
           </div>
         ) : (
-          <DataTable data={blocks} columns={columns} />
+          <DataTable
+            data={blocks}
+            columns={columns}
+            getRowKey={(block) => block.height}
+          />
         )}
       </div>
     </Card>

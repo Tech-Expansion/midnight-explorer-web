@@ -2,7 +2,7 @@
 
 import { Card } from "@/components/ui/card"
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { networkAPI } from "@/lib/api"
 import Image from "next/image"
 import {
@@ -56,7 +56,7 @@ export function NetworkCharts() {
   }, [])
 
   // Format timestamp thành ngày giờ dễ đọc
-  const formatDate = (timestamp: number, range: TimeRange) => {
+  const formatDate = useCallback((timestamp: number, range: TimeRange) => {
     const date = new Date(timestamp * 1000)
     const options: Intl.DateTimeFormatOptions = timezoneMode === 'utc' ? { timeZone: 'UTC' } : {}
     
@@ -83,10 +83,10 @@ export function NetworkCharts() {
         ...options
       })
     }
-  }
+  }, [timezoneMode]);
 
   // Format đầy đủ cho tooltip
-  const formatFullDate = (timestamp: number) => {
+  const formatFullDate = useCallback((timestamp: number) => {
     const date = new Date(timestamp * 1000)
     const options: Intl.DateTimeFormatOptions = {
       month: 'short', 
@@ -99,7 +99,7 @@ export function NetworkCharts() {
     }
     const formattedDate = date.toLocaleString('en-US', options)
     return timezoneMode === 'utc' ? `${formattedDate} UTC` : formattedDate
-  }
+  }, [timezoneMode]);
 
   useEffect(() => {
     const fetchTransactionData = async () => {
@@ -135,7 +135,7 @@ export function NetworkCharts() {
     }
 
     fetchTransactionData()
-  }, [timeRange, dataType, timezoneMode])
+  }, [timeRange, dataType, timezoneMode, formatDate, formatFullDate])
 
   const getChartTitle = () => {
     const timeLabel = TIME_LABELS[timeRange]

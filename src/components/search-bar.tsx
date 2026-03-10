@@ -563,10 +563,22 @@ export function SearchBar() {
                     <Button
                         type="submit"
                         disabled={isSearching}
+                        aria-label="Search"
                         className="w-full sm:w-auto rounded-none border-l border-border bg-primary hover:bg-primary/90 text-primary-foreground disabled:opacity-50 h-10 px-6 font-medium"
                         suppressHydrationWarning
                     >
-                        {isSearching ? <Search className="h-4 w-4 animate-spin text-primary-foreground/70" /> : <Search className="h-4 w-4" />}
+                        {isSearching ? (
+                            <Search
+                                className="h-4 w-4 animate-spin text-primary-foreground/70"
+                                aria-hidden="true"
+                            />
+                        ) : (
+                            <Search
+                                className="h-4 w-4"
+                                aria-hidden="true"
+                            />
+                        )}
+                        <span className="sr-only">Search</span>
                     </Button>
 
                 </div>

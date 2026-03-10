@@ -8,8 +8,7 @@ import {
   formatDate,
   formatValue
 } from "@/lib/utils"
-import { ChevronDown, ArrowRight } from "lucide-react"
-import Image from "next/image"
+import { ChevronDown } from "lucide-react"
 import Link from "next/link"
 import { notFound, useParams } from "next/navigation"
 import { useEffect, useState } from "react"
@@ -24,7 +23,6 @@ export default function TransactionPage() {
   const [loading, setLoading] = useState(true)
   const [expandedContractIndex, setExpandedContractIndex] = useState<number | null>(null)
   const [showRawData, setShowRawData] = useState(false)
-  const [showBlockParams, setShowBlockParams] = useState(false)
 
   useEffect(() => {
     async function fetchTransaction() {

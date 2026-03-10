@@ -1,15 +1,23 @@
+import type { ReactNode } from "react"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 
 interface StatBadgeProps {
     label?: string
-    value?: React.ReactNode
-    children?: React.ReactNode
+    value?: ReactNode
+    children?: ReactNode
     variant?: "default" | "secondary" | "destructive" | "outline" | "success" | "warning"
     className?: string
 }
 
-export function StatBadge({ label, value, children, variant = "outline", className }: StatBadgeProps) {
+export function StatBadge({
+    label,
+    value,
+    children,
+    variant = "outline",
+    className
+}: StatBadgeProps) {
+
     let badgeVariant: "default" | "secondary" | "destructive" | "outline" = "outline"
     let colorClass = ""
 
@@ -29,8 +37,15 @@ export function StatBadge({ label, value, children, variant = "outline", classNa
             variant={badgeVariant}
             className={cn("font-mono text-xs font-normal", colorClass, className)}
         >
-            {label && <span className="opacity-70 mr-1">{label}:</span>}
-            <span className="font-medium">{children || value || '-'}</span>
+            {label && (
+                <span className="opacity-70 mr-1">
+                    {label}:
+                </span>
+            )}
+
+            <span className="font-medium">
+                {children || value || "-"}
+            </span>
         </Badge>
     )
 }

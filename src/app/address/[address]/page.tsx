@@ -3,7 +3,6 @@ import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { CopyButton } from "@/components/ui/copy-button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Wallet, ArrowUpRight, ArrowDownLeft } from "lucide-react"
 import Link from "next/link"
 import { DataTable } from "@/components/ui/data-table"
 import { HashLink } from "@/components/ui/hash-link"
@@ -32,47 +31,64 @@ export default async function AddressPage({ params }: { params: Promise<{ addres
     block: 2453678 - i,
   }))
 
+  type TxItem = {
+    hash: string;
+    type: string;
+    from: string;
+    to: string;
+    value: string;
+    timestamp: string;
+    block: number;
+  };
+
   const columns = [
     {
+      id: "txHash",
       header: "Tx Hash",
-      accessor: (tx: Record<string, any>) => (
+      accessor: (tx: TxItem) => (
         <HashLink hash={tx.hash} type="tx" truncate showCopy={false} />
       ),
       className: "w-[120px]"
     },
     {
+      id: "method",
       header: "Method",
-      accessor: (tx: Record<string, any>) => (
+      accessor: () => (
         <Badge variant="outline" className="font-mono text-xs font-normal border-primary/20 bg-primary/5 text-primary">
           Transfer
         </Badge>
       ),
     },
     {
+      id: "block",
       header: "Block",
-      accessor: (tx: Record<string, any>) => (
+      accessor: (tx: TxItem) => (
         <Link href={`/block/${tx.block}`} className="font-mono text-primary hover:underline">
           {tx.block}
         </Link>
       ),
     },
     {
+      id: "age",
       header: "Age",
-      accessor: (tx: any) => (
+      accessor: (tx: TxItem) => (
         <span className="text-muted-foreground whitespace-nowrap">{tx.timestamp}</span>
       ),
     },
     {
+      id: "from",
       header: "From",
-      accessor: (tx: any) => <AddressLink address={tx.from} />,
+      accessor: (tx: TxItem) => <AddressLink address={tx.from} />,
     },
     {
+      id: "to",
       header: "To",
-      accessor: (tx: any) => <AddressLink address={tx.to} />,
+      accessor: (tx: TxItem) => <AddressLink address={tx.to} />,
     },
     {
+      id: "value",
       header: "Value",
-      accessor: (tx: any) => (
+      accessor: (tx: TxItem) => (
         <span className={tx.type === "in" ? "text-emerald-600 font-medium whitespace-nowrap" : "text-foreground whitespace-nowrap"}>
           {tx.type === "in" ? "+" : "-"}{tx.value}
         </span>
@@ -138,7 +154,11 @@ export default async function AddressPage({ params }: { params: Promise<{ addres
                   <p className="text-xs text-muted-foreground">Showing {transactions.length} records</p>
                 </div>
                 <div className="overflow-x-auto relative">
-                  <DataTable data={transactions} columns={columns} />
+                  <DataTable 
+                    data={transactions} 
+                    columns={columns} 
+                    getRowKey={(tx) => tx.hash}
+                  />
                 </div>
               </TabsContent>
 
