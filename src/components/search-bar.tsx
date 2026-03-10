@@ -9,39 +9,39 @@ import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useRouter } from "next/navigation"
 import {
-  checkBlock,
-  checkTransaction,
-  searchPool,
-  isContractAddress,
-  isHexHash,
-  isBlockHeight,
-  type PoolResult,
-  type BlockResult,
-  type TransactionResult,
-  type ContractResult,
+    checkBlock,
+    checkTransaction,
+    searchPool,
+    isContractAddress,
+    isHexHash,
+    isBlockHeight,
+    type PoolResult,
+    type BlockResult,
+    type TransactionResult,
+    type ContractResult,
 } from "@/lib/search-utils"
 import { contractAPI } from "@/lib/api"
 import { Contract } from "@/lib/types"
 import {
-  SEARCH_TYPE_ALL,
-  SEARCH_TYPE_BLOCK,
-  SEARCH_TYPE_TRANSACTION,
-  SEARCH_TYPE_CONTRACT,
-  SEARCH_TYPE_POOL,
-  RESULT_TYPE_BLOCK,
-  RESULT_TYPE_TRANSACTION,
-  RESULT_TYPE_CONTRACT,
-  RESULT_TYPE_POOL,
-  RESULT_TYPE_VIEW_ALL,
-  type SearchType,
+    SEARCH_TYPE_ALL,
+    SEARCH_TYPE_BLOCK,
+    SEARCH_TYPE_TRANSACTION,
+    SEARCH_TYPE_CONTRACT,
+    SEARCH_TYPE_POOL,
+    RESULT_TYPE_BLOCK,
+    RESULT_TYPE_TRANSACTION,
+    RESULT_TYPE_CONTRACT,
+    RESULT_TYPE_POOL,
+    RESULT_TYPE_VIEW_ALL,
+    type SearchType,
 } from "@/lib/constants/search.constants"
 
-type SearchResult = 
-  | { type: typeof RESULT_TYPE_BLOCK; block: BlockResult }
-  | { type: typeof RESULT_TYPE_TRANSACTION; transaction: TransactionResult }
-  | { type: typeof RESULT_TYPE_CONTRACT; contract: ContractResult }
-  | { type: typeof RESULT_TYPE_POOL; pool: PoolResult }
-  | { type: typeof RESULT_TYPE_VIEW_ALL; count: number; searchHash: string }
+type SearchResult =
+    | { type: typeof RESULT_TYPE_BLOCK; block: BlockResult }
+    | { type: typeof RESULT_TYPE_TRANSACTION; transaction: TransactionResult }
+    | { type: typeof RESULT_TYPE_CONTRACT; contract: ContractResult }
+    | { type: typeof RESULT_TYPE_POOL; pool: PoolResult }
+    | { type: typeof RESULT_TYPE_VIEW_ALL; count: number; searchHash: string }
 
 export function SearchBar() {
     const [searchType, setSearchType] = useState<SearchType>(SEARCH_TYPE_ALL)
@@ -133,13 +133,13 @@ export function SearchBar() {
                     try {
                         const response = await contractAPI.searchContractsByAddress(cleanQuery)
                         const contracts = (response as Record<string, Contract[]>).contracts || (response as Contract[]) || []
-                        
+
                         if (Array.isArray(contracts) && contracts.length > 0) {
                             // Show up to 5 contracts in dropdown
                             const displayContracts = contracts.slice(0, 5)
                             displayContracts.forEach((contract: Contract) => {
-                                results.push({ 
-                                    type: RESULT_TYPE_CONTRACT, 
+                                results.push({
+                                    type: RESULT_TYPE_CONTRACT,
                                     contract: {
                                         id: contract.id,
                                         address: contract.address,
@@ -224,12 +224,12 @@ export function SearchBar() {
                         try {
                             const response = await contractAPI.searchContractsByAddress(cleanQuery)
                             const contracts = (response as Record<string, Contract[]>).contracts || (response as Contract[]) || []
-                            
+
                             if (Array.isArray(contracts) && contracts.length > 0) {
                                 const displayContracts = contracts.slice(0, 5)
                                 displayContracts.forEach((contract: Contract) => {
-                                    results.push({ 
-                                        type: RESULT_TYPE_CONTRACT, 
+                                    results.push({
+                                        type: RESULT_TYPE_CONTRACT,
                                         contract: {
                                             id: contract.id,
                                             address: contract.address,
@@ -280,12 +280,12 @@ export function SearchBar() {
                     try {
                         const response = await contractAPI.searchContractsByAddress(cleanQuery)
                         const contracts = (response as Record<string, Contract[]>).contracts || (response as Contract[]) || []
-                        
+
                         if (Array.isArray(contracts) && contracts.length > 0) {
                             const displayContracts = contracts.slice(0, 5)
                             displayContracts.forEach((contract: Contract) => {
-                                results.push({ 
-                                    type: RESULT_TYPE_CONTRACT, 
+                                results.push({
+                                    type: RESULT_TYPE_CONTRACT,
                                     contract: {
                                         id: contract.id,
                                         address: contract.address,
@@ -293,11 +293,11 @@ export function SearchBar() {
                                     }
                                 })
                             })
-                            
+
                             if (contracts.length > 5) {
                                 results.push({ type: RESULT_TYPE_VIEW_ALL, count: contracts.length, searchHash: cleanQuery })
                             }
-                            
+
                             setSearchResults(results)
                             setShowDropdown(true)
                         } else {
@@ -336,7 +336,7 @@ export function SearchBar() {
                         results.push({ type: RESULT_TYPE_POOL, pool })
                     })
                 }
-                
+
                 if (results.length > 0) {
                     setSearchResults(results)
                     setShowDropdown(true)
@@ -510,12 +510,12 @@ export function SearchBar() {
     }
 
     return (
-        <div className="max-w-3xl mx-auto">
+        <div className="w-full max-w-2xl">
             <form onSubmit={handleSearch}>
-                <div className="flex flex-col sm:flex-row gap-2">
+                <div className="flex flex-col sm:flex-row gap-0 border border-border rounded-sm overflow-hidden bg-card focus-within:ring-1 focus-within:ring-primary/50 transition-shadow">
                     <Select value={searchType} onValueChange={(value: string) => setSearchType(value as SearchType)}>
-                        <SelectTrigger 
-                            className="w-full sm:w-[180px] bg-card border-border"
+                        <SelectTrigger
+                            className="w-full sm:w-[130px] border-0 rounded-none bg-accent/20 hover:bg-accent/40 focus:ring-0 text-sm h-10"
                             suppressHydrationWarning
                         >
                             <SelectValue placeholder="Search type" />
@@ -535,12 +535,12 @@ export function SearchBar() {
                             className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
                         <Input
                             type="text"
-                            placeholder="Search by Hash / Height / Contract Address / Pool Name / AuraPubkey"
+                            placeholder="Search by Hash / Height / Address / Pool"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value.replace(/,/g, ''))}
-                            className="pl-10 bg-card border-border"
+                            className="pl-10 border-0 rounded-none bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 h-10 w-full placeholder:text-muted-foreground/60"
                             suppressHydrationWarning
-                        /> {/* Search Results Dropdown */}
+                        />
                         {showDropdown && searchResults.length > 0 && (
                             <div
                                 className="absolute top-full left-0 right-0 mt-1 z-50 bg-card border border-border rounded-lg shadow-xl overflow-hidden">
@@ -563,12 +563,10 @@ export function SearchBar() {
                     <Button
                         type="submit"
                         disabled={isSearching}
-                        className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-purple-600 
-             hover:from-blue-700 hover:to-purple-700 cursor-pointer 
-             disabled:opacity-50 disabled:cursor-not-allowed text-white"
+                        className="w-full sm:w-auto rounded-none border-l border-border bg-primary hover:bg-primary/90 text-primary-foreground disabled:opacity-50 h-10 px-6 font-medium"
                         suppressHydrationWarning
                     >
-                        {isSearching ? 'Searching...' : 'Search'}
+                        {isSearching ? <Search className="h-4 w-4 animate-spin text-primary-foreground/70" /> : <Search className="h-4 w-4" />}
                     </Button>
 
                 </div>

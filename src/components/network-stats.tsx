@@ -1,9 +1,10 @@
 "use client"
 
 import { Card } from "@/components/ui/card"
-import { TrendingUp, Activity, Blocks, Clock, Zap, Calendar } from "lucide-react"
+import { Blocks, Activity, Clock, Zap } from "lucide-react"
 import { useNetworkStats } from "@/hooks/useNetworkStats"
 import { useEffect, useState } from "react"
+import { cn } from "@/lib/utils"
 
 export function NetworkStats() {
   const { data, isLoading, error } = useNetworkStats()
@@ -13,38 +14,36 @@ export function NetworkStats() {
   const latestBlock = data?.latestBlock
   const totalTransactions = data?.totalTransactions
 
-  // Calculate time until next epoch
   useEffect(() => {
     if (!sidechainStatus?.nextEpochTimestamp) return
 
     const updateTimer = () => {
       const now = Date.now()
       const diff = sidechainStatus.nextEpochTimestamp - now
-      
+
       if (diff <= 0) {
         setTimeUntilEpoch('Transitioning...')
         return
       }
-      
+
       const days = Math.floor(diff / (1000 * 60 * 60 * 24))
       const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
       const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
       const seconds = Math.floor((diff % (1000 * 60)) / 1000)
-      
+
       if (days > 0) {
         setTimeUntilEpoch(`${days}d ${hours}h ${minutes}m`)
       } else {
         setTimeUntilEpoch(`${hours}h ${minutes}m ${seconds}s`)
       }
     }
-    
+
     updateTimer()
     const interval = setInterval(updateTimer, 1000)
-    
+
     return () => clearInterval(interval)
   }, [sidechainStatus?.nextEpochTimestamp])
 
-  // Format numbers with commas
   const formatNumber = (num: number | undefined | null) => {
     if (num === undefined || num === null) return 'N/A'
     return num.toLocaleString('en-US')
@@ -52,106 +51,59 @@ export function NetworkStats() {
 
   const calculateAvgBlockTime = () => {
     if (!latestBlock || !sidechainStatus) return 'N/A'
-    return '6s'
+    return '6.00s'
   }
 
   const stats = [
     {
-      label: "Current Epoch",
-      value: isLoading ? '...' : formatNumber(sidechainStatus?.sidechainCurrentEpoch),
-      trend: "neutral",
-      icon: Calendar,
-    },
-    {
-      label: "Current Slot",
-      value: isLoading ? '...' : formatNumber(sidechainStatus?.sidechainSlot),
-      trend: "neutral",
-      icon: Zap,
-    },
-    {
-      label: "Total Blocks",
+      label: "Latest Block",
       value: isLoading ? '...' : formatNumber(latestBlock?.height),
-      change: latestBlock ? `#${latestBlock.height}` : 'Latest block',
-      trend: "up",
       icon: Blocks,
     },
     {
       label: "Total Transactions",
       value: isLoading ? '...' : formatNumber(totalTransactions),
-      trend: "up",
       icon: Activity,
-    },
-    {
-      label: "Next Epoch In",
-      value: isLoading ? '...' : timeUntilEpoch || 'N/A',
-      trend: "neutral",
-      icon: Clock,
-      suppressHydration: true, // Time-based value
     },
     {
       label: "Avg Block Time",
       value: isLoading ? '...' : calculateAvgBlockTime(),
-      trend: "neutral",
-      icon: TrendingUp,
+      icon: Clock,
+    },
+    {
+      label: "Network Status",
+      value: error ? "Offline" : "Live",
+      isLive: !error && !isLoading,
+      icon: Zap,
     },
   ]
 
-  if (error) {
-    return (
-      <section>
-        <h2 className="text-2xl font-bold mb-4">Network Overview</h2>
-        <Card className="p-8 text-center">
-          <p className="text-destructive">{error.message}</p>
-        </Card>
-      </section>
-    )
-  }
-
   return (
-    <section>
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-2xl font-bold">Network Overview</h2>
-        <div className="flex items-center gap-2">
-          {isLoading && (
-            <span className="text-xs text-muted-foreground">Updating...</span>
-          )}
-          <span className="text-xs font-medium text-green-600 bg-green-100 px-3 py-1 rounded-full flex items-center gap-1">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-            </span>
-            Live
-          </span>
-        </div>
-      </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-        {stats.map((stat) => {
-          const Icon = stat.icon
-          const isNeutral = stat.trend === "neutral"
-
-          return (
-            <Card key={stat.label} className="p-4 bg-card hover:bg-card/80 transition-colors">
-              <div className="flex items-start justify-between mb-2">
-                <div className="p-2 rounded-lg bg-primary/10">
-                  <Icon className="h-4 w-4 text-primary" />
-                </div>
-              </div>
-              <div className="space-y-1">
-                <p 
-                  className="text-2xl font-bold font-mono"
-                  suppressHydrationWarning={stat.suppressHydration}
-                >
+    <Card className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 divide-y md:divide-y-0 md:divide-x border-border/60 bg-card rounded-[4px] shadow-sm mb-6 mt-4">
+      {stats.map((stat) => {
+        const Icon = stat.icon
+        return (
+          <div key={stat.label} className="p-4 flex items-center gap-4 hover:bg-muted/10 transition-colors">
+            <div className="p-3 bg-muted/30 rounded-[4px] border border-border/50 hidden sm:block">
+              <Icon className="h-5 w-5 text-muted-foreground" />
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mb-1">{stat.label}</p>
+              <div className="flex items-center gap-2">
+                {stat.label === "Network Status" && stat.isLive && (
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                  </span>
+                )}
+                <p className={cn("text-base font-mono font-medium", stat.label === "Network Status" && stat.isLive ? 'text-green-600' : 'text-foreground')}>
                   {stat.value}
                 </p>
-                <p className="text-xs text-muted-foreground">{stat.label}</p>
-                {isNeutral && (
-                  <p className="text-xs text-muted-foreground/70">{stat.change}</p>
-                )}
               </div>
-            </Card>
-          )
-        })}
-      </div>
-    </section>
+            </div>
+          </div>
+        )
+      })}
+    </Card>
   )
 }

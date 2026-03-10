@@ -1,17 +1,18 @@
 import { Header } from "@/components/header"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
+import { CopyButton } from "@/components/ui/copy-button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Copy, Wallet, ArrowUpRight, ArrowDownLeft } from "lucide-react"
+import { Wallet, ArrowUpRight, ArrowDownLeft } from "lucide-react"
 import Link from "next/link"
+import { DataTable } from "@/components/ui/data-table"
+import { HashLink } from "@/components/ui/hash-link"
+import { AddressLink } from "@/components/ui/address-link"
 
 export default async function AddressPage({ params }: { params: Promise<{ address: string }> }) {
-  // Await params để resolve giá trị
   const resolvedParams = await params;
-  const addressParam = resolvedParams.address; // Sử dụng giá trị đã resolve
+  const addressParam = resolvedParams.address;
 
-  // Mock address data (thay params.address bằng addressParam)
   const address = {
     address: addressParam,
     balance: "1,234.5678 MIDNIGHT",
@@ -31,134 +32,122 @@ export default async function AddressPage({ params }: { params: Promise<{ addres
     block: 2453678 - i,
   }))
 
+  const columns = [
+    {
+      header: "Tx Hash",
+      accessor: (tx: Record<string, any>) => (
+        <HashLink hash={tx.hash} type="tx" truncate showCopy={false} />
+      ),
+      className: "w-[120px]"
+    },
+    {
+      header: "Method",
+      accessor: (tx: Record<string, any>) => (
+        <Badge variant="outline" className="font-mono text-xs font-normal border-primary/20 bg-primary/5 text-primary">
+          Transfer
+        </Badge>
+      ),
+    },
+    {
+      header: "Block",
+      accessor: (tx: Record<string, any>) => (
+        <Link href={`/block/${tx.block}`} className="font-mono text-primary hover:underline">
+          {tx.block}
+        </Link>
+      ),
+    },
+    {
+      header: "Age",
+      accessor: (tx: any) => (
+        <span className="text-muted-foreground whitespace-nowrap">{tx.timestamp}</span>
+      ),
+    },
+    {
+      header: "From",
+      accessor: (tx: any) => <AddressLink address={tx.from} />,
+    },
+    {
+      header: "To",
+      accessor: (tx: any) => <AddressLink address={tx.to} />,
+    },
+    {
+      header: "Value",
+      accessor: (tx: any) => (
+        <span className={tx.type === "in" ? "text-emerald-600 font-medium whitespace-nowrap" : "text-foreground whitespace-nowrap"}>
+          {tx.type === "in" ? "+" : "-"}{tx.value}
+        </span>
+      ),
+      className: "text-right"
+    }
+  ]
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
 
-      <main className="container mx-auto px-4 py-8">
-        <div className="max-w-5xl mx-auto space-y-6">
-          {/* Header */}
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <Wallet className="h-8 w-8 text-primary" />
-              <h1 className="text-3xl font-bold">Address Details</h1>
-            </div>
-            <p className="text-muted-foreground">View balance, transactions, and activity for this address</p>
+      <main className="container mx-auto px-4 py-8 max-w-[1400px]">
+        <div className="space-y-6">
+          <div className="flex items-center gap-3 border-b pb-4">
+            <h1 className="text-2xl font-semibold tracking-tight">Address</h1>
+            <span className="font-mono bg-muted px-3 py-1 rounded-[4px] border border-border text-sm flex items-center gap-2">
+              {address.address}
+              <CopyButton text={address.address} className="h-4 w-4" />
+            </span>
           </div>
 
-          {/* Address Card */}
-          <Card className="p-6 bg-card">
-            <div className="space-y-4">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-muted-foreground mb-2">Address</p>
-                  <p className="text-lg font-mono break-all">{address.address}</p>
-                </div>
-                <Button variant="outline" size="icon">
-                  <Copy className="h-4 w-4" />
-                </Button>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <Card className="p-0 bg-card rounded-[4px] border-border shadow-sm flex flex-col justify-center px-4 py-4">
+              <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mb-1">Balance</p>
+              <div>
+                <span className="text-lg font-bold text-foreground font-mono">{address.balance}</span>
               </div>
-            </div>
-          </Card>
-
-          {/* Balance Overview */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card className="p-6 bg-card">
-              <p className="text-sm text-muted-foreground mb-2">Balance</p>
-              <p className="text-2xl font-bold text-primary mb-1">{address.balance}</p>
-              <p className="text-sm text-muted-foreground">{address.balanceUSD}</p>
             </Card>
-
-            <Card className="p-6 bg-card">
-              <p className="text-sm text-muted-foreground mb-2">Total Transactions</p>
-              <p className="text-2xl font-bold mb-1">{address.transactions}</p>
-              <p className="text-sm text-muted-foreground">All time</p>
+            <Card className="p-0 bg-card rounded-[4px] border-border shadow-sm flex flex-col justify-center px-4 py-4">
+              <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mb-1">Value (USD)</p>
+              <div>
+                <span className="text-lg font-bold text-foreground font-mono">{address.balanceUSD}</span>
+              </div>
             </Card>
-
-            <Card className="p-6 bg-card">
-              <p className="text-sm text-muted-foreground mb-2">Account Age</p>
-              <p className="text-2xl font-bold mb-1">7 months</p>
-              <p className="text-sm text-muted-foreground">Since {address.firstSeen}</p>
+            <Card className="p-0 bg-card rounded-[4px] border-border shadow-sm flex flex-col justify-center px-4 py-4">
+              <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mb-1">Total Transactions</p>
+              <div>
+                <span className="text-lg font-bold text-foreground font-mono">{address.transactions}</span>
+              </div>
+            </Card>
+            <Card className="p-0 bg-card rounded-[4px] border-border shadow-sm flex flex-col justify-center px-4 py-4">
+              <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mb-1">First Seen</p>
+              <div>
+                <span className="text-lg font-bold text-foreground font-mono">{address.firstSeen}</span>
+              </div>
             </Card>
           </div>
 
-          {/* Activity Tabs */}
-          <Card className="p-6 bg-card">
-            <Tabs defaultValue="transactions" className="space-y-4">
-              <TabsList>
-                <TabsTrigger value="transactions">Transactions</TabsTrigger>
-                <TabsTrigger value="tokens">Tokens</TabsTrigger>
-                <TabsTrigger value="nfts">NFTs</TabsTrigger>
-              </TabsList>
+          <Card className="p-0 bg-card rounded-[4px] border-border shadow-sm">
+            <Tabs defaultValue="transactions" className="w-full">
+              <div className="px-4 border-b border-border bg-muted/30">
+                <TabsList className="bg-transparent h-12 p-0 space-x-6">
+                  <TabsTrigger value="transactions" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-0 h-12 font-medium">Transactions</TabsTrigger>
+                  <TabsTrigger value="tokens" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-0 h-12 font-medium">Tokens</TabsTrigger>
+                  <TabsTrigger value="nfts" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-0 h-12 font-medium">NFTs</TabsTrigger>
+                </TabsList>
+              </div>
 
-              <TabsContent value="transactions" className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold">Transaction History</h3>
-                  <p className="text-sm text-muted-foreground">Showing latest {transactions.length} transactions</p>
+              <TabsContent value="transactions" className="m-0 p-0">
+                <div className="p-4 border-b border-border flex items-center justify-between">
+                  <h3 className="text-sm font-semibold">Latest Transactions</h3>
+                  <p className="text-xs text-muted-foreground">Showing {transactions.length} records</p>
                 </div>
-
-                <div className="space-y-3">
-                  {transactions.map((tx, i) => (
-                    <Link
-                      key={i}
-                      href={`/tx/${tx.hash}`}
-                      className="block p-4 rounded-lg bg-secondary/50 hover:bg-secondary transition-colors"
-                    >
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex items-start gap-3 flex-1 min-w-0">
-                          <div className={`p-2 rounded-lg ${tx.type === "in" ? "bg-success/10" : "bg-primary/10"}`}>
-                            {tx.type === "in" ? (
-                              <ArrowDownLeft className="h-4 w-4 text-success" />
-                            ) : (
-                              <ArrowUpRight className="h-4 w-4 text-primary" />
-                            )}
-                          </div>
-
-                          <div className="flex-1 min-w-0 space-y-2">
-                            <div className="flex items-center gap-2">
-                              <Badge variant="outline" className="font-mono text-xs">
-                                Block #{tx.block}
-                              </Badge>
-                              <span className="text-xs text-muted-foreground">{tx.timestamp}</span>
-                            </div>
-
-                            <p className="text-sm font-mono text-muted-foreground truncate">{tx.hash}</p>
-
-                            <div className="flex items-center gap-2 text-xs">
-                              <span className="text-muted-foreground">{tx.type === "in" ? "From:" : "To:"}</span>
-                              <span className="font-mono truncate">
-                                {tx.type === "in"
-                                  ? `${tx.from.slice(0, 12)}...${tx.from.slice(-10)}`
-                                  : `${tx.to.slice(0, 12)}...${tx.to.slice(-10)}`}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="text-right flex-shrink-0">
-                          <p
-                            className={`text-sm font-semibold ${tx.type === "in" ? "text-success" : "text-foreground"}`}
-                          >
-                            {tx.type === "in" ? "+" : "-"}
-                            {tx.value}
-                          </p>
-                        </div>
-                      </div>
-                    </Link>
-                  ))}
+                <div className="overflow-x-auto relative">
+                  <DataTable data={transactions} columns={columns} />
                 </div>
               </TabsContent>
 
-              <TabsContent value="tokens" className="space-y-4">
-                <div className="text-center py-12">
-                  <p className="text-muted-foreground">No tokens found for this address</p>
-                </div>
+              <TabsContent value="tokens" className="m-0 p-8 text-center bg-muted/10">
+                <p className="text-muted-foreground text-sm">No tokens found for this address</p>
               </TabsContent>
 
-              <TabsContent value="nfts" className="space-y-4">
-                <div className="text-center py-12">
-                  <p className="text-muted-foreground">No NFTs found for this address</p>
-                </div>
+              <TabsContent value="nfts" className="m-0 p-8 text-center bg-muted/10">
+                <p className="text-muted-foreground text-sm">No NFTs found for this address</p>
               </TabsContent>
             </Tabs>
           </Card>

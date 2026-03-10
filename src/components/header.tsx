@@ -2,115 +2,92 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Menu, Sparkles } from "lucide-react";
-import { Fragment } from "react";
-import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { getMenu } from "@/lib/menu";
 import { NetworkToggle } from "@/components/network-toggle";
-import { TokenPrice } from "@/components/token-price";
+import { SearchBar } from "@/components/search-bar";
+import { getMenu } from "@/lib/menu";
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+  navigationMenuTriggerStyle,
+} from "@/components/ui/navigation-menu";
 
 export function Header() {
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container mx-auto px-4">
-        <div className="flex h-16 items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 group relative">
-            <div className="relative">
+    <header className="sticky top-0 z-50 w-full border-b border-border bg-card">
+      <div className="container mx-auto px-4 max-w-[1400px]">
+        <div className="flex h-16 items-center justify-between gap-4">
+
+          {/* Left: Logo & Navigation */}
+          <div className="flex items-center gap-6">
+            <Link href="/" className="flex items-center gap-2 group">
               <Image
                 src="/images/midnightexplorer-logo.png"
                 alt="Midnightexplorer Logo"
-                width={180}
-                height={40}
-                className="h-6 w-auto min-w-[180px] brightness-200"
+                width={32}
+                height={32}
+                className="h-8 w-8 rounded-sm object-cover hidden sm:block"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = 'none';
+                }}
               />
-              {/* Twinkling stars around logo */}
-              <Sparkles
-                className="h-3 w-3 text-cyan-400 absolute -top-1 -right-2 animate-pulse"
-                style={{ animationDuration: "2s" }}
-              />
-              <Sparkles
-                className="h-2 w-2 text-purple-400 absolute -bottom-1 -left-2 animate-pulse"
-                style={{ animationDuration: "3s", animationDelay: "0.5s" }}
-              />
-              <Sparkles
-                className="h-2 w-2 text-blue-300 absolute top-0 left-12 animate-pulse"
-                style={{ animationDuration: "2.5s", animationDelay: "1s" }}
-              />
-            </div>
-          </Link>
+              <span className="font-bold text-lg tracking-tight whitespace-nowrap hidden sm:block">
+                Midnight Explorer
+              </span>
+              {/* Fallback for when logo alone isn't enough */}
+              <span className="font-bold text-lg tracking-tight sm:hidden block text-primary">
+                ME
+              </span>
+            </Link>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center flex-1 justify-center gap-6 mx-2">
-            {getMenu().map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                target={item.external ? "_blank" : undefined}
-                rel={item.external ? "noopener noreferrer" : undefined}
-                className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-              >
-                {item.title}
-              </Link>
-            ))}
-          </nav>
+            <NavigationMenu className="hidden lg:flex">
+              <NavigationMenuList>
+                <NavigationMenuItem>
+                  <NavigationMenuTrigger className="h-9 px-3 text-sm font-medium">
+                    Blockchain
+                  </NavigationMenuTrigger>
+                  <NavigationMenuContent>
+                    <ul className="grid w-[200px] gap-2 p-3">
+                      {getMenu().map((item) => (
+                        <li key={item.href}>
+                          <NavigationMenuLink asChild>
+                            <Link
+                              href={item.href}
+                              target={item.external ? "_blank" : undefined}
+                              rel={item.external ? "noopener noreferrer" : undefined}
+                              className="block select-none space-y-1 rounded-sm p-2 leading-none no-underline outline-none transition-colors hover:bg-muted/50 focus:bg-muted focus:text-accent-foreground"
+                            >
+                              <div className="text-sm font-medium leading-none">{item.title}</div>
+                            </Link>
+                          </NavigationMenuLink>
+                        </li>
+                      ))}
+                    </ul>
+                  </NavigationMenuContent>
+                </NavigationMenuItem>
+              </NavigationMenuList>
+            </NavigationMenu>
+          </div>
 
-          <div className="hidden lg:flex items-center gap-3">
-            <TokenPrice />
+          {/* Center: Search Bar */}
+          <div className="flex-1 max-w-2xl px-4 hidden md:block">
+            <SearchBar />
+          </div>
+
+          {/* Right: Network Toggle */}
+          <div className="flex items-center gap-3 shrink-0">
             <NetworkToggle />
           </div>
 
-          {/* Mobile Menu */}
-          <div className="flex lg:hidden items-center gap-2">
-            <div className="hidden sm:block">
-              <TokenPrice />
-            </div>
-            <div className="hidden sm:block">
-              <NetworkToggle />
-            </div>
-            <Sheet>
-              <SheetTrigger asChild className="lg:hidden">
-                <Button variant="ghost" size="icon">
-                  <Menu className="h-5 w-5" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="right" className="w-[300px]">
-                <div className="mt-6 mb-4 px-4 space-y-4">
-                  <div className="sm:hidden">
-                    <TokenPrice />
-                  </div>
-                  <div className="sm:hidden">
-                    <NetworkToggle />
-                  </div>
-                </div>
-
-                <nav className="flex flex-col gap-1">
-                  {getMenu().map((item, index, array) => {
-                    const showSeparator =
-                      item.external &&
-                      array[index - 1] &&
-                      !array[index - 1].external;
-                    return (
-                      <Fragment key={item.href}>
-                        {showSeparator && (
-                          <div className="my-2 border-t border-border" />
-                        )}
-                        <Link
-                          href={item.href}
-                          target={item.external ? "_blank" : undefined}
-                          rel={item.external ? "noopener noreferrer" : undefined}
-                          className="px-4 py-3 text-base font-medium text-muted-foreground transition-colors hover:text-foreground hover:bg-accent rounded-md"
-                        >
-                          {item.title}
-                        </Link>
-                      </Fragment>
-                    );
-                  })}
-                </nav>
-              </SheetContent>
-            </Sheet>
-          </div>
         </div>
+      </div>
+
+      {/* Mobile Search Bar */}
+      <div className="md:hidden border-t px-4 py-2 bg-muted/20">
+        <SearchBar />
       </div>
     </header>
   );

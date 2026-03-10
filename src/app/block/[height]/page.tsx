@@ -1,41 +1,33 @@
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { ChevronLeft, ChevronRight, ArrowLeft, Clock } from "lucide-react"
+import { ChevronLeft, ChevronRight, ArrowLeft } from "lucide-react"
 import Link from "next/link"
-import { formatDistanceToNow } from "@/lib/utils"
 import { blockAPI } from "@/lib/api"
 import { notFound } from "next/navigation"
 import { CopyButton } from "@/components/ui/copy-button"
 import { BlockResponse } from "@/lib/transaction-types"
 import { BlockTransactionsList } from "@/components/block-transactions-list"
+import { HashLink } from "@/components/ui/hash-link"
+import { formatDateTimeWithRelative } from "@/lib/utils"
 
 interface PageProps {
   params: Promise<{ height: string }>
 }
 
-// Disable prerendering so network calls are executed at request time
-export const dynamic = "force-dynamic"  
-
+export const dynamic = "force-dynamic"
 
 export default async function BlockPage({ params }: PageProps) {
-  // AWAIT params first
   const { height } = await params;
-  //console.log('Fetching block with height:', height);
 
   try {
-    // Fetch block details from API
     const data = await blockAPI.getBlock<BlockResponse>(height)
-    //console.log('Block data received:', data);
-    
     if (!data.block) {
-      console.error('No block data in response');
       notFound()
     }
 
     const { block } = data
 
-    // Convert ledgerParameters buffer to hex string
     let ledgerParametersHex = ''
     if (block.ledgerParameters && block.ledgerParameters.type === 'Buffer') {
       const buffer = Buffer.from(block.ledgerParameters.data);
@@ -43,169 +35,125 @@ export default async function BlockPage({ params }: PageProps) {
     }
 
     return (
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8 max-w-[1400px]">
         {/* Header with Navigation */}
-        <div className="max-w-5xl mx-auto space-y-6">
-          {/* Header with Navigation */}
-          <div className="flex items-center justify-between">
-            <div className="space-y-2">
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                Block #{block.height}
+        <div className="space-y-6">
+          <div className="flex items-center justify-between border-b pb-4">
+            <div className="flex items-center gap-3">
+              <h1 className="text-2xl font-semibold tracking-tight">
+                Block <span className="text-muted-foreground">#{block.height}</span>
               </h1>
-              <p className="text-muted-foreground text-lg">View detailed information about this block</p>
             </div>
             <div className="flex items-center gap-2">
               <Link href="/blocks">
-                <Button variant="outline" size="sm" className="border-border">
+                <Button variant="outline" size="sm" className="rounded-sm bg-card hover:bg-muted/50 border-border">
                   <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back
+                  View Blocks
                 </Button>
               </Link>
               {block.height > 0 && (
                 <Link href={`/block/${block.height - 1}`}>
-                  <Button variant="outline" size="icon" className="border-border">
+                  <Button variant="outline" size="icon" className="rounded-sm bg-card hover:bg-muted/50 border-border h-9 w-9">
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
                 </Link>
               )}
               <Link href={`/block/${block.height + 1}`}>
-                <Button variant="outline" size="icon" className="border-border">
+                <Button variant="outline" size="icon" className="rounded-sm bg-card hover:bg-muted/50 border-border h-9 w-9">
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               </Link>
             </div>
           </div>
 
-          {/* Block Overview */}
-          <Card className="p-6 bg-card/50 border-border">
-            <h2 className="text-xl font-semibold mb-4 text-purple-400">Overview</h2>
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-muted-foreground mb-1">Block Height</p>
-                  <p className="text-lg font-semibold font-mono text-blue-400">#{block.height}</p>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Left Column: Details Grid */}
+            <div className="space-y-6">
+              <Card className="rounded-[4px] border-border bg-card shadow-sm p-0 overflow-hidden">
+                <div className="bg-muted/50 px-4 py-3 border-b border-border">
+                  <h2 className="text-sm font-semibold">Block Information</h2>
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground mb-1">Timestamp</p>
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4 text-muted-foreground" />
-                      <p className="text-sm">{new Date(block.timestamp).toLocaleString()}</p>
+                <div className="divide-y divide-border/50 text-sm">
+                  <div className="flex flex-col sm:flex-row sm:items-center px-4 py-3 gap-1 sm:gap-4 hover:bg-muted/20 transition-colors">
+                    <div className="w-1/3 text-muted-foreground font-medium">Height</div>
+                    <div className="w-2/3">{block.height}</div>
+                  </div>
+                  <div className="flex flex-col sm:flex-row sm:items-center px-4 py-3 gap-1 sm:gap-4 hover:bg-muted/20 transition-colors">
+                    <div className="w-1/3 text-muted-foreground font-medium">Timestamp</div>
+                    <div className="w-2/3 flex items-center gap-2">
+                      <span className="font-mono">{formatDateTimeWithRelative(new Date(block.timestamp))}</span>
                     </div>
-                    <p className="text-xs text-muted-foreground ml-6">
-                      ({formatDistanceToNow(new Date(block.timestamp))} ago)
-                    </p>
+                  </div>
+                  <div className="flex flex-col sm:flex-row sm:items-center px-4 py-3 gap-1 sm:gap-4 hover:bg-muted/20 transition-colors">
+                    <div className="w-1/3 text-muted-foreground font-medium">Transactions</div>
+                    <div className="w-2/3">
+                      <Badge variant="outline" className="font-mono text-xs bg-muted/50 text-foreground border-transparent rounded-[2px]">
+                        {block.txCount} txns
+                      </Badge>
+                    </div>
+                  </div>
+                  <div className="flex flex-col sm:flex-row sm:items-center px-4 py-3 gap-1 sm:gap-4 hover:bg-muted/20 transition-colors">
+                    <div className="w-1/3 text-muted-foreground font-medium">Block Hash</div>
+                    <div className="w-2/3 flex items-center justify-between">
+                      <span className="font-mono text-muted-foreground truncate w-[200px] md:w-[300px]">{block.hash}</span>
+                      <CopyButton text={block.hash} className="h-4 w-4 hover:bg-muted text-muted-foreground" />
+                    </div>
+                  </div>
+                  <div className="flex flex-col sm:flex-row sm:items-center px-4 py-3 gap-1 sm:gap-4 hover:bg-muted/20 transition-colors">
+                    <div className="w-1/3 text-muted-foreground font-medium">Parent Hash</div>
+                    <div className="w-2/3 flex items-center justify-between">
+                      <Link href={`/block/${block.parentHash}`} className="font-mono text-primary hover:underline truncate w-[200px] md:w-[300px]">{block.parentHash}</Link>
+                      <CopyButton text={block.parentHash} className="h-4 w-4 hover:bg-muted text-muted-foreground" />
+                    </div>
+                  </div>
+                  <div className="flex flex-col sm:flex-row sm:items-center px-4 py-3 gap-1 sm:gap-4 hover:bg-muted/20 transition-colors">
+                    <div className="w-1/3 text-muted-foreground font-medium">Proposer / Author</div>
+                    <div className="w-2/3 flex items-center justify-between">
+                      <HashLink hash={block.author} type="tx" truncate showCopy={false} />
+                      <CopyButton text={block.author} className="h-4 w-4 hover:bg-muted text-muted-foreground" />
+                    </div>
+                  </div>
+                  <div className="flex flex-col sm:flex-row sm:items-center px-4 py-3 gap-1 sm:gap-4 hover:bg-muted/20 transition-colors">
+                    <div className="w-1/3 text-muted-foreground font-medium">Protocol Version</div>
+                    <div className="w-2/3">v{block.protocolVersion}</div>
                   </div>
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground mb-1">Transactions</p>
-                  <Badge className="text-base px-3 py-1 bg-green-500/10 text-green-400 border-green-500/20">
-                    {block.txCount} txns
-                  </Badge>
-                </div>
-              </div>
+              </Card>
 
-              <div className="pt-4 border-t border-border">
-                <p className="text-sm text-muted-foreground mb-2">Block Hash</p>
-                <div className="flex items-center gap-2">
-                  <p className="text-sm font-mono break-all flex-1 text-blue-400">{block.hash}</p>
-                  <CopyButton text={block.hash} />
-                </div>
-              </div>
-            </div>
-          </Card>
-
-          {/* Block Information */}
-          <Card className="p-6 bg-card/50 border-border">
-            <h2 className="text-xl font-semibold mb-4 text-purple-400">Block Information</h2>
-            <div className="space-y-4 text-sm">
-              <div className="flex items-center justify-between py-2 border-b border-border/50">
-                <span className="text-muted-foreground">Height</span>
-                <span className="font-mono text-blue-400">#{block.height}</span>
-              </div>
-              <div className="flex items-start justify-between py-2 border-b border-border/50">
-                <span className="text-muted-foreground">Hash</span>
-                <div className="flex items-center gap-2">
-                  <span className="font-mono text-xs text-blue-400 break-all max-w-md text-right">
-                    {block.hash}
-                  </span>
-                  <CopyButton text={block.hash} />
-                </div>
-              </div>
-              <div className="flex items-start justify-between py-2 border-b border-border/50">
-                <span className="text-muted-foreground">Parent Hash</span>
-                <div className="flex items-center gap-2">
-                  <span className="font-mono text-xs text-purple-400 break-all max-w-md text-right">
-                    {block.parentHash}
-                  </span>
-                  <CopyButton text={block.parentHash} />
-                </div>
-              </div>
-              <div className="flex items-center justify-between py-2 border-b border-border/50">
-                <span className="text-muted-foreground">Author</span>
-                <div className="flex items-center gap-2">
-                  <span className="font-mono text-xs text-green-400 break-all max-w-md text-right">
-                    {block.author}
-                  </span>
-                  <CopyButton text={block.author} />
-                </div>
-              </div>
-              <div className="flex items-center justify-between py-2 border-b border-border/50">
-                <span className="text-muted-foreground">Timestamp</span>
-                <span className="font-medium">{new Date(Number(block.timestamp)).toLocaleString()}</span>
-              </div>
-              <div className="flex items-center justify-between py-2 border-b border-border/50">
-                <span className="text-muted-foreground">Protocol Version</span>
-                <span className="font-mono">v{block.protocolVersion}</span>
-              </div>
-              <div className="flex items-center justify-between py-2">
-                <span className="text-muted-foreground">Transaction Count</span>
-                <span className="font-medium text-green-400">{block.txCount}</span>
-              </div>
-            </div>
-          </Card>
-
-          {/* Ledger Parameters */}
-          {ledgerParametersHex && (
-            <Card className="p-6 bg-card/50 border-border">
-              <h2 className="text-xl font-semibold mb-4 text-purple-400">Ledger Parameters</h2>
-              <div className="space-y-3">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1 min-w-0 bg-background/50 rounded-lg p-4 max-h-[200px] overflow-y-auto">
-                    <p className="text-xs font-mono break-all text-muted-foreground leading-relaxed">
+              {ledgerParametersHex && (
+                <Card className="rounded-[4px] border-border bg-card shadow-sm p-0 overflow-hidden">
+                  <div className="bg-muted/50 px-4 py-3 border-b border-border flex justify-between items-center">
+                    <h2 className="text-sm font-semibold">Ledger Parameters</h2>
+                    <span className="text-xs text-muted-foreground">{Math.ceil((ledgerParametersHex.length - 2) / 2)} bytes</span>
+                  </div>
+                  <div className="p-4 bg-muted/10">
+                    <p className="text-xs font-mono break-all text-muted-foreground leading-relaxed max-h-[120px] overflow-y-auto">
                       {ledgerParametersHex}
                     </p>
                   </div>
-                  <CopyButton text={ledgerParametersHex} className="border-border flex-shrink-0" />
-                </div>
-                <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <span>Size: {ledgerParametersHex.length} characters ({Math.ceil((ledgerParametersHex.length - 2) / 2)} bytes)</span>
-                  <span className="text-muted-foreground/70">Scroll to view full data →</span>
-                </div>
-              </div>
-            </Card>
-          )}
-
-          {/* Transactions Info */}
-          <Card className="p-6 bg-card/50 border-border">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h2 className="text-xl font-semibold mb-2 text-purple-400">Transactions</h2>
-                {block.txCount > 0 && (
-                  <Link href={`/block/${block.height}/txs`} className="text-sm text-blue-400 hover:text-blue-300">
-                    view all transactions
-                  </Link>
-                )}
-              </div>
+                </Card>
+              )}
             </div>
-            {block.txCount === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <p>No transactions in this block</p>
-              </div>
-            ) : (
-              <BlockTransactionsList height={block.height} txCount={block.txCount} />
-            )}
-          </Card>
+
+            {/* Right Column: Transactions */}
+            <div className="space-y-6">
+              <Card className="rounded-[4px] border-border bg-card shadow-sm p-0 overflow-hidden">
+                <div className="bg-muted/50 px-4 py-3 border-b border-border flex items-center justify-between">
+                  <h2 className="text-sm font-semibold">Block Transactions</h2>
+                  {block.txCount > 0 && <span className="text-xs text-muted-foreground">{block.txCount} txns</span>}
+                </div>
+                <div className="p-4">
+                  {block.txCount === 0 ? (
+                    <div className="text-center py-6 text-sm text-muted-foreground">
+                      <p>No transactions in this block</p>
+                    </div>
+                  ) : (
+                    <BlockTransactionsList height={block.height} txCount={block.txCount} />
+                  )}
+                </div>
+              </Card>
+            </div>
+          </div>
         </div>
       </div>
     )
