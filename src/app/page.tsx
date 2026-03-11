@@ -1,6 +1,6 @@
 'use client'
 
-import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { SearchBar } from "@/components/search-bar"
 import { NetworkStats } from "@/components/network-stats"
 import { RecentBlocks } from "@/components/recent-blocks"
@@ -10,16 +10,6 @@ import { MidnightTokenInfo } from "@/components/midnight-token-info"
 import { ErrorBoundary } from "@/components/error-boundary"
 import { blockAPI } from "@/lib/api"
 import { Block } from "@/lib/types"
-
-// Tạo QueryClient global
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      refetchOnWindowFocus: false,
-      staleTime: 15000,
-    },
-  },
-})
 
 function HomePageContent() {
   // Query cho blocks
@@ -80,9 +70,5 @@ function HomePageContent() {
 }
 
 export default function HomePage() {
-  return (
-    <QueryClientProvider client={queryClient}>
-      <HomePageContent />
-    </QueryClientProvider>
-  )
+  return <HomePageContent />
 }
