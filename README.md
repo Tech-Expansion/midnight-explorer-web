@@ -29,7 +29,7 @@ developer tooling.
 | Charts | Recharts |
 | Database | PostgreSQL (`pg`) |
 | Runtime | Midnight Network SDK (`@midnight-ntwrk/*`) |
-
+ 
 ## 🚀 Getting Started
 
 ### Prerequisites
