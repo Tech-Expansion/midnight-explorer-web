@@ -32,6 +32,7 @@ yarn-error.log*
 babel.json
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # vercel
 .vercel

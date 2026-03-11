@@ -48,7 +48,7 @@ export function useNightToken() {
       const response = await tokenAPI.getNightToken<TokenResponse>()
       return response.data.NIGHT
     },
-    refetchInterval: 60000, // Refresh every minute
-    staleTime: 30000,
+    refetchInterval: 120000, // Refresh every 2 minutes (matches BE cache TTL)
+    staleTime: 60000, // Fresh for 1 minute
   })
 }

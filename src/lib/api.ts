@@ -263,9 +263,8 @@ export const tokenAPI = {
   /**
    * Get NIGHT token information from backend that will fetch from CoinMarketCap
    */
-  getNightToken: <T = unknown>() =>
-    apiFetch<T>('/token-night')
-}
+  getNightToken: <T = unknown>() => apiFetch<T>("/token-night-v2"),
+};
 /**
  * Pool API methods
  */
