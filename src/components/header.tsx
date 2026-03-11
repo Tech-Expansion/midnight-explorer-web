@@ -55,6 +55,7 @@ export function Header() {
             ))}
           </nav>
 
+          {/* Desktop: right side */}
           <div className="hidden lg:flex items-center gap-3">
             <TokenPrice />
             <NetworkToggle />
@@ -62,9 +63,6 @@ export function Header() {
 
           {/* Mobile Menu */}
           <div className="flex lg:hidden items-center gap-2">
-            <div className="hidden sm:block">
-              <TokenPrice />
-            </div>
             <div className="hidden sm:block">
               <NetworkToggle />
             </div>
@@ -76,9 +74,7 @@ export function Header() {
               </SheetTrigger>
               <SheetContent side="right" className="w-[300px]">
                 <div className="mt-6 mb-4 px-4 space-y-4">
-                  <div className="sm:hidden">
-                    <TokenPrice />
-                  </div>
+                  <TokenPrice />
                   <div className="sm:hidden">
                     <NetworkToggle />
                   </div>
