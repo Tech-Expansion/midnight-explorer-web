@@ -14,6 +14,14 @@ class TokenManager {
   private isReady = false
   private readyPromise: Promise<boolean> | null = null
   private readyResolve: ((value: boolean) => void) | null = null
+  private turnstileToken: string | null = null
+
+  /**
+   * Set Turnstile token from the widget (called by TokenProvider)
+   */
+  setTurnstileToken(token: string) {
+    this.turnstileToken = token
+  }
 
   /**
    * Initialize token system - fetch first token and start auto-refresh
@@ -60,12 +68,23 @@ class TokenManager {
     try {
       this.isRefreshing = true
 
+      const headers: Record<string, string> = {}
+
+      // Attach Turnstile token if available
+      if (this.turnstileToken) {
+        headers['x-turnstile-token'] = this.turnstileToken
+      }
+
       const response = await fetch('/api/auth/refresh', {
         method: 'POST',
         credentials: 'include',
+        headers,
       })
 
       if (!response.ok) return false
+
+      // Clear turnstile token after successful use (one-time use)
+      this.turnstileToken = null
 
       await response.json()
       return true
@@ -111,6 +130,7 @@ export const startTokenRefresh = () => tokenManager.start()
 export const stopTokenRefresh = () => tokenManager.stop()
 export const waitForToken = () => tokenManager.waitUntilReady()
 export const isTokenReady = () => tokenManager.ready
+export const setTurnstileToken = (token: string) => tokenManager.setTurnstileToken(token)
 
 /**
  * Fetch with automatic token retry
