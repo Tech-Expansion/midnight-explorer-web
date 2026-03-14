@@ -17,6 +17,8 @@ import {
   isHexHash,
   isBlockHeight,
 } from "@/lib/search-utils"
+import { contractAPI } from "@/lib/api"
+import { Contract } from "@/lib/types"
 
 interface SearchBarProps {
   searchType?: "all" | "transaction" | "block" | "address" | "contract" | "pool"
@@ -74,8 +76,26 @@ export function SearchBarPage({ searchType = "all" }: SearchBarProps) {
       }
 
       // If user selected Contract
-      if (selectedType === "contract") {
-        await verifyAndNavigate(cleanQuery, 'contract')
+      if (selectedType === "contract") { 
+        if (isContractAddress(cleanQuery)) {
+          try {
+            const response = await contractAPI.searchContractsByAddress(cleanQuery)
+        
+            const contracts = (response as Record<string, Contract[]>).contracts || []
+            
+            if (contracts && contracts.length > 0) {
+              router.push(`/contracts?search=${encodeURIComponent(cleanQuery)}`)
+            } else {
+              setSearchError('No contracts found for this address')
+            }
+          } catch (error) {
+            console.error('Contract search error:', error)
+            setSearchError('Contract search failed')
+          }
+        } else {
+          setSearchError('Please enter a valid contract address')
+        }
+        setIsSearching(false)
         return
       }
 
@@ -126,15 +146,23 @@ export function SearchBarPage({ searchType = "all" }: SearchBarProps) {
           return
         }
 
-        // Check if it's a contract address (70 chars without 0x, or 72 chars with 0x)
+        // Check if it's a contract address (64 chars without 0x, or 66 chars with 0x)
         if (isContractAddress(cleanQuery)) {
-          const result = await checkContract(cleanQuery)
-          if (result.found) {
-            router.push(`/contracts/${cleanQuery}`)
-            setIsSearching(false)
-            return
+          //console.log('[All Mode] Detected contract address:', cleanQuery)
+          try {
+            const response = await contractAPI.searchContractsByAddress(cleanQuery)
+            //console.log('[All Mode] Contract API response:', response)
+            const contracts = (response as Record<string, Contract[]>).contracts || []
+            
+            if (contracts && contracts.length > 0) {
+              router.push(`/contracts?search=${encodeURIComponent(cleanQuery)}`)
+              setIsSearching(false)
+              return
+            }
+          } catch (error) {
+            console.error('Contract search error in all mode:', error)
           }
-          setSearchError('Contract not found')
+          setSearchError('No contracts found for this address')
           setIsSearching(false)
           return
         }

@@ -436,7 +436,7 @@ async function refreshTokenSync() {
 ```typescript
 // fetch-utils.ts
 if (response.status === 401 && onTokenRefresh) {
-  console.log('[FetchUtils] Got 401, refreshing token...')
+  //console.log('[FetchUtils] Got 401, refreshing token...')
   
   const refreshed = await onTokenRefresh()
   if (!refreshed) {
@@ -513,7 +513,7 @@ import { decodeJWT } from '@/lib/token-manager'
 
 const token = 'eyJhbGc...'
 const payload = decodeJWT(token)
-console.log('Payload:', payload)
+//console.log('Payload:', payload)
 // { fingerprint: "...", iat: 1234567890, exp: 1234567890 }
 ``Wrap app with QueryProvider → TokenProvider hierarchy
 - Use React Query hooks (useQuery) for data fetching

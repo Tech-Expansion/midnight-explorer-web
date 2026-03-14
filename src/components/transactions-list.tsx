@@ -1,36 +1,32 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { CheckCircle2, AlertCircle } from "lucide-react"
 import { formatDateTime } from "@/lib/utils"
 import { transactionAPI } from "@/lib/api"
-import { Pagination, SimplePagination } from "@/components/pagination"
+import { Pagination } from "@/components/pagination"
 import { useNetworkStats } from "@/hooks/useNetworkStats"
-
-interface Transaction {
-  id?: string
-  hash: string
-  status: 'success' | 'failed' | 'failure'
-  blockHeight?: number
-  protocolVersion: number
-  timestamp?: string | number
-  size?: number
-}
+import { Transaction } from "@/lib/transaction-types"
 
 interface TransactionsListProps {
   initialCursor?: string
-  searchHash?: string
-  searchPage?: number
+  initialSearchHash?: string
+  initialSearchPage?: number
 }
 
-export function TransactionsList({ initialCursor, searchHash, searchPage = 1 }: TransactionsListProps) {
+export function TransactionsList({  }: TransactionsListProps) {
+  const searchParams = useSearchParams()
+  const searchHash = searchParams.get('hash') || undefined
+  const searchPage = searchParams.get('page') ? parseInt(searchParams.get('page')!, 10) : 1
+  
   const [transactions, setTransactions] = useState<Transaction[]>([])
-  const [nextCursor, setNextCursor] = useState<string | undefined>()
+  const [, setNextCursor] = useState<string | undefined>()
   const [pagination, setPagination] = useState<{ page: number; pageSize: number; totalCount: number; totalPages: number } | null>(null)
   const [loading, setLoading] = useState(true)
+  const [cursorMap, setCursorMap] = useState<Record<number, string | undefined>>({ 1: undefined })
   const { data } = useNetworkStats()
   const totalTransactions = data?.totalTransactions
 
@@ -50,10 +46,17 @@ export function TransactionsList({ initialCursor, searchHash, searchPage = 1 }: 
           setTransactions(response.data)
           setPagination(response.pagination || null)
         } else {
-          // Normal mode with cursor
-          const response: { items: Transaction[]; nextCursor?: string } = await transactionAPI.getTransactions(initialCursor)
+          // Normal mode with cursor - use cursor from cursorMap for current page
+          const cursorForPage = cursorMap[searchPage]
+          const response: { items: Transaction[]; nextCursor?: string } = await transactionAPI.getTransactions(cursorForPage)
+          //console.log('[TransactionsList] Fetched page', searchPage, 'with cursor:', cursorForPage, 'nextCursor:', response.nextCursor)
           setTransactions(response.items)
           setNextCursor(response.nextCursor)
+          
+          // Save cursor for next page
+          if (response.nextCursor) {
+            setCursorMap(prev => ({ ...prev, [searchPage + 1]: response.nextCursor }))
+          }
         }
       } catch (error) {
         console.error('Failed to fetch transactions:', error)
@@ -63,23 +66,20 @@ export function TransactionsList({ initialCursor, searchHash, searchPage = 1 }: 
     }
 
     fetchData()
-  }, [initialCursor, searchHash, searchPage])
+  }, [searchHash, searchPage])
 
-  const getStatusBadge = (status: Transaction['status']) => {
-    switch (status) {
-      case "success":
+  const getVariantBadge = (variant?: Transaction['variant']) => {
+    switch (variant) {
+      case "Regular":
         return (
-          <Badge className="bg-green-500/10 text-green-400 border-green-500/20 hover:bg-green-500/20">
-            <CheckCircle2 className="h-3 w-3 mr-1" />
-            Success 
+          <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">
+            {variant}
           </Badge>
         )
-      case "failed":
-      case "failure":
+      case "System":
         return (
-          <Badge className="bg-red-500/10 text-red-400 border-red-500/20 hover:bg-red-500/20">
-            <AlertCircle className="h-3 w-3 mr-1" />
-            Failed
+          <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30">
+            {variant}
           </Badge>
         )
       default:
@@ -97,73 +97,126 @@ export function TransactionsList({ initialCursor, searchHash, searchPage = 1 }: 
 
   return (
     <>
-      {/* Transactions Table */}
-      <Card className="bg-card/50 border-border">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-border">
-                <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Txn Hash</th>
-                <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Status</th>
-                <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Block</th>
-                <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Protocol</th>
-                <th className="text-center pr-24 p-4 text-sm font-semibold text-muted-foreground">Age</th>
-                <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Size</th>
-              </tr>
-            </thead>
-            <tbody>
-              {transactions.length > 0 ? (
-                transactions.map((tx: Transaction, index: number) => (
-                  <tr key={tx.id || `${tx.hash}-${index}`} className="border-b border-border/50 hover:bg-accent/5 transition-colors">
-                    <td className="p-4">
-                      <Link
-                        href={`/tx/${tx.hash}`}
-                        className="text-blue-400 hover:text-blue-300 transition-colors font-mono text-sm"
-                      >
-                        0x{tx.hash}
-                      </Link>
-                    </td>
-                    <td className="p-4">{getStatusBadge(tx.status)}</td>
-                    <td className="p-4">
-                      {tx.blockHeight ? (
+      {/* Transactions Table - Desktop */}
+      <div className="hidden md:block">
+        <Card className="bg-card/50 border-border">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-border">
+                  <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Txn Hash</th>
+                  <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Variant</th>
+                  <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Block</th>
+                  <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Protocol</th>
+                  <th className="text-center pr-24 p-4 text-sm font-semibold text-muted-foreground">Age</th>
+                  <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Size</th>
+                </tr>
+              </thead>
+              <tbody>
+                {transactions.length > 0 ? (
+                  transactions.map((tx: Transaction, index: number) => (
+                    <tr key={tx.id || `${tx.hash}-${index}`} className="border-b border-border/50 hover:bg-accent/5 transition-colors">
+                      <td className="p-4">
                         <Link
-                          href={`/block/${tx.blockHeight}`}
-                          className="text-purple-400 hover:text-purple-300 transition-colors font-mono text-sm"
+                          href={`/tx/${tx.hash}`}
+                          className="text-blue-400 hover:text-blue-300 transition-colors font-mono text-sm"
                         >
-                          #{tx.blockHeight}
+                          {tx.hash}
                         </Link>
-                      ) : (
-                        <span className="text-muted-foreground text-sm">Pending</span>
-                      )}
-                    </td>
-                    <td className="p-4">
-                      <span className="text-sm text-muted-foreground font-mono">
-                        v{tx.protocolVersion}
-                      </span>
-                    </td>
-                    <td className="p-4">
-                      <span className="text-sm text-muted-foreground">
-                        {tx.timestamp ? formatDateTime(new Date(parseInt(String(tx.timestamp)))) : "N/A"}
-                      </span>
-                    </td>
-                    <td className="p-4">
-                      <span className="text-sm text-muted-foreground">
-                        {tx.size ? `${tx.size} B` : "N/A"}
-                      </span>
+                      </td>
+                      <td className="p-4">{getVariantBadge(tx.variant)}</td>
+                      <td className="p-4">
+                        {tx.blockHeight ? (
+                          <Link
+                            href={`/block/${tx.blockHeight}`}
+                            className="text-purple-400 hover:text-purple-300 transition-colors font-mono text-sm"
+                          >
+                            #{tx.blockHeight}
+                          </Link>
+                        ) : (
+                          <span className="text-muted-foreground text-sm">Pending</span>
+                        )}
+                      </td>
+                      <td className="p-4">
+                        <span className="text-sm text-muted-foreground font-mono">
+                          v{tx.protocolVersion}
+                        </span>
+                      </td>
+                      <td className="p-4">
+                        <span className="text-sm text-muted-foreground">
+                          {tx.timestamp ? formatDateTime(new Date(parseInt(String(tx.timestamp)))) : "N/A"}
+                        </span>
+                      </td>
+                      <td className="p-4">
+                        <span className="text-sm text-muted-foreground">
+                          {tx.size ? `${tx.size} B` : "N/A"}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={6} className="p-8 text-center text-muted-foreground">
+                      No transactions found
                     </td>
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={6} className="p-8 text-center text-muted-foreground">
-                    No transactions found
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </Card>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      </div>
+
+      {/* Transactions Grid - Mobile */}
+      <div className="md:hidden space-y-3">
+        {transactions.length > 0 ? (
+          transactions.map((tx: Transaction, index: number) => (
+            <Card key={tx.id || `${tx.hash}-${index}`} className="bg-card/50 border-border p-4">
+              <div className="space-y-3">
+                <Link
+                  href={`/tx/${tx.hash}`}
+                  className="text-blue-400 hover:text-blue-300 transition-colors font-mono text-sm font-semibold break-all"
+                >
+                  {tx.hash}
+                </Link>
+                <div className="flex flex-wrap items-center gap-2">
+                  {getVariantBadge(tx.variant)}
+                  {tx.blockHeight ? (
+                          <Link
+                            href={`/block/${tx.blockHeight}`}
+                            className="text-purple-400 hover:text-purple-300 transition-colors font-mono text-sm"
+                          >
+                            #{tx.blockHeight}
+                          </Link>
+                        ) : (
+                          <span className="text-muted-foreground text-sm">Pending</span>
+                    )}
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div>
+                    <span className="text-muted-foreground">Protocol:</span>
+                    <div className="text-foreground font-mono mt-1">v{tx.protocolVersion}</div>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Size:</span>
+                    <div className="text-foreground mt-1">{tx.size ? `${tx.size} B` : "N/A"}</div>
+                  </div>
+                </div>
+                <div className="border-t border-border/50 pt-2">
+                  <span className="text-muted-foreground text-xs">Age:</span>
+                  <div className="text-foreground mt-1 text-xs">
+                    {tx.timestamp ? formatDateTime(new Date(parseInt(String(tx.timestamp)))) : "N/A"}
+                  </div>
+                </div>
+              </div>
+            </Card>
+          ))
+        ) : (
+          <Card className="bg-card/50 border-border p-8">
+            <p className="text-center text-muted-foreground">No transactions found</p>
+          </Card>
+        )}
+      </div>
 
       {/* Pagination */}
       <div className="pb-8">
@@ -174,22 +227,14 @@ export function TransactionsList({ initialCursor, searchHash, searchPage = 1 }: 
             buildUrl={(page) => `/transactions?hash=${searchHash}&page=${page}`}
             className="mt-4"
           />
-        ) : totalPages > 0 ? (
+        ) : totalPages > 1 ? (
           <Pagination
             currentPage={searchPage}
             totalPages={totalPages}
             buildUrl={(page) => `/transactions?page=${page}`}
             className="mt-4"
           />
-        ) : (
-          <SimplePagination
-            hasPrev={!!initialCursor}
-            hasNext={!!nextCursor}
-            prevUrl="/transactions"
-            nextUrl={nextCursor ? `/transactions?cursor=${nextCursor}` : undefined}
-            className="mt-4"
-          />
-        )}
+        ) : null}
       </div>
     </>
   )

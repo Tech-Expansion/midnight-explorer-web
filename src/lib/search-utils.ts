@@ -2,7 +2,7 @@
 export interface PoolResult {
   auraPublicKey: string
   blocksMinted: number
-  mainchainPublicKey?: string
+  mainchainPubKey?: string
   poolOffchainData?: {
     name: string
     ticker: string
@@ -25,6 +25,7 @@ export interface TransactionResult {
 }
 
 export interface ContractResult {
+  id: string | number
   address: string
   variant?: string
 }
@@ -72,14 +73,51 @@ export async function checkBlock(query: string): Promise<{
     }
   } catch (error) {
     if (error instanceof Error && error.name === 'AbortError') {
-      console.log('⏱️ Block check timeout')
+      //console.log('⏱️ Block check timeout')
     }
     return { found: false }
   }
 }
 
 /**
- * Check if a transaction exists by hash
+ * Verify if a transaction exists by hash (fast verification)
+ * Uses transactionAPI.verifyTransaction from api.ts
+ */
+export async function verifyTransaction(query: string): Promise<{
+  found: boolean
+  type?: string
+  txHash?: string
+  txId?: string
+}> {
+  try {
+    const { transactionAPI } = await import('@/lib/api')
+    
+    const data = await transactionAPI.verifyTransaction<{
+      found: boolean
+      type?: string
+      txHash?: string
+      txId?: string
+    }>(query)
+
+    if (data.found) {
+      return {
+        found: true,
+        type: data.type,
+        txHash: data.txHash,
+        txId: data.txId
+      }
+    }
+
+    return { found: false }
+  } catch (error) {
+    console.error('❌ Transaction verify error:', error)
+    return { found: false }
+  }
+}
+
+/**
+ * Check if a transaction exists by hash (full search)
+ * Uses /api/transactions/search endpoint for detailed results
  */
 export async function checkTransaction(query: string): Promise<{
   found: boolean
@@ -129,7 +167,7 @@ export async function checkTransaction(query: string): Promise<{
     return { found: false }
   } catch (error) {
     if (error instanceof Error && error.name === 'AbortError') {
-      console.log('⏱️ Transaction check timeout')
+      //console.log('⏱️ Transaction check timeout')
     }
     return { found: false }
   }
@@ -146,7 +184,7 @@ export async function searchPool(query: string): Promise<{
   results?: Array<{
     auraPublicKey: string
     blocksMinted: number
-    mainchainPublicKey?: string
+    mainchainPubKey?: string
     poolOffchainData?: {
       name: string
       ticker: string
@@ -161,7 +199,7 @@ export async function searchPool(query: string): Promise<{
     const data = await poolAPI.searchPools<Array<{
       auraPublicKey: string
       blocksMinted: number
-      mainchainPublicKey?: string
+      mainchainPubKey?: string
       poolOffchainData?: {
         name: string
         ticker: string
@@ -216,7 +254,8 @@ export async function checkContract(query: string): Promise<{
         found: true,
         data: {
           address: data.contract?.address ?? data.address ?? query,
-          variant: data.contract?.variant ?? data.variant
+          variant: data.contract?.variant ?? data.variant,
+          id: data.contract?.id ??data.id??null
         }
       }
     }
@@ -224,26 +263,32 @@ export async function checkContract(query: string): Promise<{
     return { found: false }
   } catch (error) {
     if (error instanceof Error && error.name === 'AbortError') {
-      console.log('⏱️ Contract check timeout')
+      //console.log('⏱️ Contract check timeout')
     }
     return { found: false }
   }
 }
 
 /**
- * Helper function to determine if a string is a contract address (70 hex chars)
+ * Helper function to determine if a string is a contract address (64 hex chars without 0x, or 66 with 0x)
  */
 export function isContractAddress(query: string): boolean {
   const cleanHash = query.startsWith("0x") ? query.slice(2) : query
-  return /^[a-fA-F0-9]{70}$/.test(cleanHash)
+  return /^[a-fA-F0-9]{64}$/.test(cleanHash)
 }
 
 /**
- * Helper function to determine if a string is a hex hash (64 hex chars)
+ * Helper function to determine if a string is a hex hash
+ * Transaction hash: 64 or 66 hex chars (without 0x), or 68 chars (with 0x)
+ * Block/Pool hash: 64 hex chars
  */
 export function isHexHash(query: string): boolean {
-  const cleanHash = query.startsWith("0x") ? query.slice(2) : query
-  return /^[a-fA-F0-9]{64}$/.test(cleanHash)
+  // With 0x prefix: total length should be 66 (block) or 68 (tx identifier)
+  if (query.startsWith("0x") || query.startsWith("0X")) {
+    return /^0[xX][a-fA-F0-9]{64}$/.test(query) || /^0[xX][a-fA-F0-9]{66}$/.test(query)
+  }
+  // Without prefix: should be 64 chars (block/pool) or 66 chars (tx identifier)
+  return /^[a-fA-F0-9]{64}$/.test(query) || /^[a-fA-F0-9]{66}$/.test(query)
 }
 
 /**

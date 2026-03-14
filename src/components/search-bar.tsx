@@ -5,12 +5,12 @@ import { useState, useRef, useEffect } from "react"
 import { Search, Waves, Box, ArrowRightLeft, FileCode } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useRouter } from "next/navigation"
 import {
   checkBlock,
   checkTransaction,
-  checkContract,
   searchPool,
   isContractAddress,
   isHexHash,
@@ -20,6 +20,8 @@ import {
   type TransactionResult,
   type ContractResult,
 } from "@/lib/search-utils"
+import { contractAPI } from "@/lib/api"
+import { Contract } from "@/lib/types"
 import {
   SEARCH_TYPE_ALL,
   SEARCH_TYPE_BLOCK,
@@ -87,26 +89,21 @@ export function SearchBar() {
                 if (txResult.found && txResult.results && txResult.results.length > 0) {
                     const totalCount = txResult.count || txResult.results.length
 
-                    if (totalCount === 1) {
-                        // Only one result, navigate directly
-                        router.push(`/tx/${cleanQuery}`)
-                    } else {
-                        // Multiple results - show up to 5 in dropdown
-                        const displayResults = txResult
-                            .results
-                            .slice(0, 5)
-                        displayResults.forEach(tx => {
-                            results.push({ type: RESULT_TYPE_TRANSACTION, transaction: tx })
-                        })
+                    // Show up to 5 in dropdown
+                    const displayResults = txResult
+                        .results
+                        .slice(0, 5)
+                    displayResults.forEach(tx => {
+                        results.push({ type: RESULT_TYPE_TRANSACTION, transaction: tx })
+                    })
 
-                        // Add "View All" option if more than 5 results available
-                        if (totalCount > 5) {
-                            results.push({ type: RESULT_TYPE_VIEW_ALL, count: totalCount, searchHash: cleanQuery })
-                        }
-
-                        setSearchResults(results)
-                        setShowDropdown(true)
+                    // Add "View All" option if more than 5 results available
+                    if (totalCount > 5) {
+                        results.push({ type: RESULT_TYPE_VIEW_ALL, count: totalCount, searchHash: cleanQuery })
                     }
+
+                    setSearchResults(results)
+                    setShowDropdown(true)
                 } else {
                     setSearchError('Transaction not found')
                 }
@@ -132,15 +129,41 @@ export function SearchBar() {
 
             // If user selected Contract
             if (searchType === SEARCH_TYPE_CONTRACT) {
-                const contractResult = await checkContract(cleanQuery)
-                if (contractResult.found && contractResult.data) {
-                    results.push({ type: RESULT_TYPE_CONTRACT, contract: contractResult.data })
-                }
-                if (results.length > 0) {
-                    setSearchResults(results)
-                    setShowDropdown(true)
+                if (isContractAddress(cleanQuery)) {
+                    try {
+                        const response = await contractAPI.searchContractsByAddress(cleanQuery)
+                        const contracts = (response as Record<string, Contract[]>).contracts || (response as Contract[]) || []
+                        
+                        if (Array.isArray(contracts) && contracts.length > 0) {
+                            // Show up to 5 contracts in dropdown
+                            const displayContracts = contracts.slice(0, 5)
+                            displayContracts.forEach((contract: Contract) => {
+                                results.push({ 
+                                    type: RESULT_TYPE_CONTRACT, 
+                                    contract: {
+                                        id: contract.id,
+                                        address: contract.address,
+                                        variant: contract.variant
+                                    }
+                                })
+                            })
+
+                            // Add "View All" option if more than 5 results
+                            if (contracts.length > 5) {
+                                results.push({ type: RESULT_TYPE_VIEW_ALL, count: contracts.length, searchHash: cleanQuery })
+                            }
+
+                            setSearchResults(results)
+                            setShowDropdown(true)
+                        } else {
+                            setSearchError('No contracts found for this address')
+                        }
+                    } catch (error) {
+                        console.error('Contract search error:', error)
+                        setSearchError('Contract search failed')
+                    }
                 } else {
-                    setSearchError('Contract not found')
+                    setSearchError('Please enter a valid contract address')
                 }
                 setIsSearching(false)
                 return
@@ -170,81 +193,119 @@ export function SearchBar() {
 
             // If "all" is selected, smart detection
             if (searchType === SEARCH_TYPE_ALL) {
-                // Check if it looks like a tx/block/contract hash (64 chars)
+                // Check if it looks like a tx/block/contract hash (64 or 66 chars)
                 if (isHexHash(cleanQuery)) {
-                    // Check all types in parallel: TX first, then Contract, then Block, then Pool
-                    const [txResult, poolResult, blockResult, contractResult] = await Promise.all([
-                        checkTransaction(cleanQuery),
-                        searchPool(cleanQuery),
-                        checkBlock(cleanQuery),
-                        checkContract(cleanQuery)
-                    ])
-
-                    // Check TRANSACTION first
+                    // Check TRANSACTION first using search API (same as transaction mode)
+                    const txResult = await checkTransaction(cleanQuery)
                     if (txResult.found && txResult.results && txResult.results.length > 0) {
                         const totalCount = txResult.count || txResult.results.length
 
-                        if (totalCount === 1) {
-                            // Only one transaction, add to dropdown
-                            results.push({ type: RESULT_TYPE_TRANSACTION, transaction: txResult.results[0] })
-                        } else {
-                            // Multiple transactions - show up to 5 in dropdown
-                            const displayResults = txResult
-                                .results
-                                .slice(0, 5)
-                            displayResults.forEach(tx => {
-                                results.push({ type: RESULT_TYPE_TRANSACTION, transaction: tx })
-                            })
+                        // Show up to 5 in dropdown
+                        const displayResults = txResult
+                            .results
+                            .slice(0, 5)
+                        displayResults.forEach(tx => {
+                            results.push({ type: RESULT_TYPE_TRANSACTION, transaction: tx })
+                        })
 
-                            // Add "View All" option if more than 5 results available
-                            if (totalCount > 5) {
-                                results.push({ type: RESULT_TYPE_VIEW_ALL, count: totalCount, searchHash: cleanQuery })
+                        // Add "View All" option if more than 5 results available
+                        if (totalCount > 5) {
+                            results.push({ type: RESULT_TYPE_VIEW_ALL, count: totalCount, searchHash: cleanQuery })
+                        }
+
+                        setSearchResults(results)
+                        setShowDropdown(true)
+                        setIsSearching(false)
+                        return
+                    }
+
+                    // Check CONTRACT second
+                    if (isContractAddress(cleanQuery)) {
+                        try {
+                            const response = await contractAPI.searchContractsByAddress(cleanQuery)
+                            const contracts = (response as Record<string, Contract[]>).contracts || (response as Contract[]) || []
+                            
+                            if (Array.isArray(contracts) && contracts.length > 0) {
+                                const displayContracts = contracts.slice(0, 5)
+                                displayContracts.forEach((contract: Contract) => {
+                                    results.push({ 
+                                        type: RESULT_TYPE_CONTRACT, 
+                                        contract: {
+                                            id: contract.id,
+                                            address: contract.address,
+                                            variant: contract.variant
+                                        }
+                                    })
+                                })
+                                setSearchResults(results)
+                                setShowDropdown(true)
+                                setIsSearching(false)
+                                return
                             }
+                        } catch (error) {
+                            console.error('Contract search error:', error)
                         }
                     }
 
-                    // Check POOL second
+                    // Check POOL third
+                    const poolResult = await searchPool(cleanQuery)
                     if (poolResult.found && poolResult.results) {
-                        // Show up to 5 pools in dropdown
-                        const displayPools = poolResult
-                            .results
-                            .slice(0, 5)
+                        const displayPools = poolResult.results.slice(0, 5)
                         displayPools.forEach(pool => {
                             results.push({ type: RESULT_TYPE_POOL, pool })
                         })
-                    }
-
-                    // Check BLOCK third
-                    if (blockResult.found && blockResult.data) {
-                        results.push({ type: RESULT_TYPE_BLOCK, block: blockResult.data })
-                    }
-
-                    // Check CONTRACT fourth
-                    if (contractResult.found && contractResult.data) {
-                        results.push({ type: RESULT_TYPE_CONTRACT, contract: contractResult.data })
-                    }
-
-                    if (results.length > 0) {
                         setSearchResults(results)
                         setShowDropdown(true)
-                    } else {
-                        setSearchError('Hash not found in transactions, contracts, blocks, or pools')
+                        setIsSearching(false)
+                        return
                     }
+
+                    // Check BLOCK fourth
+                    const blockResult = await checkBlock(cleanQuery)
+                    if (blockResult.found && blockResult.data) {
+                        results.push({ type: RESULT_TYPE_BLOCK, block: blockResult.data })
+                        setSearchResults(results)
+                        setShowDropdown(true)
+                        setIsSearching(false)
+                        return
+                    }
+
+                    setSearchError('Hash not found in transactions, contracts, blocks, or pools')
                     setIsSearching(false)
                     return
                 }
 
                 // Check if it's a contract address (70 chars without 0x, or 72 chars with 0x)
                 if (isContractAddress(cleanQuery)) {
-                    const contractResult = await checkContract(cleanQuery)
-                    if (contractResult.found && contractResult.data) {
-                        results.push({ type: RESULT_TYPE_CONTRACT, contract: contractResult.data })
-                    }
-                    if (results.length > 0) {
-                        setSearchResults(results)
-                        setShowDropdown(true)
-                    } else {
-                        setSearchError('Contract not found')
+                    try {
+                        const response = await contractAPI.searchContractsByAddress(cleanQuery)
+                        const contracts = (response as Record<string, Contract[]>).contracts || (response as Contract[]) || []
+                        
+                        if (Array.isArray(contracts) && contracts.length > 0) {
+                            const displayContracts = contracts.slice(0, 5)
+                            displayContracts.forEach((contract: Contract) => {
+                                results.push({ 
+                                    type: RESULT_TYPE_CONTRACT, 
+                                    contract: {
+                                        id: contract.id,
+                                        address: contract.address,
+                                        variant: contract.variant
+                                    }
+                                })
+                            })
+                            
+                            if (contracts.length > 5) {
+                                results.push({ type: RESULT_TYPE_VIEW_ALL, count: contracts.length, searchHash: cleanQuery })
+                            }
+                            
+                            setSearchResults(results)
+                            setShowDropdown(true)
+                        } else {
+                            setSearchError('No contracts found for this address')
+                        }
+                    } catch (error) {
+                        console.error('Contract search error:', error)
+                        setSearchError('Contract search failed')
                     }
                     setIsSearching(false)
                     return
@@ -309,7 +370,7 @@ export function SearchBar() {
                 break
             case RESULT_TYPE_CONTRACT:
                 if (result.contract) {
-                    router.push(`/contracts/${result.contract.address}`)
+                    router.push(`/contracts/${result.contract.id}`)
                 }
                 break
             case RESULT_TYPE_POOL:
@@ -436,6 +497,11 @@ export function SearchBar() {
                     <div className="flex items-center gap-2">
                         <span className={`text-sm font-medium ${getResultTextColor(result.type)}`}>{title}</span>
                         <span className="text-xs text-muted-foreground capitalize">{result.type}</span>
+                        {result.type === RESULT_TYPE_CONTRACT && result.contract?.variant && (
+                            <Badge variant="outline" className="text-xs ml-auto">
+                                {result.contract.variant}
+                            </Badge>
+                        )}
                     </div>
                     <p className="text-xs text-muted-foreground truncate font-mono">{subtitle}</p>
                 </div>

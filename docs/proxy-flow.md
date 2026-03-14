@@ -128,12 +128,12 @@ export function validateToken(request: Request): string | null {
   const token = getTokenFromCookie(cookieHeader) // Extract from __et cookie
   
   if (!token) {
-    console.log('[Token] No token found in cookie')
+    //console.log('[Token] No token found in cookie')
     return null
   }
   
   if (!isTokenValid(token)) { // Check expiry
-    console.log('[Token] Token is expired')
+    //console.log('[Token] Token is expired')
     return null
   }
   
@@ -195,7 +195,7 @@ return NextResponse.json(data) // Forward response to client
 ```typescript
 // fetch-utils.ts
 if (response.status === 401 && onTokenRefresh) {
-  console.log('[FetchUtils] Got 401, refreshing token...')
+  //console.log('[FetchUtils] Got 401, refreshing token...')
   
   const refreshed = await onTokenRefresh()
   if (refreshed) {
@@ -436,7 +436,7 @@ export async function proxyToExternalAPI(
     const queryString = url.search
     const fullUrl = `${API_BASE_URL}/api/${API_VERSION}${endpoint}${queryString}`
     
-    console.log(`[Proxy] Forwarding to: ${fullUrl}`)
+    //console.log(`[Proxy] Forwarding to: ${fullUrl}`)
 
     // 3. Forward request
     const response = await fetch(fullUrl, {

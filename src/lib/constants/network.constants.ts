@@ -15,25 +15,25 @@ export const TIME_RANGES = {
 } as const
 
 // Data type constants
-export const DATA_TYPE_SUCCESS = 'success' as const
-export const DATA_TYPE_UNSIGNED_EXTRINSICS = 'unsigned-extrinsics' as const
+export const DATA_TYPE_REGULAR = 'regular' as const
+export const DATA_TYPE_SYSTEM = 'system' as const
 export const DATA_TYPE_TRANSACTIONS = 'transactions' as const
 
 export const DATA_TYPES = {
-  SUCCESS: DATA_TYPE_SUCCESS,
-  UNSIGNED_EXTRINSICS: DATA_TYPE_UNSIGNED_EXTRINSICS,
+  REGULAR: DATA_TYPE_REGULAR,
+  SYSTEM: DATA_TYPE_SYSTEM,
   TRANSACTIONS: DATA_TYPE_TRANSACTIONS
 } as const
 
 // Color constants
-export const COLOR_SUCCESS = '#10b981' // green
+export const COLOR_REGULAR = '#10b981' // green
 export const COLOR_TRANSACTIONS = '#3b82f6' // blue
-export const COLOR_FAILED = '#ef4444' // red
+export const COLOR_SYSTEM = '#ef4444' // red
 
 export const CHART_COLORS = {
-  SUCCESS: COLOR_SUCCESS,
+  REGULAR: COLOR_REGULAR,
   TRANSACTIONS: COLOR_TRANSACTIONS,
-  FAILED: COLOR_FAILED
+  SYSTEM: COLOR_SYSTEM
 } as const
 
 // Label constants - Time range labels
@@ -48,6 +48,13 @@ export const X_AXIS_INTERVALS = {
   [TIME_RANGE_1D]: 1,  // Show every 2 hours
   [TIME_RANGE_7D]: 0,  // Show all
   [TIME_RANGE_1M]: 2   // Show every 3 days
+} as const
+
+// Mobile-specific axis intervals for better readability on small screens
+export const X_AXIS_INTERVALS_MOBILE = {
+  [TIME_RANGE_1D]: 3,  // Show fewer labels on mobile for 24h view
+  [TIME_RANGE_7D]: 1,  // Show every other day
+  [TIME_RANGE_1M]: 4   // Show every 5 days on mobile
 } as const
 
 // Chart height constants - Responsive heights

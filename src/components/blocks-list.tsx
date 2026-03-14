@@ -54,7 +54,7 @@ export function BlocksList({ initialCursor, page = 1 }: BlocksListProps) {
     }
 
     fetchData()
-  }, [cursor, latestBlock])
+  }, [cursor])
 
   if (loading) {
     return (
@@ -74,66 +74,116 @@ export function BlocksList({ initialCursor, page = 1 }: BlocksListProps) {
 
   return (
     <>
-      {/* Blocks Table */}
-      <Card className="bg-card/50 border-border">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-border">
-                <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Block</th>
-                <th className="text-center p-4 text-sm font-semibold text-muted-foreground">
-                  <span className="inline-block -translate-x-28">Age</span>
-                </th>
-                <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Txns</th>
-              </tr>
-            </thead>
-            <tbody>
-              {blocks.map((block: Block) => (
-                <tr key={block.hash} className="border-b border-border/50 hover:bg-accent/5 transition-colors">
-                  <td className="p-4">
-                    <div className="space-y-1">
-                      <Link
-                        href={`/block/${block.height}`}
-                        className="flex items-center gap-2 text-blue-400 hover:text-blue-300 transition-colors font-mono"
-                      >
-                        <Box className="h-4 w-4" />
-                        {block.height.toLocaleString()}
-                      </Link>
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground font-mono">
-                        {block.hash}
-                      </div>
-                      {block.parent_hash && block.author && (
-                        <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
-                          <span className="font-mono text-xs truncate max-w-[220px]">
-                            Parent: {block.parent_hash.slice(0, 12)}...{block.parent_hash.slice(-8)}
-                          </span>
-                          <span className="truncate max-w-[160px]">
-                            Author: {block.author.length > 24 ? `${block.author.slice(0, 12)}...${block.author.slice(-8)}` : block.author}
-                          </span>
-                          {block.protocol_version && (
-                            <span className="text-muted-foreground">Protocol: v{block.protocol_version}</span>
-                          )}
+      {/* Blocks Table - Desktop */}
+      <div className="hidden md:block">
+        <Card className="bg-card/50 border-border">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-border">
+                  <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Block</th>
+                  <th className="text-center p-4 text-sm font-semibold text-muted-foreground">
+                    <span className="inline-block -translate-x-28">Age</span>
+                  </th>
+                  <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Txns</th>
+                </tr>
+              </thead>
+              <tbody>
+                {blocks.map((block: Block) => (
+                  <tr key={block.hash} className="border-b border-border/50 hover:bg-accent/5 transition-colors">
+                    <td className="p-4">
+                      <div className="space-y-1">
+                        <Link
+                          href={`/block/${block.height}`}
+                          className="flex items-center gap-2 text-blue-400 hover:text-blue-300 transition-colors font-mono"
+                        >
+                          <Box className="h-4 w-4" />
+                          {block.height.toLocaleString()}
+                        </Link>
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground font-mono">
+                          {block.hash}
                         </div>
-                      )}
-                    </div>
-                  </td>
-                  <td className="p-4">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Clock className="h-4 w-4" />
-                      {formatDateTime(new Date(Number(block.timestamp)))}
-                    </div>
-                  </td>
-                  <td className="p-4">
-                    <Badge variant="outline" className="bg-cyan-500/10 text-cyan-400 border-cyan-500/20">
+                        {block.parent_hash && block.author && (
+                          <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
+                            <span className="font-mono text-xs truncate max-w-[220px]">
+                              Parent: {block.parent_hash.slice(0, 12)}...{block.parent_hash.slice(-8)}
+                            </span>
+                            <span className="truncate max-w-[160px]">
+                              Author: {block.author.length > 24 ? `${block.author.slice(0, 12)}...${block.author.slice(-8)}` : block.author}
+                            </span>
+                            {block.protocol_version && (
+                              <span className="text-muted-foreground">Protocol: v{block.protocol_version}</span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Clock className="h-4 w-4" />
+                        {formatDateTime(new Date(Number(block.timestamp)))}
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      <Badge variant="outline" className="bg-cyan-500/10 text-cyan-400 border-cyan-500/20">
+                        {block.txCount}
+                      </Badge>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      </div>
+
+      {/* Blocks Grid - Mobile */}
+      <div className="md:hidden space-y-3">
+        {blocks.map((block: Block) => (
+          <Card key={block.hash} className="bg-card/50 border-border p-4">
+            <div className="space-y-3">
+              <Link
+                href={`/block/${block.height}`}
+                className="flex items-center gap-2 text-blue-400 hover:text-blue-300 transition-colors font-mono text-sm font-semibold"
+              >
+                <Box className="h-4 w-4" />
+                Block #{block.height.toLocaleString()}
+              </Link>
+              <div className="text-xs text-muted-foreground font-mono break-all">{block.hash}</div>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div>
+                  <span className="text-muted-foreground">Age:</span>
+                  <div className="flex items-center gap-1 text-foreground mt-1">
+                    <Clock className="h-3 w-3" />
+                    {formatDateTime(new Date(Number(block.timestamp)))}
+                  </div>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Txns:</span>
+                  <div className="mt-1">
+                    <Badge variant="outline" className="bg-cyan-500/10 text-cyan-400 border-cyan-500/20 text-xs">
                       {block.txCount}
                     </Badge>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </Card>
+                  </div>
+                </div>
+              </div>
+              {block.parent_hash && block.author && (
+                <div className="text-xs text-muted-foreground space-y-1 border-t border-border/50 pt-2">
+                  <div className="break-all">
+                    Parent: {block.parent_hash.slice(0, 12)}...{block.parent_hash.slice(-8)}
+                  </div>
+                  <div className="break-all">
+                    Author: {block.author.length > 24 ? `${block.author.slice(0, 12)}...${block.author.slice(-8)}` : block.author}
+                  </div>
+                  {block.protocol_version && (
+                    <div>Protocol: v{block.protocol_version}</div>
+                  )}
+                </div>
+              )}
+            </div>
+          </Card>
+        ))}
+      </div>
 
       {/* Pagination */}
       {totalPages > 0 ? (

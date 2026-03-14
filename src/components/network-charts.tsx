@@ -9,14 +9,15 @@ import {
   TIME_RANGE_1D,
   TIME_RANGE_7D,
   TIME_RANGE_1M,
-  DATA_TYPE_SUCCESS,
-  DATA_TYPE_UNSIGNED_EXTRINSICS,
+  DATA_TYPE_REGULAR,
+  DATA_TYPE_SYSTEM,
   DATA_TYPE_TRANSACTIONS,
-  COLOR_SUCCESS,
+  COLOR_REGULAR,
   COLOR_TRANSACTIONS,
-  COLOR_FAILED,
+  COLOR_SYSTEM,
   TIME_LABELS,
   X_AXIS_INTERVALS,
+  X_AXIS_INTERVALS_MOBILE,
   CHART_HEIGHTS,
   type TimeRange,
   type DataType,
@@ -30,8 +31,8 @@ export interface ChartDataPoint {
 
 export interface NetworkStatsResponse {
   chartData: ChartDataPoint[]
-  chartDataSuccess: ChartDataPoint[]
-  chartDataFailed: ChartDataPoint[]
+  chartDataRegular: ChartDataPoint[]
+  chartDataSystem: ChartDataPoint[]
 }
 
 // 🔹 Giao diện chính
@@ -40,29 +41,46 @@ export function NetworkCharts() {
   const [loading, setLoading] = useState(true)
   const [timeRange, setTimeRange] = useState<TimeRange>(TIME_RANGE_1D)
   const [dataType, setDataType] = useState<DataType>(DATA_TYPE_TRANSACTIONS)
+  const [isMobile, setIsMobile] = useState(false)
+  const [timezoneMode, setTimezoneMode] = useState<'local' | 'utc'>('local')
+
+  // Detect screen size for responsive interval adjustment
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 640) // sm breakpoint
+    }
+    
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   // Format timestamp thành ngày giờ dễ đọc
   const formatDate = (timestamp: number, range: TimeRange) => {
     const date = new Date(timestamp * 1000)
+    const options: Intl.DateTimeFormatOptions = timezoneMode === 'utc' ? { timeZone: 'UTC' } : {}
     
     if (range === TIME_RANGE_1D) {
       // 24h format: "14:00" (giờ:phút)
       return date.toLocaleTimeString('en-US', { 
         hour: '2-digit', 
         minute: '2-digit',
-        hour12: false 
+        hour12: false,
+        ...options
       })
     } else if (range === TIME_RANGE_7D) {
       // 7 days format: "Dec 20" (tháng ngày)
       return date.toLocaleDateString('en-US', { 
         month: 'short', 
-        day: 'numeric' 
+        day: 'numeric',
+        ...options
       })
     } else {
       // 1 month format: "12/20" (tháng/ngày)
       return date.toLocaleDateString('en-US', { 
         month: 'numeric', 
-        day: 'numeric' 
+        day: 'numeric',
+        ...options
       })
     }
   }
@@ -70,14 +88,17 @@ export function NetworkCharts() {
   // Format đầy đủ cho tooltip
   const formatFullDate = (timestamp: number) => {
     const date = new Date(timestamp * 1000)
-    return date.toLocaleString('en-US', { 
+    const options: Intl.DateTimeFormatOptions = {
       month: 'short', 
       day: 'numeric', 
       year: 'numeric',
       hour: '2-digit', 
       minute: '2-digit',
-      hour12: false
-    })
+      hour12: false,
+      ...(timezoneMode === 'utc' ? { timeZone: 'UTC' } : {})
+    }
+    const formattedDate = date.toLocaleString('en-US', options)
+    return timezoneMode === 'utc' ? `${formattedDate} UTC` : formattedDate
   }
 
   useEffect(() => {
@@ -90,10 +111,10 @@ export function NetworkCharts() {
         let sourceData: ChartDataPoint[] = []
         
         // Determine which data field to use based on dataType
-        if (dataType === DATA_TYPE_SUCCESS) {
-          sourceData = stats.chartDataSuccess || []
-        } else if (dataType === DATA_TYPE_UNSIGNED_EXTRINSICS) {
-          sourceData = stats.chartDataFailed || []
+        if (dataType === DATA_TYPE_REGULAR) {
+          sourceData = stats.chartDataRegular || []
+        } else if (dataType === DATA_TYPE_SYSTEM) {
+          sourceData = stats.chartDataSystem || []
         } else {
           sourceData = stats.chartData || []
         }
@@ -114,7 +135,7 @@ export function NetworkCharts() {
     }
 
     fetchTransactionData()
-  }, [timeRange, dataType])
+  }, [timeRange, dataType, timezoneMode])
 
   const getChartTitle = () => {
     const timeLabel = TIME_LABELS[timeRange]
@@ -122,9 +143,9 @@ export function NetworkCharts() {
   }
 
   const getChartColor = () => {
-    if (dataType === DATA_TYPE_SUCCESS) return COLOR_SUCCESS
+    if (dataType === DATA_TYPE_REGULAR) return COLOR_REGULAR
     if (dataType === DATA_TYPE_TRANSACTIONS) return COLOR_TRANSACTIONS
-    return COLOR_FAILED
+    return COLOR_SYSTEM
   }
 
   // Custom tooltip để hiện thông tin chi tiết
@@ -142,9 +163,8 @@ export function NetworkCharts() {
     return null
   }
 
-  // Quyết định có nên hiển thị tất cả labels hay không
   const getXAxisInterval = () => {
-    return X_AXIS_INTERVALS[timeRange]
+    return isMobile ? X_AXIS_INTERVALS_MOBILE[timeRange] : X_AXIS_INTERVALS[timeRange]
   }
 
   return (
@@ -167,17 +187,17 @@ export function NetworkCharts() {
             <div>
               <h3 className="text-lg font-semibold mb-1">Chain Status</h3>
               <p className="text-sm text-muted-foreground">
-                {loading ? "Loading..." : getChartTitle()}
+                {loading ? "Loading..." : `${getChartTitle()} (${timezoneMode === 'utc' ? 'UTC+0' : 'Local Time'})`} 
               </p>
             </div>
             
             {/* Toggle Controls */}
-            <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
-              {/* Data Type Toggle */}
-              <div className="flex flex-wrap gap-1 bg-muted p-1 rounded-lg">
+            <div className="flex flex-col lg:flex-row gap-3 w-full lg:w-auto">
+              {/* Data Type Toggle - Full width on mobile */}
+              <div className="flex gap-1 bg-muted p-1 rounded-lg w-full lg:w-auto">
                 <button
                   onClick={() => setDataType(DATA_TYPE_TRANSACTIONS)}
-                  className={`px-3 py-1.5 text-xs font-medium rounded transition-colors ${
+                  className={`flex-1 lg:flex-none px-3 py-1.5 text-xs font-medium rounded transition-colors ${
                     dataType === DATA_TYPE_TRANSACTIONS
                       ? 'bg-blue-500 text-white'
                       : 'text-muted-foreground hover:text-foreground'
@@ -187,64 +207,93 @@ export function NetworkCharts() {
                   Transactions
                 </button>
                 <button
-                  onClick={() => setDataType(DATA_TYPE_SUCCESS)}
-                  className={`px-3 py-1.5 text-xs font-medium rounded transition-colors ${
-                    dataType === DATA_TYPE_SUCCESS
+                  onClick={() => setDataType(DATA_TYPE_REGULAR)}
+                  className={`flex-1 lg:flex-none px-3 py-1.5 text-xs font-medium rounded transition-colors ${
+                    dataType === DATA_TYPE_REGULAR
                       ? 'bg-green-600 text-white'
                       : 'text-muted-foreground hover:text-foreground'
                   }`}
                   suppressHydrationWarning
                 >
-                  Success
+                  Regular
                 </button>
                 <button
-                  onClick={() => setDataType(DATA_TYPE_UNSIGNED_EXTRINSICS)}
-                  className={`px-3 py-1.5 text-xs font-medium rounded transition-colors whitespace-nowrap ${
-                    dataType === DATA_TYPE_UNSIGNED_EXTRINSICS
+                  onClick={() => setDataType(DATA_TYPE_SYSTEM)}
+                  className={`flex-1 lg:flex-none px-3 py-1.5 text-xs font-medium rounded transition-colors whitespace-nowrap ${
+                    dataType === DATA_TYPE_SYSTEM
                       ? 'bg-red-500 text-white'
                       : 'text-muted-foreground hover:text-foreground'
                   }`}
                   suppressHydrationWarning
                 >
-                  Unsigned Extrinsics
+                  System
                 </button>
               </div>
 
-              {/* Time Range Toggle */}
-              <div className="flex gap-1 bg-muted p-1 rounded-lg">
-                <button
-                  onClick={() => setTimeRange(TIME_RANGE_1D)}
-                  className={`px-3 py-1.5 text-xs font-medium rounded transition-colors ${
-                    timeRange === TIME_RANGE_1D
-                      ? 'bg-primary text-primary-foreground'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                  suppressHydrationWarning
-                >
-                  1D
-                </button>
-                <button
-                  onClick={() => setTimeRange(TIME_RANGE_7D)}
-                  className={`px-3 py-1.5 text-xs font-medium rounded transition-colors ${
-                    timeRange === TIME_RANGE_7D
-                      ? 'bg-primary text-primary-foreground'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                  suppressHydrationWarning
-                >
-                  7D
-                </button>
-                <button
-                  onClick={() => setTimeRange(TIME_RANGE_1M)}
-                  className={`px-3 py-1.5 text-xs font-medium rounded transition-colors ${
-                    timeRange === TIME_RANGE_1M
-                      ? 'bg-primary text-primary-foreground'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                  suppressHydrationWarning
-                >
-                  1M
-                </button>
+              {/* Time Range & Timezone Toggle - Side by side on all screens */}
+              <div className="flex gap-3 w-full lg:w-auto">
+                {/* Time Range Toggle */}
+                <div className="flex gap-1 bg-muted p-1 rounded-lg flex-1 lg:flex-none">
+                  <button
+                    onClick={() => setTimeRange(TIME_RANGE_1D)}
+                    className={`flex-1 lg:flex-none px-3 py-1.5 text-xs font-medium rounded transition-colors ${
+                      timeRange === TIME_RANGE_1D
+                        ? 'bg-primary text-primary-foreground'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                    suppressHydrationWarning
+                  >
+                    1D
+                  </button>
+                  <button
+                    onClick={() => setTimeRange(TIME_RANGE_7D)}
+                    className={`flex-1 lg:flex-none px-3 py-1.5 text-xs font-medium rounded transition-colors ${
+                      timeRange === TIME_RANGE_7D
+                        ? 'bg-primary text-primary-foreground'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                    suppressHydrationWarning
+                  >
+                    7D
+                  </button>
+                  <button
+                    onClick={() => setTimeRange(TIME_RANGE_1M)}
+                    className={`flex-1 lg:flex-none px-3 py-1.5 text-xs font-medium rounded transition-colors ${
+                      timeRange === TIME_RANGE_1M
+                        ? 'bg-primary text-primary-foreground'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                    suppressHydrationWarning
+                  >
+                    1M
+                  </button>
+                </div>
+
+                {/* Timezone Toggle */}
+                <div className="flex gap-1 bg-muted p-1 rounded-lg flex-1 lg:flex-none">
+                  <button
+                    onClick={() => setTimezoneMode('local')}
+                    className={`flex-1 lg:flex-none px-2 py-1.5 text-xs font-medium rounded transition-colors whitespace-nowrap ${
+                      timezoneMode === 'local'
+                        ? 'bg-primary text-primary-foreground'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                    suppressHydrationWarning
+                  >
+                    Local
+                  </button>
+                  <button
+                    onClick={() => setTimezoneMode('utc')}
+                    className={`flex-1 lg:flex-none px-2 py-1.5 text-xs font-medium rounded transition-colors whitespace-nowrap ${
+                      timezoneMode === 'utc'
+                        ? 'bg-primary text-primary-foreground'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                    suppressHydrationWarning
+                  >
+                    UTC
+                  </button>
+                </div>
               </div>
             </div>
           </div>

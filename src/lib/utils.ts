@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from 'clsx'
 import { twMerge } from 'tailwind-merge'
+import { TOKEN_DECIMALS } from './constants/common.constants'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -99,6 +100,40 @@ export function formatDistanceToNow(date: Date): string {
   const diffYear = Math.floor(diffMonth / 12);
   return `${diffYear}y`;
 }
+
+/**
+ * Get status color and badge styling based on transaction result
+ */
+export function getTransactionStatusColor(status?: string): { bg: string; text: string; border: string } {
+  switch (status?.toLowerCase()) {
+    case 'success':
+      return {
+        bg: 'bg-green-500/20',
+        text: 'text-green-400',
+        border: 'border-green-500/30'
+      }
+    case 'failed':
+    case 'failure':
+      return {
+        bg: 'bg-red-500/20',
+        text: 'text-red-400',
+        border: 'border-red-500/30'
+      }
+    case 'pending':
+      return {
+        bg: 'bg-yellow-500/20',
+        text: 'text-yellow-400',
+        border: 'border-yellow-500/30'
+      }
+    default:
+      return {
+        bg: 'bg-gray-500/20',
+        text: 'text-gray-400',
+        border: 'border-gray-500/30'
+      }
+  }
+}
+
   
 /**
  * Formats a date to show either relative time for recent dates or full datetime for older dates
@@ -176,4 +211,97 @@ export function bufferToHex(buffer: { type: 'Buffer'; data: number[] } | string 
   
   // Invalid or null
   return ''
+}
+
+/**
+ * Converts hex string (like token amount) to readable decimal format
+ * @param hexValue Hex string starting with 0x
+ * @returns Readable decimal value
+ */
+export function hexToDecimal(hexValue: string | undefined): string {
+  if (!hexValue) return '0'
+  try {
+    if (!hexValue.startsWith('0x')) return hexValue
+    const decimal = BigInt(hexValue).toString()
+    return decimal
+  } catch {
+    return hexValue
+  }
+}
+
+/**
+ * Formats token/amount values with commas and optional decimals
+ * @param value Decimal string value
+ * @param decimals Number of decimal places (default 18)
+ * @returns Formatted value
+ */
+export function formatTokenValue(value: string, decimals: number = 18): string {
+  try {
+    const num = BigInt(value)
+    if (num === BigInt(0)) return '0'
+    
+    // Convert to decimal with specified decimals
+    const divisor = BigInt(10 ** decimals)
+    const wholeNumber = num / divisor
+    const remainder = num % divisor
+    
+    if (remainder === BigInt(0)) {
+      return wholeNumber.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+    }
+    
+    const remainderStr = remainder.toString().padStart(decimals, '0').replace(/0+$/, '')
+    return `${wholeNumber.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')}.${remainderStr}`
+  } catch {
+    return value
+  }
+}
+
+/**
+ * Copy text to clipboard
+ */
+export function copyToClipboard(text: string) {
+  if (typeof window !== 'undefined') {
+    navigator.clipboard.writeText(text)
+  }
+}
+
+/**
+ * Format blockchain address for display
+ */
+export function formatAddress(address: string) {
+  if (address.length > 20) {
+    return address.slice(0, 10) + "..." + address.slice(-10)
+  }
+  return address
+}
+
+/**
+ * Format transaction value with decimals
+ * @param value The value in smallest unit (e.g., wei)
+ * @param decimals Number of decimals (default is TOKEN_DECIMALS.NIGHT)
+ * @returns Formatted value as string
+ */
+export function formatValue(value: string, decimals: number = TOKEN_DECIMALS.NIGHT) {
+  const num = BigInt(value)
+  const divisor = BigInt(10 ** decimals)
+  const integerPart = num / divisor
+  const fractionalPart = num % divisor
+
+  return `${integerPart}.${fractionalPart.toString().padStart(decimals, "0")}`
+}
+
+/**
+ * Format date/timestamp
+ */
+export function formatDate(timestamp: number | string) {
+  const ts = typeof timestamp === 'string' ? parseInt(timestamp) : timestamp
+  return new Date(ts).toLocaleString()
+}
+
+/**
+ * Truncate hex string
+ */
+export function truncateHex(hex: string, length = 20) {
+  if (hex.length <= length) return hex
+  return hex.slice(0, Math.floor(length / 2)) + "..." + hex.slice(-Math.floor(length / 2))
 }

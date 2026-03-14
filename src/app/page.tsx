@@ -1,27 +1,15 @@
 'use client'
 
-import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query'
-import { Header } from "@/components/header"
-import { Footer } from "@/components/footer"
+import { useQuery } from '@tanstack/react-query'
 import { SearchBar } from "@/components/search-bar"
 import { NetworkStats } from "@/components/network-stats"
 import { RecentBlocks } from "@/components/recent-blocks"
 import { RecentTransactions } from "@/components/recent-transactions"
 import { NetworkCharts } from "@/components/network-charts"
 import { MidnightTokenInfo } from "@/components/midnight-token-info"
-import { Starfield } from "@/components/starfield"
+import { ErrorBoundary } from "@/components/error-boundary"
 import { blockAPI } from "@/lib/api"
 import { Block } from "@/lib/types"
-
-// Tạo QueryClient global
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      refetchOnWindowFocus: false,
-      staleTime: 15000,
-    },
-  },
-})
 
 function HomePageContent() {
   // Query cho blocks
@@ -36,62 +24,51 @@ function HomePageContent() {
   const blocks = blocksData || []
 
   return (
-    <div className="min-h-screen bg-background relative">
-      <div className="fixed inset-0 z-0">
-        <Starfield />
+    <div className="container mx-auto px-4 py-8 space-y-8">
+      {/* Hero Section with Search */}
+      <section className="text-center space-y-6 py-12">
+        <div className="space-y-3">
+          <h1 className="text-4xl md:text-5xl font-bold text-balance">Midnight Blockchain Explorer</h1>
+          <p className="text-lg text-muted-foreground text-balance max-w-2xl mx-auto">
+            Trace and explore all transactions, blocks, contracts, pools on the Midnight network
+          </p>
+        </div>
+        <SearchBar />
+      </section>
+
+      {/* Network Statistics */}
+      <NetworkStats />
+
+      {/* Charts & Token Info Grid */}
+      <div className="grid xl:grid-cols-[3fr_1fr] gap-6">
+        <ErrorBoundary>
+          <NetworkCharts />
+        </ErrorBoundary>
+
+        <ErrorBoundary>
+          <MidnightTokenInfo />
+        </ErrorBoundary>
       </div>
 
-      <div className="relative z-10">
-        <Header />
-
-        <main className="container mx-auto px-4 py-8 space-y-8">
-          {/* Hero Section with Search */}
-          <section className="text-center space-y-6 py-12">
-            <div className="space-y-3">
-              <h1 className="text-4xl md:text-5xl font-bold text-balance">Midnight Blockchain Explorer</h1>
-              <p className="text-lg text-muted-foreground text-balance max-w-2xl mx-auto">
-                Trace and explore all transactions, blocks, contracts, pools on the Midnight network
-              </p>
-            </div>
-            <SearchBar />
-          </section>
-
-          {/* Network Statistics */}
-          <NetworkStats /> 
-          
-          {/* Charts & Token Info Grid */}
-          <div className="grid lg:grid-cols-[3fr_1fr] gap-6">
-            <NetworkCharts />
-            <MidnightTokenInfo />
-          </div> 
-
-          {/* Recent Activity Grid */}
-          <div className="grid lg:grid-cols-2 gap-6">
-            <RecentBlocks blocks={blocks} />
-            {/* ✅ FIXED: RecentTransactions doesn't need props - it fetches internally */}
-            <RecentTransactions />
-          </div>
-
-          {/* Validator Statistics */}
-            {/* <ValidatorStats /> 
-
-            {/* Token Statistics */}
-           {/*} <TokenStats />  */}
-
-            {/* Network Health */}
-          {/*}  <NetworkHealth />  */}
-        </main>
-
-        <Footer />
+      {/* Recent Activity Grid */}
+      <div className="grid lg:grid-cols-2 gap-6">
+        <RecentBlocks blocks={blocks} />
+        {/* FIXED: RecentTransactions doesn't need props - it fetches internally */}
+        <RecentTransactions />
       </div>
+
+      {/* Validator Statistics */}
+      {/* <ValidatorStats /> 
+
+        {/* Token Statistics */}
+      {/*} <TokenStats />  */}
+
+      {/* Network Health */}
+      {/*}  <NetworkHealth />  */}
     </div>
   )
 }
 
 export default function HomePage() {
-  return (
-    <QueryClientProvider client={queryClient}>
-      <HomePageContent />
-    </QueryClientProvider>
-  )
+  return <HomePageContent />
 }

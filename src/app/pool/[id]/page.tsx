@@ -1,6 +1,3 @@
-import { Header } from "@/components/header"
-import { Starfield } from "@/components/starfield"
-import { Footer } from "@/components/footer"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -24,7 +21,7 @@ interface PoolDetail {
   type: string
   blocksMinted: number
   sidechainAccountId: string
-  mainchainPublicKey: string
+  mainchainPubKey: string
   crossChainPublicKey: string
   sidechainSignature: string
   mainchainSignature: string
@@ -62,33 +59,25 @@ export default async function PoolDetailPage({ params }: PageProps) {
   }
 
   return (
-    <div className="min-h-screen bg-background relative">
-      <div className="fixed inset-0 z-0">
-        <Starfield />
-      </div>
-
-      <div className="relative z-10">
-        <Header />
-
-        <main className="container mx-auto px-4 py-8">
-          <div className="max-w-5xl mx-auto space-y-6">
-            {/* Header */}
-            <div className="flex items-center justify-between">
-              <div className="space-y-2">
-                <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                  Pool Details
-                </h1>
-                <p className="text-muted-foreground text-lg">
-                  View stake pool information and metadata
-                </p>
-              </div>
-              <Link href="/pool">
-                <Button variant="outline" size="sm" className="border-border">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back
-                </Button>
-              </Link>
-            </div>
+    <div className="container mx-auto px-4 py-8">
+      <div className="max-w-5xl mx-auto space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div className="space-y-2">
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+              Pool Details
+            </h1>
+            <p className="text-muted-foreground text-lg">
+              View stake pool information and metadata
+            </p>
+          </div>
+          <Link href="/pool">
+            <Button variant="outline" size="sm" className="border-border">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back
+            </Button>
+          </Link>
+        </div>
 
             {/* Overview */}
             <Card className="p-6 bg-card/50 border-border">
@@ -206,9 +195,9 @@ export default async function PoolDetailPage({ params }: PageProps) {
                     <p className="text-sm text-muted-foreground mb-2">Mainchain Public Key</p>
                     <div className="flex items-center gap-2">
                       <p className="text-xs font-mono break-all flex-1 text-blue-400">
-                        {pool.mainchainPublicKey}
+                        {pool.mainchainPubKey}
                       </p>
-                      <CopyButton text={pool.mainchainPublicKey} />
+                      <CopyButton text={pool.mainchainPubKey} />
                     </div>
                   </div>
                   <div>
@@ -284,10 +273,6 @@ export default async function PoolDetailPage({ params }: PageProps) {
               </div>
             </Card>
           </div>
-        </main>
-
-        <Footer />
-      </div>
     </div>
   )
 }
