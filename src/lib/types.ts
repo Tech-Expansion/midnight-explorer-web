@@ -125,9 +125,3 @@ export interface PoolsResponse {
   pageSize: number;
   hasMore: boolean;
 }
-
-export interface ResultDto<T> {
-  isSuccess?: boolean;
-  data: T;
-  message?: string;
-}
