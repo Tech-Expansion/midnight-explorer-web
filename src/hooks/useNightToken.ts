@@ -1,7 +1,7 @@
 "use client"
 
 import { useQuery } from "@tanstack/react-query"
-import { generateAesKey, decryptAesGcm } from "@/lib/crypto"
+import { tokenAPI } from "@/lib/api"
 
 interface TokenQuote {
   price: number
@@ -37,40 +37,18 @@ interface TokenResponse {
   }
 }
 
-async function fetchNightToken(): Promise<TokenData> {
-  const { key, keyB64 } = await generateAesKey()
-
-  const response = await fetch("/api/token-night-v2", {
-    headers: { "x-mek": keyB64 },
-    cache: "no-store",
-  })
-
-  if (!response.ok) {
-    throw new Error(`Token API error: ${response.status}`)
-  }
-
-  const body = await response.json()
-  const isEncrypted = response.headers.get("x-ect") === "1"
-
-  let tokenResponse: TokenResponse
-  if (isEncrypted && body.data) {
-    tokenResponse = (await decryptAesGcm(body.data as string, key)) as TokenResponse
-  } else {
-    tokenResponse = body
-  }
-
-  return tokenResponse.data.NIGHT
-}
-
 /**
- * Fetch NIGHT token price.
- * Key is generated per-request in browser, response is encrypted in transit.
+ * Fetch NIGHT token price
+ * Token is automatically handled by TokenProvider
  */
 export function useNightToken() {
   return useQuery<TokenData>({
-    queryKey: ["nightToken"],
-    queryFn: fetchNightToken,
-    refetchInterval: 120000,
-    staleTime: 60000,
+    queryKey: ['nightToken'],
+    queryFn: async () => {
+      const response = await tokenAPI.getNightToken<TokenResponse>()
+      return response.data.NIGHT
+    },
+    refetchInterval: 120000, // Refresh every 2 minutes (matches BE cache TTL)
+    staleTime: 60000, // Fresh for 1 minute
   })
 }

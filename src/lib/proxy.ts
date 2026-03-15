@@ -1,56 +1,52 @@
+
 /**
  * API Proxy Utility
  * Forwards all requests to external API service
+ * Only validates token, never auto-refreshes
  */
 
 import { NextRequest, NextResponse } from 'next/server'
+import { validateToken } from './token-manager'
 
 const API_BASE_URL = process.env.API_URL
 const API_VERSION = 'v1'
-
-export interface ProxyOptions {
-  /** Request headers to forward to the upstream API (e.g. 'x-mek') */
-  forwardRequestHeaders?: string[]
-  /** Response headers from the upstream API to pass back to the client (e.g. 'x-ect') */
-  forwardResponseHeaders?: string[]
-}
-
 /**
- * Proxy a request to the external API (no auth required)
+ * Proxy a request to the external API
+ * Returns 401 if token is invalid/missing (browser will handle refresh)
  */
 export async function proxyToExternalAPI(
   request: NextRequest,
-  endpoint: string,
-  options: ProxyOptions = {}
+  endpoint: string
 ): Promise<NextResponse> {
-  const { forwardRequestHeaders = [], forwardResponseHeaders = [] } = options
-
   try {
+    // 1. Validate token (no auto-refresh)
+    const token = validateToken(request)
+    
+    if (!token) {
+      console.error('[Proxy] No valid token, returning 401')
+      return NextResponse.json(
+        { error: 'Token required', code: 'TOKEN_REQUIRED' },
+        { status: 401 }
+      )
+    }
+  
     const url = new URL(request.url)
-    const queryString = url.search
-
+    const queryString = url.search 
+    
     // Build full URL with /api/v1 prefix
-    const fullUrl = endpoint.includes('?')
+    const fullUrl = endpoint.includes('?') 
       ? `${API_BASE_URL}/api/${API_VERSION}${endpoint}`
       : `${API_BASE_URL}/api/${API_VERSION}${endpoint}${queryString}`
 
-    // Forward request body if present
-    let body: string | undefined
-    if (request.method !== 'GET' && request.method !== 'HEAD') {
-      body = await request.text()
-    }
+    //console.log(`[Proxy] Forwarding request to: ${fullUrl}`)
 
-    // Build upstream headers, forwarding any explicitly requested ones
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-    for (const key of forwardRequestHeaders) {
-      const val = request.headers.get(key)
-      if (val) headers[key] = val
-    }
-
+    // 2. Forward request with token
     const response = await fetch(fullUrl, {
       method: request.method,
-      headers,
-      body,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
       cache: 'no-store',
     })
 
@@ -63,15 +59,7 @@ export async function proxyToExternalAPI(
     }
 
     const data = await response.json()
-    const res = NextResponse.json(data)
-
-    // Pass back any explicitly requested response headers
-    for (const key of forwardResponseHeaders) {
-      const val = response.headers.get(key)
-      if (val) res.headers.set(key, val)
-    }
-
-    return res
+    return NextResponse.json(data)
   } catch (error) {
     console.error('[Proxy] Error:', error)
     return NextResponse.json(
