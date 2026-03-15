@@ -1,27 +1,38 @@
 import { NextRequest, NextResponse } from "next/server";
-import dotenv from "dotenv";
-import path from "path";
-import { proxyToExternalAPI } from "@/lib/proxy";
-//add path dir_name
-dotenv.config({ path: path.resolve(__dirname, "../../../../.env") });
+
+const API_BASE_URL = process.env.API_URL;
+const API_VERSION = "v1";
 
 export async function GET(request: NextRequest) {
   try {
-    const response = await proxyToExternalAPI(request, "/tokens");
+    const mek = request.headers.get("x-mek");
+
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+    if (mek) headers["x-mek"] = mek;
+
+    const response = await fetch(
+      `${API_BASE_URL}/api/${API_VERSION}/tokens`,
+      { method: "GET", headers, cache: "no-store" }
+    );
 
     if (!response.ok) {
-      console.error(
-        `token API error: ${response.status} ${response.statusText}`
-      );
+      console.error(`token API error: ${response.status} ${response.statusText}`);
       return NextResponse.json(
         { error: "Failed to fetch token data", status: response.status },
         { status: response.status }
       );
     }
 
-    const data = await response.json();
+    const body = await response.json();
+    const res = NextResponse.json(body);
 
-    return NextResponse.json(data);
+    if (response.headers.get("x-ect") === "1") {
+      res.headers.set("x-ect", "1");
+    }
+
+    return res;
   } catch (error) {
     console.error("Token API error:", error);
     return NextResponse.json(
