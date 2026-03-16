@@ -8,13 +8,23 @@ import { NextRequest, NextResponse } from 'next/server'
 const API_BASE_URL = process.env.API_URL
 const API_VERSION = 'v1'
 
+export interface ProxyOptions {
+  /** Request headers to forward to the upstream API (e.g. 'x-mek') */
+  forwardRequestHeaders?: string[]
+  /** Response headers from the upstream API to pass back to the client (e.g. 'x-ect') */
+  forwardResponseHeaders?: string[]
+}
+
 /**
  * Proxy a request to the external API (no auth required)
  */
 export async function proxyToExternalAPI(
   request: NextRequest,
-  endpoint: string
+  endpoint: string,
+  options: ProxyOptions = {}
 ): Promise<NextResponse> {
+  const { forwardRequestHeaders = [], forwardResponseHeaders = [] } = options
+
   try {
     const url = new URL(request.url)
     const queryString = url.search
@@ -30,11 +40,16 @@ export async function proxyToExternalAPI(
       body = await request.text()
     }
 
+    // Build upstream headers, forwarding any explicitly requested ones
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+    for (const key of forwardRequestHeaders) {
+      const val = request.headers.get(key)
+      if (val) headers[key] = val
+    }
+
     const response = await fetch(fullUrl, {
       method: request.method,
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers,
       body,
       cache: 'no-store',
     })
@@ -48,7 +63,15 @@ export async function proxyToExternalAPI(
     }
 
     const data = await response.json()
-    return NextResponse.json(data)
+    const res = NextResponse.json(data)
+
+    // Pass back any explicitly requested response headers
+    for (const key of forwardResponseHeaders) {
+      const val = response.headers.get(key)
+      if (val) res.headers.set(key, val)
+    }
+
+    return res
   } catch (error) {
     console.error('[Proxy] Error:', error)
     return NextResponse.json(
