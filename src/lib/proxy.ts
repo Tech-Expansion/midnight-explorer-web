@@ -1,6 +1,10 @@
 /**
  * API Proxy Utility
- * Forwards all requests to external API service
+ * Forwards all requests to external API service.
+ *
+ * Performance improvements:
+ * - Streams response body directly (no JSON parse → re-stringify round-trip)
+ * - Supports per-call cache TTL via `revalidate` option
  */
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -13,17 +17,28 @@ export interface ProxyOptions {
   forwardRequestHeaders?: string[]
   /** Response headers from the upstream API to pass back to the client (e.g. 'x-ect') */
   forwardResponseHeaders?: string[]
+  /**
+   * Cache revalidation period in seconds (Next.js ISR / fetch cache).
+   * Use 0 (default) for `no-store` – fully dynamic endpoints.
+   * Use a positive number (e.g. 30) for semi-static endpoints like charts/token data.
+   */
+  revalidate?: number
 }
 
 /**
- * Proxy a request to the external API (no auth required)
+ * Proxy a request to the external API (no auth required).
+ * Response body is streamed directly without buffering JSON.
  */
 export async function proxyToExternalAPI(
   request: NextRequest,
   endpoint: string,
   options: ProxyOptions = {}
 ): Promise<NextResponse> {
-  const { forwardRequestHeaders = [], forwardResponseHeaders = [] } = options
+  const {
+    forwardRequestHeaders = [],
+    forwardResponseHeaders = [],
+    revalidate = 0,
+  } = options
 
   try {
     const url = new URL(request.url)
@@ -47,12 +62,12 @@ export async function proxyToExternalAPI(
       if (val) headers[key] = val
     }
 
-    const response = await fetch(fullUrl, {
-      method: request.method,
-      headers,
-      body,
-      cache: 'no-store',
-    })
+    const fetchOptions: RequestInit & { next?: { revalidate: number } } =
+      revalidate > 0
+        ? { method: request.method, headers, body, next: { revalidate } }
+        : { method: request.method, headers, body, cache: 'no-store' }
+
+    const response = await fetch(fullUrl, fetchOptions)
 
     if (!response.ok) {
       console.error(`[Proxy] External API error: ${response.status} ${response.statusText}`)
@@ -62,16 +77,19 @@ export async function proxyToExternalAPI(
       )
     }
 
-    const data = await response.json()
-    const res = NextResponse.json(data)
-
-    // Pass back any explicitly requested response headers
+    // Stream body directly – avoids JSON.parse() + JSON.stringify() overhead
+    const responseHeaders = new Headers({
+      'Content-Type': response.headers.get('Content-Type') ?? 'application/json',
+    })
     for (const key of forwardResponseHeaders) {
       const val = response.headers.get(key)
-      if (val) res.headers.set(key, val)
+      if (val) responseHeaders.set(key, val)
     }
 
-    return res
+    return new NextResponse(response.body, {
+      status: response.status,
+      headers: responseHeaders,
+    })
   } catch (error) {
     console.error('[Proxy] Error:', error)
     return NextResponse.json(

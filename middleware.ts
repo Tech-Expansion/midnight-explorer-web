@@ -12,13 +12,10 @@ export async function middleware(request: NextRequest) {
 }
 
 /**
- * Configure which paths this middleware should run on
+ * Empty matcher – middleware won't be invoked for any routes.
+ * This avoids the unnecessary Edge Function invocation overhead on /api/* paths.
  */
 export const config = {
-  matcher: [
-    /*
-     * Match all API routes
-     */
-    '/api/:path*',
-  ],
+  matcher: [],
 }
+
