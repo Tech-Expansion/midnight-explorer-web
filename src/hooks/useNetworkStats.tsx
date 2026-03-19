@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
-import { fetchWithTokenRetry } from '@/lib/token-client'
-import {networkAPI} from '@/lib/api'
+import { networkAPI } from '@/lib/api'
+
 interface SideChainStatus {
   sidechainCurrentEpoch: number
   sidechainSlot: number
@@ -9,46 +9,52 @@ interface SideChainStatus {
 
 interface Block {
   height: number
-  hash: string
-  timestamp: number
-  transactionCount: number
 }
 
-interface NetworkData {
-  sidechainStatus: SideChainStatus | null
+interface OverviewResponse {
   latestBlock: Block | null
-  totalTransactions: number | null
+  totalTransactions: number
 }
 
 /**
- * Fetch network stats (sidechain status, latest block, tx count)
- * Token is automatically handled by TokenProvider
+ * Fetch network stats (sidechain status, latest block, tx count).
+ * All 3 data sources are fetched in parallel:
+ *   - networkAPI.getOverview()     → latestBlock + totalTransactions (single BE call, 2 concurrent DB queries)
+ *   - networkAPI.getSidechainStatus() → RPC sidechain status
  */
-export function useNetworkStats() {
-  return useQuery<NetworkData>({
-    queryKey: ['networkStats'],
-    queryFn: async () => {
-      // Fetch 3 APIs in parallel
-      const [blocksRes, txCountRes] = await Promise.all([
-        fetchWithTokenRetry('/api/blocks/recent'),
-        fetchWithTokenRetry('/api/transactions/count')
-      ])
-
-      if(!blocksRes.ok || !txCountRes.ok) {
-        throw new Error('Failed to fetch network stats')
-      }
-
-      const statusData: SideChainStatus = await networkAPI.getSidechainStatus()
-      const blocksData = await blocksRes.json()
-      const txCountData = await txCountRes.json()
-
-      return {
-        sidechainStatus: statusData,
-        latestBlock: blocksData.blocks?.[0] || null,
-        totalTransactions: txCountData.count || null,
-      }
-    },
-    refetchInterval: 30000, // Refresh every 30 seconds
+export function useNetworkOverview() {
+  return useQuery<OverviewResponse>({
+    queryKey: ['networkOverview'],
+    queryFn: () => networkAPI.getOverview<OverviewResponse>(),
+    refetchInterval: 60000,
     staleTime: 10000,
   })
-} 
+}
+
+export function useSidechainStatus() {
+  return useQuery<SideChainStatus>({
+    queryKey: ['sidechainStatus'],
+    queryFn: () => networkAPI.getSidechainStatus<SideChainStatus>(),
+    refetchInterval: 60000,
+    staleTime: 10000,
+  })
+}
+
+/**
+ * Fetch network stats (sidechain status, latest block, tx count).
+ * Combined hook for components that need both (e.g. Home page).
+ */
+export function useNetworkStats() {
+  const overview = useNetworkOverview();
+  const sidechain = useSidechainStatus();
+
+  return {
+    data: {
+      sidechainStatus: sidechain.data ?? null,
+      latestBlock: overview.data?.latestBlock ?? null,
+      totalTransactions: overview.data?.totalTransactions ?? null,
+    },
+    isLoading: overview.isLoading || sidechain.isLoading,
+    error: overview.error || sidechain.error,
+  };
+}

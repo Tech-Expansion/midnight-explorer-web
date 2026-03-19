@@ -1,6 +1,7 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState, useEffect } from "react"
+import { useQuery } from "@tanstack/react-query"
 import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { Card } from "@/components/ui/card"
@@ -8,7 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { formatDateTime } from "@/lib/utils"
 import { transactionAPI } from "@/lib/api"
 import { Pagination } from "@/components/pagination"
-import { useNetworkStats } from "@/hooks/useNetworkStats"
+import { useNetworkOverview } from "@/hooks/useNetworkStats"
 import { Transaction } from "@/lib/transaction-types"
 
 interface TransactionsListProps {
@@ -22,12 +23,8 @@ export function TransactionsList({  }: TransactionsListProps) {
   const searchHash = searchParams.get('hash') || undefined
   const searchPage = searchParams.get('page') ? parseInt(searchParams.get('page')!, 10) : 1
   
-  const [transactions, setTransactions] = useState<Transaction[]>([])
-  const [, setNextCursor] = useState<string | undefined>()
-  const [pagination, setPagination] = useState<{ page: number; pageSize: number; totalCount: number; totalPages: number } | null>(null)
-  const [loading, setLoading] = useState(true)
   const [cursorMap, setCursorMap] = useState<Record<number, string | undefined>>({ 1: undefined })
-  const { data } = useNetworkStats()
+  const { data } = useNetworkOverview()
   const totalTransactions = data?.totalTransactions
 
   const searchMode = !!searchHash
@@ -36,37 +33,31 @@ export function TransactionsList({  }: TransactionsListProps) {
   // Calculate total pages from totalTransactions
   const totalPages = totalTransactions ? Math.ceil(totalTransactions / pageSize) : 0
 
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        setLoading(true)
-        if (searchHash) {
-          // Search mode
-          const response: { data: Transaction[]; pagination?: { page: number; pageSize: number; totalCount: number; totalPages: number } } = await transactionAPI.searchTransactions(searchHash, searchPage, pageSize)
-          setTransactions(response.data)
-          setPagination(response.pagination || null)
-        } else {
-          // Normal mode with cursor - use cursor from cursorMap for current page
-          const cursorForPage = cursorMap[searchPage]
-          const response: { items: Transaction[]; nextCursor?: string } = await transactionAPI.getTransactions(cursorForPage)
-          //console.log('[TransactionsList] Fetched page', searchPage, 'with cursor:', cursorForPage, 'nextCursor:', response.nextCursor)
-          setTransactions(response.items)
-          setNextCursor(response.nextCursor)
-          
-          // Save cursor for next page
-          if (response.nextCursor) {
-            setCursorMap(prev => ({ ...prev, [searchPage + 1]: response.nextCursor }))
-          }
-        }
-      } catch (error) {
-        console.error('Failed to fetch transactions:', error)
-      } finally {
-        setLoading(false)
+  const { data: queryData, isLoading: loading } = useQuery({
+    queryKey: ['transactions', searchHash, searchPage, cursorMap[searchPage]],
+    queryFn: async () => {
+      if (searchHash) {
+        // Search mode
+        const response: { data: Transaction[]; pagination?: { page: number; pageSize: number; totalCount: number; totalPages: number } } = await transactionAPI.searchTransactions(searchHash, searchPage, pageSize)
+        return { transactions: response.data, pagination: response.pagination || null, nextCursor: undefined }
+      } else {
+        // Normal mode with cursor
+        const cursorForPage = cursorMap[searchPage]
+        const response: { items: Transaction[]; nextCursor?: string } = await transactionAPI.getTransactions(cursorForPage)
+        return { transactions: response.items, nextCursor: response.nextCursor, pagination: null }
       }
     }
+  })
 
-    fetchData()
-  }, [searchHash, searchPage])
+  // Synchronize nextCursor for pagination mapping
+  useEffect(() => {
+    if (queryData?.nextCursor && !searchHash) {
+      setCursorMap(prev => ({ ...prev, [searchPage + 1]: queryData.nextCursor }))
+    }
+  }, [queryData?.nextCursor, searchHash, searchPage])
+
+  const transactions = queryData?.transactions || []
+  const pagination = queryData?.pagination
 
   const getVariantBadge = (variant?: Transaction['variant']) => {
     switch (variant) {
