@@ -4,7 +4,7 @@ import { useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { Github, Sparkles } from "lucide-react"
-import { useNetworkStats } from "@/hooks/useNetworkStats"
+import { useNetworkOverview } from "@/hooks/useNetworkStats"
 interface NetworkStats {
   blockHeight: number
   status: 'online' | 'offline'
@@ -15,7 +15,7 @@ export function Footer() {
     blockHeight: 0,
     status: 'online'
   })
-  const { data } = useNetworkStats()
+  const { data } = useNetworkOverview()
   const latestBlock = data?.latestBlock
 
   return (

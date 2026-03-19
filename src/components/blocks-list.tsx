@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useQuery } from "@tanstack/react-query"
 import Link from "next/link"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -8,7 +8,7 @@ import { Box, Clock } from "lucide-react"
 import { formatDateTime } from "@/lib/utils"
 import { blockAPI } from "@/lib/api"
 import { Pagination, SimplePagination } from "@/components/pagination"
-import { useNetworkStats } from "@/hooks/useNetworkStats"
+import { useNetworkOverview } from "@/hooks/useNetworkStats"
 
 interface Block {
   hash: string
@@ -26,11 +26,8 @@ interface BlocksListProps {
 }
 
 export function BlocksList({ initialCursor, page = 1 }: BlocksListProps) {
-  const [blocks, setBlocks] = useState<Block[]>([])
-  const [nextCursor, setNextCursor] = useState<string | undefined>()
-  const [loading, setLoading] = useState(true)
-  const { data } = useNetworkStats()
-  const latestBlock = data?.latestBlock
+  const { data: stats } = useNetworkOverview()
+  const latestBlock = stats?.latestBlock
 
   const pageSize = 20
   // Calculate total pages from latest block height
@@ -39,22 +36,16 @@ export function BlocksList({ initialCursor, page = 1 }: BlocksListProps) {
   // Calculate cursor from page number
   const cursor = page > 1 && latestBlock ? latestBlock.height - (page - 1) * pageSize : initialCursor
 
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        setLoading(true)
-        const response: { items: Block[]; nextCursor?: string } = await blockAPI.getBlocks(cursor ? String(cursor) : undefined)
-        setBlocks(response.items)
-        setNextCursor(response.nextCursor)
-      } catch (error) {
-        console.error('Failed to fetch blocks:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
+  const { data: queryData, isLoading: loading } = useQuery({
+    queryKey: ['blocks', cursor],
+    queryFn: async () => {
+      const response: { items: Block[]; nextCursor?: string } = await blockAPI.getBlocks(cursor ? String(cursor) : undefined)
+      return response
+    },
+  })
 
-    fetchData()
-  }, [cursor])
+  const blocks = queryData?.items || []
+  const nextCursor = queryData?.nextCursor
 
   if (loading) {
     return (
