@@ -3,6 +3,7 @@
 import { Card } from "@/components/ui/card"
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
 import { useEffect, useState } from "react"
+import { useQuery } from "@tanstack/react-query"
 import { networkAPI } from "@/lib/api"
 import Image from "next/image"
 import {
@@ -37,8 +38,6 @@ export interface NetworkStatsResponse {
 
 // 🔹 Giao diện chính
 export function NetworkCharts() {
-  const [data, setData] = useState<Array<{ time: string; count: number; timestamp: number; fullDate: string }>>([])
-  const [loading, setLoading] = useState(true)
   const [timeRange, setTimeRange] = useState<TimeRange>(TIME_RANGE_1D)
   const [dataType, setDataType] = useState<DataType>(DATA_TYPE_TRANSACTIONS)
   const [isMobile, setIsMobile] = useState(false)
@@ -101,41 +100,32 @@ export function NetworkCharts() {
     return timezoneMode === 'utc' ? `${formattedDate} UTC` : formattedDate
   }
 
-  useEffect(() => {
-    const fetchTransactionData = async () => {
-      setLoading(true)
-      try {
-        // API call now returns consistent structure regardless of timeRange
-        const stats = await networkAPI.getChart<NetworkStatsResponse>(timeRange as '1D' | '7D' | '1M')
-        
-        let sourceData: ChartDataPoint[] = []
-        
-        // Determine which data field to use based on dataType
-        if (dataType === DATA_TYPE_REGULAR) {
-          sourceData = stats.chartDataRegular || []
-        } else if (dataType === DATA_TYPE_SYSTEM) {
-          sourceData = stats.chartDataSystem || []
-        } else {
-          sourceData = stats.chartData || []
-        }
-        
-        const chartData = sourceData.map((item) => ({
-          time: formatDate(item.timestamp, timeRange),
-          count: item.count,
-          timestamp: item.timestamp,
-          fullDate: formatFullDate(item.timestamp)
-        }))
-        
-        setData(chartData)
-      } catch (error) {
-        console.error("Error fetching transaction data:", error)
-      } finally {
-        setLoading(false)
+  const { data = [], isLoading: loading } = useQuery({
+    queryKey: ['network-chart', timeRange, dataType, timezoneMode],
+    queryFn: async () => {
+      // API call now returns consistent structure regardless of timeRange
+      const stats = await networkAPI.getChart<NetworkStatsResponse>(timeRange as '1D' | '7D' | '1M')
+      
+      let sourceData: ChartDataPoint[] = []
+      
+      // Determine which data field to use based on dataType
+      if (dataType === DATA_TYPE_REGULAR) {
+        sourceData = stats.chartDataRegular || []
+      } else if (dataType === DATA_TYPE_SYSTEM) {
+        sourceData = stats.chartDataSystem || []
+      } else {
+        sourceData = stats.chartData || []
       }
-    }
-
-    fetchTransactionData()
-  }, [timeRange, dataType, timezoneMode])
+      
+      return sourceData.map((item) => ({
+        time: formatDate(item.timestamp, timeRange),
+        count: item.count,
+        timestamp: item.timestamp,
+        fullDate: formatFullDate(item.timestamp)
+      }))
+    },
+    refetchInterval: 60000,
+  })
 
   const getChartTitle = () => {
     const timeLabel = TIME_LABELS[timeRange]
