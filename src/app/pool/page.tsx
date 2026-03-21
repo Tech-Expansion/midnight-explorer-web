@@ -1,4 +1,4 @@
-﻿
+
 import { SearchBarPage } from "@/components/search-bar-page"
 import { PoolsList } from "@/components/pools-list"
 import Link from "next/link"

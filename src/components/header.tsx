@@ -15,14 +15,14 @@ export function Header() {
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 group relative">
-            <div className="relative">
+          <Link href="/" className="flex items-center gap-2 group relative flex-shrink-0">
+            <div className="relative min-w-[180px]">
               <Image
                 src="/images/midnightexplorer-logo.png"
                 alt="Midnightexplorer Logo"
                 width={180}
                 height={40}
-                className="h-6 w-auto min-w-[180px] brightness-200"
+                className="h-6 w-auto brightness-200"
               />
               {/* Twinkling stars around logo */}
               <Sparkles

@@ -1,4 +1,4 @@
-﻿import type React from "next";
+import type React from "next";
 import type { Metadata } from "next";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
@@ -14,22 +14,22 @@ import { QueryProvider } from "@/components/query-provider";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { Starfield } from "@/components/starfield";
-
+import { MIDNIGHT_NETWORK } from "@/lib/env";
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.midnightexplorer.com"),
   title: {
-    default: "Midnight Explorer",
-    template: `%s | Midnight Explorer`,
+    default: `${MIDNIGHT_NETWORK} Midnight Explorer`,
+    template: `%s | ${MIDNIGHT_NETWORK} Midnight Explorer`,
   },
-  description: "An explorer for the Midnight Network.",
+  description: `An explorer for the ${MIDNIGHT_NETWORK} Midnight Network.`,
   viewport: "width=device-width, initial-scale=1",
   icons: {
     icon: "/favicon.ico",
     shortcut: "/favicon-16x16.png",
   },
   openGraph: {
-    title: "Midnight Explorer",
-    description: "An explorer for the Midnight Network.",
+    title: `${MIDNIGHT_NETWORK} Midnight Explorer`,
+    description: `An explorer for the ${MIDNIGHT_NETWORK} Midnight Network.`,
     url: "https://www.midnightexplorer.com",
     siteName: "Midnight Explorer",
     images: [
@@ -44,8 +44,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Midnight Explorer",
-    description: "An explorer for the Midnight network.",
+    title: `${MIDNIGHT_NETWORK} Midnight Explorer`,
+    description: `An explorer for the ${MIDNIGHT_NETWORK} Midnight Network.`,
     images: ["/og-image.jpg"],
   },
 };
