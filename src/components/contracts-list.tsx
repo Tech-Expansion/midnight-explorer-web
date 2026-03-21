@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { ExternalLink } from "lucide-react"
 import { contractAPI } from "@/lib/api"
 import { Pagination } from "@/components/pagination"
+import { ContractsListSkeleton } from "@/components/skeletons/contracts-list-skeleton"
 
 interface Contract {
   id: number
@@ -96,41 +97,9 @@ export function ContractsList({ initialCursor, page = 1, searchAddress }: Contra
 
   const totalPages = totalContracts > 0 ? Math.ceil(totalContracts / pageSize) : 0
 
-  const SkeletonRow = () => (
-    <tr className="border-b border-border/50 animate-pulse">
-      <td className="p-4">
-        <div className="h-4 bg-muted rounded w-3/4"></div>
-      </td>
-      <td className="p-4">
-        <div className="h-5 bg-muted rounded w-16 mx-auto"></div>
-      </td>
-      <td className="p-4">
-        <div className="h-4 bg-muted rounded w-32"></div>
-      </td>
-      <td className="p-4">
-        <div className="h-8 bg-muted rounded w-20 mx-auto"></div>
-      </td>
-    </tr>
-  )
-
-  const SkeletonMobileCard = () => (
-    <Card className="bg-card/50 border-border p-4 animate-pulse">
-      <div className="space-y-3">
-        <div className="h-4 bg-muted rounded w-3/4"></div>
-        <div className="flex items-center gap-2">
-          <div className="h-3 bg-muted rounded w-10"></div>
-          <div className="h-5 bg-muted rounded w-16 inline-block"></div>
-        </div>
-        <div className="border-t border-border/50 pt-2">
-          <div className="h-3 bg-muted rounded w-20 mb-1"></div>
-          <div className="h-4 bg-muted rounded w-32 mt-1"></div>
-        </div>
-        <div className="pt-2">
-          <div className="h-9 bg-muted rounded w-full"></div>
-        </div>
-      </div>
-    </Card>
-  )
+  if (loading) {
+    return <ContractsListSkeleton />
+  }
 
   return (
     <>
@@ -162,11 +131,7 @@ export function ContractsList({ initialCursor, page = 1, searchAddress }: Contra
                 </tr>
               </thead>
               <tbody>
-                {loading ? (
-                  Array.from({ length: 10 }).map((_, index) => (
-                    <SkeletonRow key={`skeleton-${index}`} />
-                  ))
-                ) : (
+                {displayedContracts.length > 0 ? (
                   displayedContracts.map((contract: Contract) => (
                     <tr
                       key={contract.id}
@@ -226,6 +191,12 @@ export function ContractsList({ initialCursor, page = 1, searchAddress }: Contra
                       </td>
                     </tr>
                   ))
+                ) : (
+                  <tr>
+                    <td colSpan={4} className="p-8 text-center text-muted-foreground">
+                      No contracts found
+                    </td>
+                  </tr>
                 )}
               </tbody>
             </table>
@@ -235,11 +206,7 @@ export function ContractsList({ initialCursor, page = 1, searchAddress }: Contra
 
       {/* Contracts Grid - Mobile */}
       <div className="md:hidden space-y-3">
-        {loading ? (
-          Array.from({ length: 10 }).map((_, index) => (
-            <SkeletonMobileCard key={`skeleton-mobile-${index}`} />
-          ))
-        ) : (
+        {displayedContracts.length > 0 ? (
           displayedContracts.map((contract: Contract) => (
           <Card key={contract.id} className="bg-card/50 border-border p-4">
             <div className="space-y-3">
@@ -291,7 +258,11 @@ export function ContractsList({ initialCursor, page = 1, searchAddress }: Contra
               </Link>
             </div>
           </Card>
-        ))
+          ))
+        ) : (
+          <Card className="bg-card/50 border-border p-8">
+            <p className="text-center text-muted-foreground">No contracts found</p>
+          </Card>
         )}
       </div>
 

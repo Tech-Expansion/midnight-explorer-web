@@ -8,6 +8,7 @@ import { Waves } from "lucide-react"
 import { poolAPI } from "@/lib/api"
 import { Pagination } from "@/components/pagination"
 import { Pool, PoolsResponse } from "@/lib/types"
+import { PoolsListSkeleton } from "@/components/skeletons/pools-list-skeleton"
 
 interface PoolsListProps {
   initialPage?: number
@@ -117,51 +118,13 @@ export function PoolsList({ initialPage = 1, pageSize = 20, searchQuery = '' }: 
     return text
   }
 
-  const SkeletonRow = () => (
-    <tr className="border-b border-border/50 animate-pulse">
-      <td className="p-4">
-        <div className="space-y-2">
-          <div className="h-4 bg-muted rounded w-2/3"></div>
-          <div className="h-3 bg-muted rounded w-full"></div>
-        </div>
-      </td>
-      <td className="p-4">
-        <div className="flex justify-center">
-          <div className="h-5 bg-muted rounded w-40"></div>
-        </div>
-      </td>
-      <td className="p-4">
-        <div className="flex justify-end">
-          <div className="h-5 bg-muted rounded w-24"></div>
-        </div>
-      </td>
-    </tr>
-  )
-
-  const SkeletonMobileCard = () => (
-    <Card className="bg-card/50 border-border p-4 animate-pulse">
-      <div className="space-y-3">
-        <div className="space-y-2">
-          <div className="h-4 bg-muted rounded w-2/3"></div>
-          <div className="h-3 bg-muted rounded w-full"></div>
-        </div>
-        <div className="border-t border-border/50 pt-2 space-y-2">
-          <div>
-            <div className="h-3 bg-muted rounded w-20 mb-1"></div>
-            <div className="h-5 bg-muted rounded w-40"></div>
-          </div>
-          <div>
-            <div className="h-3 bg-muted rounded w-20 mb-1"></div>
-            <div className="h-5 bg-muted rounded w-24"></div>
-          </div>
-        </div>
-      </div>
-    </Card>
-  )
+  if (loading) {
+    return <PoolsListSkeleton />
+  }
 
   return (
     <>
-      {!loading && pools.length === 0 ? (
+      {pools.length === 0 ? (
         <Card className="p-12 bg-card/50 border-border text-center">
           <div className="space-y-4">
             <div className="p-4 rounded-lg bg-blue-500/10 inline-block">
@@ -203,15 +166,10 @@ export function PoolsList({ initialPage = 1, pageSize = 20, searchQuery = '' }: 
                     </tr>
                   </thead>
                   <tbody>
-                    {loading ? (
-                      Array.from({ length: 10 }).map((_, index) => (
-                        <SkeletonRow key={`skeleton-${index}`} />
-                      ))
-                    ) : (
-                      pools.map((pool: Pool) => (
-                        <tr 
-                          key={pool.auraPublicKey} 
-                          className="border-b border-border/50 hover:bg-accent/5 transition-colors cursor-pointer"
+                    {pools.map((pool: Pool) => (
+                      <tr 
+                        key={pool.auraPublicKey} 
+                        className="border-b border-border/50 hover:bg-accent/5 transition-colors cursor-pointer"
                           onClick={() => router.push(`/pool/${pool.auraPublicKey}`)}
                         >
                           <td className="p-4 truncate">
@@ -247,7 +205,7 @@ export function PoolsList({ initialPage = 1, pageSize = 20, searchQuery = '' }: 
                           </td>
                         </tr>
                       ))
-                    )}
+                    }
                   </tbody>
                 </table>
               </div>
@@ -256,15 +214,10 @@ export function PoolsList({ initialPage = 1, pageSize = 20, searchQuery = '' }: 
 
           {/* Pools Grid - Mobile */}
           <div className="md:hidden space-y-3">
-            {loading ? (
-              Array.from({ length: 10 }).map((_, index) => (
-                <SkeletonMobileCard key={`skeleton-mobile-${index}`} />
-              ))
-            ) : (
-              pools.map((pool: Pool) => (
-              <Card 
-                key={pool.auraPublicKey} 
-                className="bg-card/50 border-border p-4 cursor-pointer hover:bg-accent/5 transition-colors"
+            {pools.map((pool: Pool) => (
+            <Card 
+              key={pool.auraPublicKey} 
+              className="bg-card/50 border-border p-4 cursor-pointer hover:bg-accent/5 transition-colors"
                 onClick={() => router.push(`/pool/${pool.auraPublicKey}`)}
               >
                 <div className="space-y-3">
@@ -299,8 +252,7 @@ export function PoolsList({ initialPage = 1, pageSize = 20, searchQuery = '' }: 
                   </div>
                 </div>
               </Card>
-            ))
-            )}
+            ))}
           </div>
 
           {/* Pagination */}

@@ -11,7 +11,9 @@ export enum Environment {
   TESTING = 'testing',
   PRODUCTION = 'production',
 }
-export const NETWORK = process.env.NETWORK || "";
+
+export const MIDNIGHT_NETWORK = process.env.MIDNIGHT_NETWORK || "";
+
 /**
  * Current application environment
  * Set via NEXT_PUBLIC_ENVIRONMENT environment variable

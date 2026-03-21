@@ -13,6 +13,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { notFound, useParams } from "next/navigation"
 import { useEffect, useState } from "react"
+import { LoadingFallback } from "@/components/loading-fallback"
 
 export default function TransactionPage() {
   const params = useParams()
@@ -41,11 +42,7 @@ export default function TransactionPage() {
   }, [hash])
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-black text-slate-50 p-6 flex items-center justify-center">
-        <p className="text-slate-400">Loading transaction...</p>
-      </div>
-    )
+    return <LoadingFallback />
   }
 
   if (!transaction) {

@@ -9,6 +9,7 @@ import { formatDateTime } from "@/lib/utils"
 import { blockAPI } from "@/lib/api"
 import { Pagination, SimplePagination } from "@/components/pagination"
 import { useNetworkStats } from "@/hooks/useNetworkStats"
+import { BlocksListSkeleton } from "@/components/skeletons/blocks-list-skeleton"
 
 interface Block {
   hash: string
@@ -56,54 +57,16 @@ export function BlocksList({ initialCursor, page = 1 }: BlocksListProps) {
     fetchData()
   }, [cursor])
 
-  const SkeletonRow = () => (
-    <tr className="border-b border-border/50 animate-pulse">
-      <td className="p-4">
-        <div className="space-y-2">
-          <div className="h-4 bg-muted rounded w-16"></div>
-          <div className="h-3 bg-muted rounded w-3/4"></div>
-          <div className="h-3 bg-muted rounded w-1/2"></div>
-        </div>
-      </td>
-      <td className="p-4">
-        <div className="h-4 bg-muted rounded w-32 mx-auto"></div>
-      </td>
-      <td className="p-4">
-        <div className="h-5 bg-muted rounded w-8 ml-auto"></div>
-      </td>
-    </tr>
-  )
-
-  const SkeletonMobileCard = () => (
-    <Card className="bg-card/50 border-border p-4 animate-pulse">
-      <div className="space-y-3">
-        <div className="h-4 bg-muted rounded w-24"></div>
-        <div className="h-3 bg-muted rounded w-3/4"></div>
-        <div className="grid grid-cols-2 gap-2 text-xs">
-          <div>
-            <div className="h-3 bg-muted rounded w-10 mb-1"></div>
-            <div className="h-4 bg-muted rounded w-24 mt-1"></div>
-          </div>
-          <div>
-            <div className="h-3 bg-muted rounded w-10 mb-1"></div>
-            <div className="h-4 bg-muted rounded w-8 mt-1"></div>
-          </div>
-        </div>
-        <div className="border-t border-border/50 pt-2">
-          <div className="h-3 bg-muted rounded w-12 mb-2"></div>
-          <div className="h-3 bg-muted rounded w-3/4 mb-1"></div>
-          <div className="h-3 bg-muted rounded w-2/3"></div>
-        </div>
-      </div>
-    </Card>
-  )
-
   // Pagination helpers
   const limit = 20
   let prevHref = ''
   if (initialCursor && blocks.length > 0) {
     const prevCursor = blocks[0].height + limit + 1
     prevHref = `/blocks?cursor=${prevCursor}`
+  }
+
+  if (loading) {
+    return <BlocksListSkeleton />
   }
 
   return (
@@ -126,11 +89,7 @@ export function BlocksList({ initialCursor, page = 1 }: BlocksListProps) {
                 </tr>
               </thead>
               <tbody>
-                {loading ? (
-                  Array.from({ length: 10 }).map((_, index) => (
-                    <SkeletonRow key={`skeleton-${index}`} />
-                  ))
-                ) : (
+                {blocks.length > 0 ? (
                   blocks.map((block: Block) => (
                     <tr key={block.hash} className="border-b border-border/50 hover:bg-accent/5 transition-colors">
                       <td className="p-4 truncate">
@@ -175,20 +134,23 @@ export function BlocksList({ initialCursor, page = 1 }: BlocksListProps) {
                       </td>
                     </tr>
                   ))
+                ) : (
+                  <tr>
+                    <td colSpan={3} className="p-8 text-center text-muted-foreground">
+                      No blocks found
+                    </td>
+                  </tr>
                 )}
               </tbody>
             </table>
+
           </div>
         </Card>
       </div>
 
       {/* Blocks Grid - Mobile */}
       <div className="md:hidden space-y-3">
-        {loading ? (
-          Array.from({ length: 10 }).map((_, index) => (
-            <SkeletonMobileCard key={`skeleton-mobile-${index}`} />
-          ))
-        ) : (
+        {blocks.length > 0 ? (
           blocks.map((block: Block) => (
           <Card key={block.hash} className="bg-card/50 border-border p-4">
             <div className="space-y-3">
@@ -233,6 +195,10 @@ export function BlocksList({ initialCursor, page = 1 }: BlocksListProps) {
             </div>
           </Card>
           ))
+        ) : (
+          <Card className="bg-card/50 border-border p-8">
+            <p className="text-center text-muted-foreground">No blocks found</p>
+          </Card>
         )}
       </div>
 
