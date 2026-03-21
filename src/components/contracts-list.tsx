@@ -1,6 +1,7 @@
 "use client"
 
-import { useEffect, useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
+import { useQuery } from "@tanstack/react-query"
 import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { Card } from "@/components/ui/card"
@@ -28,72 +29,69 @@ interface ContractsListProps {
 
 export function ContractsList({ initialCursor, page = 1, searchAddress }: ContractsListProps) {
   const searchParams = useSearchParams()
-  const [contracts, setContracts] = useState<Contract[]>([])
-  const [loading, setLoading] = useState(true)
   const [totalContracts, setTotalContracts] = useState<number>(0)
-  const [displayedContracts, setDisplayedContracts] = useState<Contract[]>([])
   const cursorMapRef = useRef<Record<number, string | undefined>>({ 1: initialCursor })
 
   const pageSize = 20
   const currentPage = searchParams.get('page') ? parseInt(searchParams.get('page')!) : page
   const currentSearch = searchParams.get('search') || searchAddress
 
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        setLoading(true)
+  const { data: queryData, isLoading: loading } = useQuery({
+    queryKey: ['contracts', currentPage, currentSearch],
+    queryFn: async () => {
+      if (currentSearch) {
+        // Search by address
+        const response: { contracts?: Contract[] } = await contractAPI.searchContractsByAddress(currentSearch)
+        const contractsData = response.contracts || []
+        return { contractsData, total: contractsData.length, nextCursorValue: undefined }
+      } else {
+        // Fetch contracts with cursor-based pagination
+        const currentCursor = cursorMapRef.current[currentPage]
+        const response: { items?: Contract[]; nextCursor?: string } = await contractAPI.getContracts(currentCursor)
+        const contractsData = response.items || []
+        const nextCursorValue = response.nextCursor
         
-        let contractsData: Contract[] = []
-        
-        if (currentSearch) {
-          // Search by address
-          const response: { contracts?: Contract[] } = await contractAPI.searchContractsByAddress(currentSearch)
-          contractsData = response.contracts || []
-          setTotalContracts(contractsData.length)
-        } else {
-          // Fetch contracts with cursor-based pagination
-          const currentCursor = cursorMapRef.current[currentPage]
-          const response: { items?: Contract[]; nextCursor?: string } = await contractAPI.getContracts(currentCursor)
-          contractsData = response.items || []
-          const nextCursorValue = response.nextCursor
-          
-          // Save nextCursor for next page (using ref, doesn't trigger re-render)
-          if (nextCursorValue && currentPage + 1 > Object.keys(cursorMapRef.current).length) {
-            cursorMapRef.current[currentPage + 1] = nextCursorValue
-          }
-          
-          // Estimate total contracts from the first contract ID
-          if (contractsData.length > 0 && currentPage === 1) {
-            const firstId = contractsData[0].id
-            setTotalContracts(firstId)
-          }
+        let total = 0
+        // Estimate total contracts from the first contract ID
+        if (contractsData.length > 0 && currentPage === 1) {
+          total = contractsData[0].id
         }
         
-        // Map transactionhash to transactionHash for consistency
-        const contractsWithHashes = contractsData.map((contract: Contract): Contract => ({
-          ...contract,
-          transactionHash: contract.transactionhash || contract.transactionHash
-        }))
-        
-        setContracts(contractsWithHashes)
-        
-        // For search results, apply pagination
-        if (currentSearch) {
-          const startIdx = (currentPage - 1) * pageSize
-          const endIdx = startIdx + pageSize
-          setDisplayedContracts(contractsWithHashes.slice(startIdx, endIdx))
-        } else {
-          setDisplayedContracts(contractsWithHashes)
-        }
-      } catch (error) {
-        console.error('Failed to fetch contracts:', error)
-      } finally {
-        setLoading(false)
+        return { contractsData, nextCursorValue, total }
       }
     }
+  })
 
-    fetchData()
-  }, [currentPage, currentSearch])
+  // Synchronize cursor and totalContracts
+  useEffect(() => {
+    if (queryData) {
+      if (queryData.nextCursorValue && currentPage + 1 > Object.keys(cursorMapRef.current).length) {
+        cursorMapRef.current[currentPage + 1] = queryData.nextCursorValue
+      }
+      
+      if (currentSearch) {
+        setTotalContracts(queryData.total)
+      } else if (queryData.total > 0 && currentPage === 1) {
+        setTotalContracts(queryData.total)
+      }
+    }
+  }, [queryData, currentPage, currentSearch])
+
+  const contractsData = queryData?.contractsData || []
+  
+  // Map transactionhash to transactionHash for consistency
+  const contractsWithHashes = contractsData.map((contract: Contract): Contract => ({
+    ...contract,
+    transactionHash: contract.transactionhash || contract.transactionHash
+  }))
+  
+  // For search results, apply pagination
+  let displayedContracts = contractsWithHashes
+  if (currentSearch) {
+    const startIdx = (currentPage - 1) * pageSize
+    const endIdx = startIdx + pageSize
+    displayedContracts = contractsWithHashes.slice(startIdx, endIdx)
+  }
 
   const totalPages = totalContracts > 0 ? Math.ceil(totalContracts / pageSize) : 0
 

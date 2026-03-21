@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useQuery } from "@tanstack/react-query"
 import { useRouter } from "next/navigation"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -18,67 +18,62 @@ interface PoolsListProps {
 
 export function PoolsList({ initialPage = 1, pageSize = 20, searchQuery = '' }: PoolsListProps) {
   const router = useRouter()
-  const [pools, setPools] = useState<Pool[]>([])
-  const [pagination, setPagination] = useState({
-    page: initialPage,
-    pageSize: pageSize,
-    total: 0,
-    hasMore: false
-  })
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        setLoading(true)
-        
-        if (searchQuery) {
-          // Search mode: use searchPools API
-          const searchResults = await poolAPI.searchPools(searchQuery)
-          if (Array.isArray(searchResults) && searchResults.length > 0) {
-            setPools(searchResults)
-            setPagination({
+  const { data, isLoading: loading } = useQuery({
+    queryKey: ['pools', initialPage, pageSize, searchQuery],
+    queryFn: async () => {
+      if (searchQuery) {
+        // Search mode: use searchPools API
+        const searchResults = await poolAPI.searchPools(searchQuery)
+        if (Array.isArray(searchResults) && searchResults.length > 0) {
+          return {
+            pools: searchResults,
+            pagination: {
               page: 1,
               pageSize: searchResults.length,
               total: searchResults.length,
               hasMore: false
-            })
-          } else {
-            setPools([])
-            setPagination({
+            }
+          }
+        } else {
+          return {
+            pools: [],
+            pagination: {
               page: 1,
               pageSize: pageSize,
               total: 0,
               hasMore: false
-            })
+            }
           }
-        } else {
-          // Browse mode: use getPools API with pagination
-          const response: PoolsResponse = await poolAPI.getPools(
-            initialPage.toString(),
-            pageSize.toString()
-          )
-          
-          if (response && response.pools) {
-            setPools(response.pools)
-            setPagination({
+        }
+      } else {
+        // Browse mode: use getPools API with pagination
+        const response: PoolsResponse = await poolAPI.getPools(
+          initialPage.toString(),
+          pageSize.toString()
+        )
+        
+        if (response && response.pools) {
+          return {
+            pools: response.pools,
+            pagination: {
               page: response.page,
               pageSize: response.pageSize,
               total: response.total,
               hasMore: response.hasMore
-            })
+            }
           }
         }
-      } catch (error) {
-        console.error('Failed to fetch pools:', error)
-      } finally {
-        setLoading(false)
+        
+        return {
+          pools: [],
+          pagination: { page: initialPage, pageSize, total: 0, hasMore: false }
+        }
       }
     }
+  })
 
-    fetchData()
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialPage, pageSize, searchQuery])
+  const pools = data?.pools || []
+  const pagination = data?.pagination || { page: initialPage, pageSize, total: 0, hasMore: false }
 
   const buildPaginationUrl = (targetPage: number) => {
     const params = new URLSearchParams()
