@@ -96,13 +96,41 @@ export function ContractsList({ initialCursor, page = 1, searchAddress }: Contra
 
   const totalPages = totalContracts > 0 ? Math.ceil(totalContracts / pageSize) : 0
 
-  if (loading) {
-    return (
-      <Card className="bg-card/50 border-border p-8">
-        <p className="text-center text-muted-foreground">Loading contracts...</p>
-      </Card>
-    )
-  }
+  const SkeletonRow = () => (
+    <tr className="border-b border-border/50 animate-pulse">
+      <td className="p-4">
+        <div className="h-4 bg-muted rounded w-3/4"></div>
+      </td>
+      <td className="p-4">
+        <div className="h-5 bg-muted rounded w-16 mx-auto"></div>
+      </td>
+      <td className="p-4">
+        <div className="h-4 bg-muted rounded w-32"></div>
+      </td>
+      <td className="p-4">
+        <div className="h-8 bg-muted rounded w-20 mx-auto"></div>
+      </td>
+    </tr>
+  )
+
+  const SkeletonMobileCard = () => (
+    <Card className="bg-card/50 border-border p-4 animate-pulse">
+      <div className="space-y-3">
+        <div className="h-4 bg-muted rounded w-3/4"></div>
+        <div className="flex items-center gap-2">
+          <div className="h-3 bg-muted rounded w-10"></div>
+          <div className="h-5 bg-muted rounded w-16 inline-block"></div>
+        </div>
+        <div className="border-t border-border/50 pt-2">
+          <div className="h-3 bg-muted rounded w-20 mb-1"></div>
+          <div className="h-4 bg-muted rounded w-32 mt-1"></div>
+        </div>
+        <div className="pt-2">
+          <div className="h-9 bg-muted rounded w-full"></div>
+        </div>
+      </div>
+    </Card>
+  )
 
   return (
     <>
@@ -110,77 +138,95 @@ export function ContractsList({ initialCursor, page = 1, searchAddress }: Contra
       <div className="hidden md:block">
         <Card className="bg-card/50 border-border">
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full" style={{ tableLayout: 'fixed' }}>
+              <colgroup>
+                <col style={{ width: '40%' }} />
+                <col style={{ width: '15%' }} />
+                <col style={{ width: '30%' }} />
+                <col style={{ width: '15%' }} />
+              </colgroup>
               <thead>
                 <tr className="border-b border-border">
                   <th className="text-left p-4 text-sm font-semibold text-muted-foreground">
                     Contract Address
                   </th>
-                  <th className="text-left p-4 text-sm font-semibold text-muted-foreground">
+                  <th className="text-center p-4 text-sm font-semibold text-muted-foreground">
                     Type
                   </th>
                   <th className="text-left p-4 text-sm font-semibold text-muted-foreground">
                     Transaction
                   </th>
-                  <th className="text-left p-4 text-sm font-semibold text-muted-foreground">
+                  <th className="text-center p-4 text-sm font-semibold text-muted-foreground">
                     Actions
                   </th>
                 </tr>
               </thead>
               <tbody>
-                {displayedContracts.map((contract: Contract) => (
-                  <tr
-                    key={contract.id}
-                    className="border-b border-border/50 hover:bg-accent/5 transition-colors"
-                  >
-                    <td className="p-4">
-                      <Link
-                        href={`/contracts/${contract.id}`}
-                        className="font-mono text-sm text-blue-400 hover:text-blue-300 transition-colors break-all"
-                      >
-                        {contract.address}
-                      </Link>
-                    </td>
-                    <td className="p-4">
-                      <Badge
-                        variant="outline"
-                        className={
-                          contract.variant === 'Deploy'
-                            ? 'bg-green-500/10 text-green-400 border-green-500/20'
-                            : 'bg-purple-500/10 text-purple-400 border-purple-500/20'
-                        }
-                      >
-                        {contract.variant}
-                      </Badge>
-                    </td>
-                    <td className="p-4">
-                      {contract.transactionHash ? (
+                {loading ? (
+                  Array.from({ length: 10 }).map((_, index) => (
+                    <SkeletonRow key={`skeleton-${index}`} />
+                  ))
+                ) : (
+                  displayedContracts.map((contract: Contract) => (
+                    <tr
+                      key={contract.id}
+                      className="border-b border-border/50 hover:bg-accent/5 transition-colors"
+                    >
+                      <td className="p-4 truncate">
                         <Link
-                          href={`/tx/${contract.transactionHash}`}
-                          className="text-sm text-muted-foreground hover:text-foreground transition-colors font-mono"
+                          href={`/contracts/${contract.id}`}
+                          className="font-mono text-sm text-blue-400 hover:text-blue-300 transition-colors truncate block"
+                          title={contract.address}
                         >
-                          {contract.transactionHash.slice(0, 16)}...
+                          {contract.address}
                         </Link>
-                      ) : (
-                        <span className="text-sm text-muted-foreground font-mono">
-                          TX #{contract.transactionId}
-                        </span>
-                      )}
-                    </td>
-                    <td className="p-4">
-                      <Link href={`/contracts/${contract.id}`}>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="border-border hover:bg-accent/50"
-                        >
-                          <ExternalLink className="h-3 w-3 mr-1" />
-                          View
-                        </Button>
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                      <td className="p-4 truncate">
+                        <div className="flex justify-center">
+                          <Badge
+                            variant="outline"
+                            className={
+                              contract.variant === 'Deploy'
+                                ? 'bg-green-500/10 text-green-400 border-green-500/20'
+                                : 'bg-purple-500/10 text-purple-400 border-purple-500/20'
+                            }
+                          >
+                            {contract.variant}
+                          </Badge>
+                        </div>
+                      </td>
+                      <td className="p-4 truncate">
+                        {contract.transactionHash ? (
+                          <Link
+                            href={`/tx/${contract.transactionHash}`}
+                            className="text-sm text-muted-foreground hover:text-foreground transition-colors font-mono truncate block"
+                            title={contract.transactionHash}
+                          >
+                            {contract.transactionHash.slice(0, 16)}...
+                          </Link>
+                        ) : (
+                          <span className="text-sm text-muted-foreground font-mono">
+                            TX #{contract.transactionId}
+                          </span>
+                        )}
+                      </td>
+                      <td className="p-4 truncate">
+                        <div className="flex justify-center">
+                          <Link href={`/contracts/${contract.id}`}>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="border-border hover:bg-accent/50"
+                            >
+                              <ExternalLink className="h-3 w-3 mr-1" />
+                              View
+                            </Button>
+                          </Link>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
@@ -189,7 +235,12 @@ export function ContractsList({ initialCursor, page = 1, searchAddress }: Contra
 
       {/* Contracts Grid - Mobile */}
       <div className="md:hidden space-y-3">
-        {displayedContracts.map((contract: Contract) => (
+        {loading ? (
+          Array.from({ length: 10 }).map((_, index) => (
+            <SkeletonMobileCard key={`skeleton-mobile-${index}`} />
+          ))
+        ) : (
+          displayedContracts.map((contract: Contract) => (
           <Card key={contract.id} className="bg-card/50 border-border p-4">
             <div className="space-y-3">
               <Link
@@ -240,7 +291,8 @@ export function ContractsList({ initialCursor, page = 1, searchAddress }: Contra
               </Link>
             </div>
           </Card>
-        ))}
+        ))
+        )}
       </div>
 
       {/* Pagination */}

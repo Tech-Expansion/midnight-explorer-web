@@ -87,13 +87,54 @@ export function TransactionsList({  }: TransactionsListProps) {
     }
   }
 
-  if (loading) {
-    return (
-      <Card className="bg-card/50 border-border p-8">
-        <p className="text-center text-muted-foreground">Loading transactions...</p>
-      </Card>
-    )
-  }
+  const SkeletonRow = () => (
+    <tr className="border-b border-border/50 animate-pulse">
+      <td className="p-4">
+        <div className="h-4 bg-muted rounded w-3/4"></div>
+      </td>
+      <td className="p-4">
+        <div className="h-5 bg-muted rounded w-16"></div>
+      </td>
+      <td className="p-4">
+        <div className="h-4 bg-muted rounded w-12"></div>
+      </td>
+      <td className="p-4">
+        <div className="h-4 bg-muted rounded w-10"></div>
+      </td>
+      <td className="p-4">
+        <div className="h-4 bg-muted rounded w-24"></div>
+      </td>
+      <td className="p-4">
+        <div className="h-4 bg-muted rounded w-10"></div>
+      </td>
+    </tr>
+  )
+
+  const SkeletonMobileCard = () => (
+    <Card className="bg-card/50 border-border p-4 animate-pulse">
+      <div className="space-y-3">
+        <div className="h-4 bg-muted rounded w-3/4"></div>
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="h-5 bg-muted rounded w-16"></div>
+          <div className="h-4 bg-muted rounded w-12"></div>
+        </div>
+        <div className="grid grid-cols-2 gap-2 text-xs">
+          <div>
+            <div className="h-3 bg-muted rounded w-12 mb-1"></div>
+            <div className="h-4 bg-muted rounded w-8 mt-1"></div>
+          </div>
+          <div>
+            <div className="h-3 bg-muted rounded w-12 mb-1"></div>
+            <div className="h-4 bg-muted rounded w-16 mt-1"></div>
+          </div>
+        </div>
+        <div className="border-t border-border/50 pt-2">
+          <div className="h-3 bg-muted rounded w-12 mb-1"></div>
+          <div className="h-4 bg-muted rounded w-24 mt-1"></div>
+        </div>
+      </div>
+    </Card>
+  )
 
   return (
     <>
@@ -101,31 +142,44 @@ export function TransactionsList({  }: TransactionsListProps) {
       <div className="hidden md:block">
         <Card className="bg-card/50 border-border">
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full" style={{ tableLayout: 'fixed' }}>
+              <colgroup>
+                <col style={{ width: '35%' }} />
+                <col style={{ width: '15%' }} />
+                <col style={{ width: '15%' }} />
+                <col style={{ width: '12%' }} />
+                <col style={{ width: '15%' }} />
+                <col style={{ width: '8%' }} />
+              </colgroup>
               <thead>
                 <tr className="border-b border-border">
                   <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Txn Hash</th>
                   <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Variant</th>
                   <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Block</th>
                   <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Protocol</th>
-                  <th className="text-center pr-24 p-4 text-sm font-semibold text-muted-foreground">Age</th>
+                  <th className="text-center p-4 text-sm font-semibold text-muted-foreground">Age</th>
                   <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Size</th>
                 </tr>
               </thead>
               <tbody>
-                {transactions.length > 0 ? (
+                {loading ? (
+                  Array.from({ length: 10 }).map((_, index) => (
+                    <SkeletonRow key={`skeleton-${index}`} />
+                  ))
+                ) : transactions.length > 0 ? (
                   transactions.map((tx: Transaction, index: number) => (
                     <tr key={tx.id || `${tx.hash}-${index}`} className="border-b border-border/50 hover:bg-accent/5 transition-colors">
-                      <td className="p-4">
+                      <td className="p-4 truncate">
                         <Link
                           href={`/tx/${tx.hash}`}
-                          className="text-blue-400 hover:text-blue-300 transition-colors font-mono text-sm"
+                          className="text-blue-400 hover:text-blue-300 transition-colors font-mono text-sm truncate block"
+                          title={tx.hash}
                         >
                           {tx.hash}
                         </Link>
                       </td>
-                      <td className="p-4">{getVariantBadge(tx.variant)}</td>
-                      <td className="p-4">
+                      <td className="p-4 truncate">{getVariantBadge(tx.variant)}</td>
+                      <td className="p-4 truncate">
                         {tx.blockHeight ? (
                           <Link
                             href={`/block/${tx.blockHeight}`}
@@ -137,17 +191,17 @@ export function TransactionsList({  }: TransactionsListProps) {
                           <span className="text-muted-foreground text-sm">Pending</span>
                         )}
                       </td>
-                      <td className="p-4">
+                      <td className="p-4 truncate">
                         <span className="text-sm text-muted-foreground font-mono">
                           v{tx.protocolVersion}
                         </span>
                       </td>
-                      <td className="p-4">
+                      <td className="p-4 text-center truncate">
                         <span className="text-sm text-muted-foreground">
                           {tx.timestamp ? formatDateTime(new Date(parseInt(String(tx.timestamp)))) : "N/A"}
                         </span>
                       </td>
-                      <td className="p-4">
+                      <td className="p-4 truncate">
                         <span className="text-sm text-muted-foreground">
                           {tx.size ? `${tx.size} B` : "N/A"}
                         </span>
@@ -169,7 +223,11 @@ export function TransactionsList({  }: TransactionsListProps) {
 
       {/* Transactions Grid - Mobile */}
       <div className="md:hidden space-y-3">
-        {transactions.length > 0 ? (
+        {loading ? (
+          Array.from({ length: 10 }).map((_, index) => (
+            <SkeletonMobileCard key={`skeleton-mobile-${index}`} />
+          ))
+        ) : transactions.length > 0 ? (
           transactions.map((tx: Transaction, index: number) => (
             <Card key={tx.id || `${tx.hash}-${index}`} className="bg-card/50 border-border p-4">
               <div className="space-y-3">

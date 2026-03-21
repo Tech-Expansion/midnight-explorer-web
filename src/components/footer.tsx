@@ -24,16 +24,16 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* About Section */}
           <div className="space-y-4">
-            <Link href="/" className="flex items-center gap-2 group relative">
-              <div className="relative">
+            <Link href="/" className="flex items-center gap-2 group relative flex-shrink-0">
+              <div className="relative min-w-[180px] flex-shrink-0">
                 <Image
                   src="/images/midnightexplorer-logo.png"
                   alt="Midnightexplorer Logo"
                   width={180}
                   height={40}
-                  className="h-6 w-auto brightness-200"
+                  className="h-6 w-auto brightness-200 flex-shrink-0"
                 />
-                {/* Twinkling stars around logo */}
+                {/* Twinkling stars around logo */}   
                 <Sparkles
                   className="h-3 w-3 text-cyan-400 absolute -top-1 -right-2 animate-pulse"
                   style={{ animationDuration: "2s" }}

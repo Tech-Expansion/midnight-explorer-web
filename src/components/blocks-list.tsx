@@ -56,13 +56,47 @@ export function BlocksList({ initialCursor, page = 1 }: BlocksListProps) {
     fetchData()
   }, [cursor])
 
-  if (loading) {
-    return (
-      <Card className="bg-card/50 border-border p-8">
-        <p className="text-center text-muted-foreground">Loading blocks...</p>
-      </Card>
-    )
-  }
+  const SkeletonRow = () => (
+    <tr className="border-b border-border/50 animate-pulse">
+      <td className="p-4">
+        <div className="space-y-2">
+          <div className="h-4 bg-muted rounded w-16"></div>
+          <div className="h-3 bg-muted rounded w-3/4"></div>
+          <div className="h-3 bg-muted rounded w-1/2"></div>
+        </div>
+      </td>
+      <td className="p-4">
+        <div className="h-4 bg-muted rounded w-32 mx-auto"></div>
+      </td>
+      <td className="p-4">
+        <div className="h-5 bg-muted rounded w-8 ml-auto"></div>
+      </td>
+    </tr>
+  )
+
+  const SkeletonMobileCard = () => (
+    <Card className="bg-card/50 border-border p-4 animate-pulse">
+      <div className="space-y-3">
+        <div className="h-4 bg-muted rounded w-24"></div>
+        <div className="h-3 bg-muted rounded w-3/4"></div>
+        <div className="grid grid-cols-2 gap-2 text-xs">
+          <div>
+            <div className="h-3 bg-muted rounded w-10 mb-1"></div>
+            <div className="h-4 bg-muted rounded w-24 mt-1"></div>
+          </div>
+          <div>
+            <div className="h-3 bg-muted rounded w-10 mb-1"></div>
+            <div className="h-4 bg-muted rounded w-8 mt-1"></div>
+          </div>
+        </div>
+        <div className="border-t border-border/50 pt-2">
+          <div className="h-3 bg-muted rounded w-12 mb-2"></div>
+          <div className="h-3 bg-muted rounded w-3/4 mb-1"></div>
+          <div className="h-3 bg-muted rounded w-2/3"></div>
+        </div>
+      </div>
+    </Card>
+  )
 
   // Pagination helpers
   const limit = 20
@@ -78,59 +112,70 @@ export function BlocksList({ initialCursor, page = 1 }: BlocksListProps) {
       <div className="hidden md:block">
         <Card className="bg-card/50 border-border">
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full" style={{ tableLayout: 'fixed' }}>
+              <colgroup>
+                <col style={{ width: '55%' }} />
+                <col style={{ width: '35%' }} />
+                <col style={{ width: '10%' }} />
+              </colgroup>
               <thead>
                 <tr className="border-b border-border">
                   <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Block</th>
-                  <th className="text-center p-4 text-sm font-semibold text-muted-foreground">
-                    <span className="inline-block -translate-x-28">Age</span>
-                  </th>
-                  <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Txns</th>
+                  <th className="text-center p-4 text-sm font-semibold text-muted-foreground">Age</th>
+                  <th className="text-right p-4 text-sm font-semibold text-muted-foreground">Txns</th>
                 </tr>
               </thead>
               <tbody>
-                {blocks.map((block: Block) => (
-                  <tr key={block.hash} className="border-b border-border/50 hover:bg-accent/5 transition-colors">
-                    <td className="p-4">
-                      <div className="space-y-1">
-                        <Link
-                          href={`/block/${block.height}`}
-                          className="flex items-center gap-2 text-blue-400 hover:text-blue-300 transition-colors font-mono"
-                        >
-                          <Box className="h-4 w-4" />
-                          {block.height.toLocaleString()}
-                        </Link>
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground font-mono">
-                          {block.hash}
-                        </div>
-                        {block.parent_hash && block.author && (
-                          <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
-                            <span className="font-mono text-xs truncate max-w-[220px]">
-                              Parent: {block.parent_hash.slice(0, 12)}...{block.parent_hash.slice(-8)}
-                            </span>
-                            <span className="truncate max-w-[160px]">
-                              Author: {block.author.length > 24 ? `${block.author.slice(0, 12)}...${block.author.slice(-8)}` : block.author}
-                            </span>
-                            {block.protocol_version && (
-                              <span className="text-muted-foreground">Protocol: v{block.protocol_version}</span>
-                            )}
+                {loading ? (
+                  Array.from({ length: 10 }).map((_, index) => (
+                    <SkeletonRow key={`skeleton-${index}`} />
+                  ))
+                ) : (
+                  blocks.map((block: Block) => (
+                    <tr key={block.hash} className="border-b border-border/50 hover:bg-accent/5 transition-colors">
+                      <td className="p-4 truncate">
+                        <div className="space-y-1">
+                          <Link
+                            href={`/block/${block.height}`}
+                            className="flex items-center gap-2 text-blue-400 hover:text-blue-300 transition-colors font-mono truncate"
+                          >
+                            <Box className="h-4 w-4 flex-shrink-0" />
+                            <span className="truncate">{block.height.toLocaleString()}</span>
+                          </Link>
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground font-mono truncate">
+                            {block.hash}
                           </div>
-                        )}
-                      </div>
-                    </td>
-                    <td className="p-4">
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Clock className="h-4 w-4" />
-                        {formatDateTime(new Date(Number(block.timestamp)))}
-                      </div>
-                    </td>
-                    <td className="p-4">
-                      <Badge variant="outline" className="bg-cyan-500/10 text-cyan-400 border-cyan-500/20">
-                        {block.txCount}
-                      </Badge>
-                    </td>
-                  </tr>
-                ))}
+                          {block.parent_hash && block.author && (
+                            <div className="flex flex-col gap-1 text-xs text-muted-foreground mt-1">
+                              <span className="font-mono text-xs truncate">
+                                Parent: {block.parent_hash.slice(0, 12)}...{block.parent_hash.slice(-8)}
+                              </span>
+                              <span className="truncate">
+                                Author: {block.author.length > 24 ? `${block.author.slice(0, 12)}...${block.author.slice(-8)}` : block.author}
+                              </span>
+                              {block.protocol_version && (
+                                <span className="text-muted-foreground">Protocol: v{block.protocol_version}</span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                      <td className="p-4 truncate">
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground truncate justify-center">
+                          <Clock className="h-4 w-4 flex-shrink-0" />
+                          <span className="truncate">{formatDateTime(new Date(Number(block.timestamp)))}</span>
+                        </div>
+                      </td>
+                      <td className="p-4 truncate">
+                        <div className="flex justify-end">
+                          <Badge variant="outline" className="bg-cyan-500/10 text-cyan-400 border-cyan-500/20">
+                            {block.txCount}
+                          </Badge>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
@@ -139,7 +184,12 @@ export function BlocksList({ initialCursor, page = 1 }: BlocksListProps) {
 
       {/* Blocks Grid - Mobile */}
       <div className="md:hidden space-y-3">
-        {blocks.map((block: Block) => (
+        {loading ? (
+          Array.from({ length: 10 }).map((_, index) => (
+            <SkeletonMobileCard key={`skeleton-mobile-${index}`} />
+          ))
+        ) : (
+          blocks.map((block: Block) => (
           <Card key={block.hash} className="bg-card/50 border-border p-4">
             <div className="space-y-3">
               <Link
@@ -182,7 +232,8 @@ export function BlocksList({ initialCursor, page = 1 }: BlocksListProps) {
               )}
             </div>
           </Card>
-        ))}
+          ))
+        )}
       </div>
 
       {/* Pagination */}

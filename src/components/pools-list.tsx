@@ -117,74 +117,137 @@ export function PoolsList({ initialPage = 1, pageSize = 20, searchQuery = '' }: 
     return text
   }
 
-  if (loading) {
-    return (
-      <Card className="bg-card/50 border-border p-8">
-        <p className="text-center text-muted-foreground">Loading pools...</p>
-      </Card>
-    )
-  }
+  const SkeletonRow = () => (
+    <tr className="border-b border-border/50 animate-pulse">
+      <td className="p-4">
+        <div className="space-y-2">
+          <div className="h-4 bg-muted rounded w-2/3"></div>
+          <div className="h-3 bg-muted rounded w-full"></div>
+        </div>
+      </td>
+      <td className="p-4">
+        <div className="flex justify-center">
+          <div className="h-5 bg-muted rounded w-40"></div>
+        </div>
+      </td>
+      <td className="p-4">
+        <div className="flex justify-end">
+          <div className="h-5 bg-muted rounded w-24"></div>
+        </div>
+      </td>
+    </tr>
+  )
+
+  const SkeletonMobileCard = () => (
+    <Card className="bg-card/50 border-border p-4 animate-pulse">
+      <div className="space-y-3">
+        <div className="space-y-2">
+          <div className="h-4 bg-muted rounded w-2/3"></div>
+          <div className="h-3 bg-muted rounded w-full"></div>
+        </div>
+        <div className="border-t border-border/50 pt-2 space-y-2">
+          <div>
+            <div className="h-3 bg-muted rounded w-20 mb-1"></div>
+            <div className="h-5 bg-muted rounded w-40"></div>
+          </div>
+          <div>
+            <div className="h-3 bg-muted rounded w-20 mb-1"></div>
+            <div className="h-5 bg-muted rounded w-24"></div>
+          </div>
+        </div>
+      </div>
+    </Card>
+  )
 
   return (
     <>
-      {pools.length > 0 ? (
+      {!loading && pools.length === 0 ? (
+        <Card className="p-12 bg-card/50 border-border text-center">
+          <div className="space-y-4">
+            <div className="p-4 rounded-lg bg-blue-500/10 inline-block">
+              <Waves className="h-8 w-8 text-blue-400" />
+            </div>
+            <div>
+              <h3 className="text-xl font-semibold text-blue-400">No Pools Found</h3>
+              <p className="text-muted-foreground mt-2">
+                {searchQuery 
+                  ? `No pools matching "${searchQuery}" were found.`
+                  : 'No stake pools are available at the moment.'}
+              </p>
+            </div>
+          </div>
+        </Card>
+      ) : (
         <>
           {/* Pools Table - Desktop */}
           <div className="hidden md:block">
             <Card className="bg-card/50 border-border">
               <div className="overflow-x-auto">
-                <table className="w-full">
+                <table className="w-full" style={{ tableLayout: 'fixed' }}>
+                  <colgroup>
+                    <col style={{ width: '45%' }} />
+                    <col style={{ width: '35%' }} />
+                    <col style={{ width: '20%' }} />
+                  </colgroup>
                   <thead>
                     <tr className="border-b border-border">
                       <th className="text-left p-4 text-sm font-semibold text-muted-foreground">
                         Pool Name
                       </th>
-                      <th className="text-left p-4 text-sm font-semibold text-muted-foreground ml-0">
+                      <th className="text-center p-4 text-sm font-semibold text-muted-foreground">
                         Aura Public Key
                       </th>
-                      <th className="text-left p-4 text-sm font-semibold text-muted-foreground ml-0">
-                      Blocks Minted
+                      <th className="text-right p-4 text-sm font-semibold text-muted-foreground">
+                        Blocks Minted
                       </th>
                     </tr>
                   </thead>
                   <tbody>
-                    {pools.map((pool: Pool) => {
-                      return (
+                    {loading ? (
+                      Array.from({ length: 10 }).map((_, index) => (
+                        <SkeletonRow key={`skeleton-${index}`} />
+                      ))
+                    ) : (
+                      pools.map((pool: Pool) => (
                         <tr 
                           key={pool.auraPublicKey} 
                           className="border-b border-border/50 hover:bg-accent/5 transition-colors cursor-pointer"
                           onClick={() => router.push(`/pool/${pool.auraPublicKey}`)}
                         >
-                          <td className="p-4">
+                          <td className="p-4 truncate">
                             <div className="space-y-1">
-                              <div className="text-sm font-medium text-blue-400">
-                                <span>{getPoolName(pool)}</span>
+                              <div className="text-sm font-medium text-blue-400 truncate">
+                                <span className="truncate">{getPoolName(pool)}</span>
                                 {pool.poolOffchainData?.ticker && (
-                                  <Badge variant="outline" className="ml-2 bg-cyan-500/10 text-cyan-400 border-cyan-500/20 text-xs">
+                                  <Badge variant="outline" className="ml-2 bg-cyan-500/10 text-cyan-400 border-cyan-500/20 text-xs inline-block">
                                     [{pool.poolOffchainData.ticker}]
                                   </Badge>
                                 )}
                               </div>
                               {pool.poolOffchainData?.description && (
-                                <p className="text-xs text-muted-foreground">
+                                <p className="text-xs text-muted-foreground truncate">
                                   {limitWords(pool.poolOffchainData.description, 10)}
                                 </p>
                               )}
                             </div>
                           </td>
-                          <td className="p-4 text-left ml-0">
-                            <Badge variant="outline" className="bg-purple-500/10 text-purple-400 border-purple-500/20 font-mono text-xs">
-                              {getAuraPublicKey(pool)}
-                            </Badge>
+                          <td className="p-4 truncate">
+                            <div className="flex justify-center">
+                              <Badge variant="outline" className="bg-purple-500/10 text-purple-400 border-purple-500/20 font-mono text-xs">
+                                {getAuraPublicKey(pool)}
+                              </Badge>
+                            </div>
                           </td>
-                          <td className="p-4 text-left ml-0">
-                            <Badge variant="outline" className="bg-green-500/10 text-green-400 border-green-500/20 font-mono">
-                              {getBlocksMinted(pool)}
-                            </Badge>
+                          <td className="p-4 truncate">
+                            <div className="flex justify-end">
+                              <Badge variant="outline" className="bg-green-500/10 text-green-400 border-green-500/20 font-mono">
+                                {getBlocksMinted(pool)}
+                              </Badge>
+                            </div>
                           </td>
                         </tr>
-                      )
-                    })}
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -193,7 +256,12 @@ export function PoolsList({ initialPage = 1, pageSize = 20, searchQuery = '' }: 
 
           {/* Pools Grid - Mobile */}
           <div className="md:hidden space-y-3">
-            {pools.map((pool: Pool) => (
+            {loading ? (
+              Array.from({ length: 10 }).map((_, index) => (
+                <SkeletonMobileCard key={`skeleton-mobile-${index}`} />
+              ))
+            ) : (
+              pools.map((pool: Pool) => (
               <Card 
                 key={pool.auraPublicKey} 
                 className="bg-card/50 border-border p-4 cursor-pointer hover:bg-accent/5 transition-colors"
@@ -231,7 +299,8 @@ export function PoolsList({ initialPage = 1, pageSize = 20, searchQuery = '' }: 
                   </div>
                 </div>
               </Card>
-            ))}
+            ))
+            )}
           </div>
 
           {/* Pagination */}
@@ -244,22 +313,6 @@ export function PoolsList({ initialPage = 1, pageSize = 20, searchQuery = '' }: 
             />
           </div>
         </>
-      ) : (
-        <Card className="p-12 bg-card/50 border-border text-center">
-          <div className="space-y-4">
-            <div className="p-4 rounded-lg bg-blue-500/10 inline-block">
-              <Waves className="h-8 w-8 text-blue-400" />
-            </div>
-            <div>
-              <h3 className="text-xl font-semibold text-blue-400">No Pools Found</h3>
-              <p className="text-muted-foreground mt-2">
-                {searchQuery 
-                  ? `No pools matching "${searchQuery}" were found.`
-                  : 'No stake pools are available at the moment.'}
-              </p>
-            </div>
-          </div>
-        </Card>
       )}
     </>
   )

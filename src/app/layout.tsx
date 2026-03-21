@@ -14,22 +14,22 @@ import { QueryProvider } from "@/components/query-provider";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { Starfield } from "@/components/starfield";
-
+import { NETWORK } from "@/lib/env";
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.midnightexplorer.com"),
   title: {
-    default: "Midnight Explorer",
-    template: `%s | Midnight Explorer`,
+    default: `${NETWORK} Midnight Explorer`,
+    template: `%s | ${NETWORK} Midnight Explorer`,
   },
-  description: "An explorer for the Midnight Network.",
+  description: `An explorer for the ${NETWORK} Midnight Network.`,
   viewport: "width=device-width, initial-scale=1",
   icons: {
     icon: "/favicon.ico",
     shortcut: "/favicon-16x16.png",
   },
   openGraph: {
-    title: "Midnight Explorer",
-    description: "An explorer for the Midnight Network.",
+    title: `${NETWORK} Midnight Explorer`,
+    description: `An explorer for the ${NETWORK} Midnight Network.`,
     url: "https://www.midnightexplorer.com",
     siteName: "Midnight Explorer",
     images: [
@@ -44,8 +44,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Midnight Explorer",
-    description: "An explorer for the Midnight network.",
+    title: `${NETWORK} Midnight Explorer`,
+    description: `An explorer for the ${NETWORK} Midnight Network.`,
     images: ["/og-image.jpg"],
   },
 };
