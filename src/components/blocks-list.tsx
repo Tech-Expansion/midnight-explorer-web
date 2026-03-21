@@ -9,6 +9,7 @@ import { formatDateTime } from "@/lib/utils"
 import { blockAPI } from "@/lib/api"
 import { Pagination, SimplePagination } from "@/components/pagination"
 import { useNetworkOverview } from "@/hooks/useNetworkStats"
+import { BlocksListSkeleton } from "./skeletons/blocks-list-skeleton"
 
 interface Block {
   hash: string
