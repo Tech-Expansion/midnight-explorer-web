@@ -379,7 +379,7 @@ export default function PrivacyPolicyPage() {
             <ul className="space-y-1">
               <li>
                 <strong className="text-foreground">Email:</strong>{" "}
-                contact@texblabs.com
+                contact@midnightexplorer.com
               </li>
               <li>
                 <strong className="text-foreground">Address:</strong> Hanoi,
