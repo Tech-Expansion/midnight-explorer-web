@@ -29,8 +29,9 @@ export function BlockTransactionsList({ height, txCount }: BlockTransactionsList
   const { data: transactions = [], isLoading: loading, isError } = useQuery({
     queryKey: ['block-transactions', height, offset],
     queryFn: async () => {
-      const response = await blockAPI.getBlockTransactions(height, ITEMS_PER_PAGE, offset)
-      return (response as { transactions: Transaction[] }).transactions || []
+      const response = await blockAPI.getBlockTransactions(height, ITEMS_PER_PAGE, offset) as { block?: { transactions?: Transaction[] } }
+      const allTx = response?.block?.transactions || []
+      return allTx.slice(offset, offset + ITEMS_PER_PAGE)
     }
   })
 
@@ -111,14 +112,14 @@ export function BlockTransactionsList({ height, txCount }: BlockTransactionsList
             </tr>
           </thead>
           <tbody>
-            {transactions.map((tx) => (
+            {transactions.map((tx: Transaction) => (
               <tr key={tx.hash} className="border-b border-border/30 hover:bg-muted/50 transition-colors">
                 <td className="py-3 px-2">
                   <Link href={`/tx/${tx.hash}`} className="font-mono text-blue-400 hover:text-blue-300 break-all">
                     {tx.hash.slice(0, 24)}...{tx.hash.slice(-16)}
                   </Link>
                 </td>
-                <td className="text-right py-3 px-2 font-mono text-muted-foreground">{tx.size} bytes</td>
+                <td className="text-right py-3 px-2 font-mono text-muted-foreground">{tx.size || 'N/A'}</td>
                 <td className="text-right py-3 px-2">
                   <CopyButton text={tx.hash} />
                 </td>

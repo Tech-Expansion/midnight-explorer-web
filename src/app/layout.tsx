@@ -8,7 +8,6 @@ import { Suspense } from "react";
 import { cn } from "@/lib/utils";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import { LoadingFallback } from "@/components/loading-fallback";
-import { HighlightNotification } from "@/components/highlight-notification";
 import { TokenProvider } from "@/components/token-provider";
 import { QueryProvider } from "@/components/query-provider";
 import { Header } from "@/components/header";
@@ -60,12 +59,12 @@ export default function RootLayout({
       <head>{/* Xóa dòng <link> cho favicon nếu có ở đây */}</head>
       <body
         className={cn(
-          `font-sans ${GeistSans.variable} ${GeistMono.variable} antialiased`
+          `font-sans ${GeistSans.variable} ${GeistMono.variable} antialiased`,
         )}
       >
         <QueryProvider>
           <TokenProvider>
-            <HighlightNotification />
+            {/* <HighlightNotification /> */}
             <div className="min-h-screen bg-background relative">
               <div className="fixed inset-0 z-0">
                 <Starfield />

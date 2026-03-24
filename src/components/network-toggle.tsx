@@ -13,35 +13,33 @@ import { NetworkType, NETWORKS } from "@/lib/constants/common.constants"
 
 // Helper function to detect network from domain
 function getNetworkFromDomain(): NetworkType {
-  if (typeof window === "undefined") return NetworkType.PREPROD
-  
-  const hostname = window.location.hostname
-  
+  if (typeof window === "undefined") return NetworkType.MAINNET;
+
+  const hostname = window.location.hostname;
+
   // Check each network's domains array
   for (const [networkType, config] of Object.entries(NETWORKS)) {
-    if (config.domains.some(domain => hostname.includes(domain))) {
-      return networkType as NetworkType
+    if (config.domains.some((domain) => hostname.includes(domain))) {
+      return networkType as NetworkType;
     }
   }
-  
+
   // Default for localhost and other unknown domains
-  // - localhost:8080 -> PREPROD
-  // - midnightexplorer.com -> PREPROD (configured in domains)
-  return NetworkType.PREPROD
+  return NetworkType.MAINNET;
 }
 
 export function NetworkToggle() {
-  const [network, setNetwork] = useState<NetworkType>(NetworkType.PREPROD)
-  
+  const [network, setNetwork] = useState<NetworkType>(NetworkType.MAINNET);
+
   // Detect network on mount based on domain
   useEffect(() => {
-    setNetwork(getNetworkFromDomain())
-  }, [])
+    setNetwork(getNetworkFromDomain());
+  }, []);
 
-  const currentDisplay = NETWORKS[network]
+  const currentDisplay = NETWORKS[network];
 
   // Get all available networks in order
-  const networks = Object.values(NetworkType)
+  const networks = Object.values(NetworkType);
 
   return (
     <DropdownMenu>
@@ -53,7 +51,9 @@ export function NetworkToggle() {
           className="gap-2 border-border hover:bg-accent transition-colors bg-transparent"
         >
           <Globe className={`h-4 w-4 ${currentDisplay.iconColor}`} />
-          <span className={`font-medium ${currentDisplay.color}`}>{currentDisplay.label}</span>
+          <span className={`font-medium ${currentDisplay.color}`}>
+            {currentDisplay.label}
+          </span>
           <ChevronDown className="h-3 w-3 opacity-50" />
         </Button>
       </DropdownMenuTrigger>
@@ -61,13 +61,16 @@ export function NetworkToggle() {
       {/* Menu xổ xuống */}
       <DropdownMenuContent align="end" className="w-[210px]">
         {networks.map((networkType) => {
-          const config = NETWORKS[networkType]
-          const isCurrentNetwork = network === networkType
+          const config = NETWORKS[networkType];
+          const isCurrentNetwork = network === networkType;
 
           return (
             <DropdownMenuItem
               key={networkType}
-              onClick={() => config.enabled && window.open(`https://${config.domain}`, '_blank')}
+              onClick={() =>
+                config.enabled &&
+                window.open(`https://${config.domain}`, "_blank")
+              }
               disabled={!config.enabled}
               className={
                 config.enabled
@@ -83,12 +86,14 @@ export function NetworkToggle() {
                 {isCurrentNetwork && <span className="ml-2 text-xs">✓</span>}
               </div>
               <span className="text-xs text-muted-foreground ml-6">
-                {config.enabled ? config.domain : config.message || "Coming soon"}
+                {config.enabled
+                  ? config.domain
+                  : config.message || "Coming soon"}
               </span>
             </DropdownMenuItem>
-          )
+          );
         })}
       </DropdownMenuContent>
     </DropdownMenu>
-  )
+  );
 }

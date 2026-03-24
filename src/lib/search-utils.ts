@@ -41,40 +41,22 @@ export async function checkBlock(query: string): Promise<{
   data?: BlockResult
 }> {
   try {
-    const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS)
-
-    const response = await fetch(`/api/blocks/verify?hash=${encodeURIComponent(query)}`, {
-      signal: controller.signal,
-      cache: 'no-store'
-    })
-
-    clearTimeout(timeoutId)
-
-    if (!response.ok) {
-      return { found: false }
-    }
-
-    const data = await response.json()
+    const { blockAPI } = await import('@/lib/api')
+    const { block } = await blockAPI.getBlock<{block: BlockResult}>(query)
     
-    if (!data.found) {
-      return { found: false }
-    }
-
-    return {
-      found: true,
-      height: String(data.value),
-      data: {
-        hash: data.hash || query,
-        height: Number(data.value),
-        timestamp: undefined,
-        txCount: undefined
+    if (block) {
+      return {
+        found: true,
+        height: String(block.height),
+        data: {
+          hash: block.hash || query,
+          height: Number(block.height),
+          timestamp: block.timestamp,
+        }
       }
     }
-  } catch (error) {
-    if (error instanceof Error && error.name === 'AbortError') {
-      //console.log('⏱️ Block check timeout')
-    }
+    return { found: false }
+  } catch {
     return { found: false }
   }
 }
@@ -92,25 +74,19 @@ export async function verifyTransaction(query: string): Promise<{
   try {
     const { transactionAPI } = await import('@/lib/api')
     
-    const data = await transactionAPI.verifyTransaction<{
-      found: boolean
-      type?: string
-      txHash?: string
-      txId?: string
-    }>(query)
+    const { transaction } = await transactionAPI.getTransactionById<{transaction: TransactionResult}>(query)
 
-    if (data.found) {
+    if (transaction) {
       return {
         found: true,
-        type: data.type,
-        txHash: data.txHash,
-        txId: data.txId
+        type: 'Transaction',
+        txHash: transaction.hash,
+        txId: transaction.hash
       }
     }
 
     return { found: false }
-  } catch (error) {
-    console.error('❌ Transaction verify error:', error)
+  } catch {
     return { found: false }
   }
 }
@@ -126,49 +102,27 @@ export async function checkTransaction(query: string): Promise<{
   results?: TransactionResult[]
 }> {
   try {
-    const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS)
+    const { transactionAPI } = await import('@/lib/api')
+    
+    const { transaction } = await transactionAPI.getTransactionById<{transaction: TransactionResult}>(query)
 
-    const response = await fetch(
-      `/api/transactions/search?hash=${encodeURIComponent(query)}&page=1&pageSize=20`,
-      {
-        signal: controller.signal,
-        cache: 'no-store'
+    if (transaction) {
+      const tx = {
+        hash: transaction.hash || query,
+        blockHeight: transaction.blockHeight,
+        status: transaction.status ?? 'success'
       }
-    )
-
-    clearTimeout(timeoutId)
-
-    if (!response.ok) {
-      return { found: false }
-    }
-
-    const responseData = await response.json()
-
-    if (responseData.data && Array.isArray(responseData.data) && responseData.data.length > 0) {
-      const transactions = responseData.data.map(
-        (tx: { hash: string; blockHeight?: number; status?: string }) => ({
-          hash: tx.hash || query,
-          blockHeight: tx.blockHeight,
-          status: tx.status ?? 'success'
-        })
-      )
-
-      const totalCount = responseData.pagination?.totalCount || transactions.length
 
       return {
         found: true,
-        data: transactions[0],
-        count: totalCount,
-        results: transactions
+        data: tx,
+        count: 1,
+        results: [tx]
       }
     }
 
     return { found: false }
-  } catch (error) {
-    if (error instanceof Error && error.name === 'AbortError') {
-      //console.log('⏱️ Transaction check timeout')
-    }
+  } catch {
     return { found: false }
   }
 }
@@ -177,7 +131,7 @@ export async function checkTransaction(query: string): Promise<{
  * Search for pools by query (hash, ticker, or name)
  * Returns pools matching the query
  */
-export async function searchPool(query: string): Promise<{
+export async function searchPool(_query: string): Promise<{
   found: boolean
   value?: string
   count?: number
@@ -193,36 +147,8 @@ export async function searchPool(query: string): Promise<{
     }
   }>
 }> {
-  try {
-    const { poolAPI } = await import('@/lib/api')
-    
-    const data = await poolAPI.searchPools<Array<{
-      auraPublicKey: string
-      blocksMinted: number
-      mainchainPubKey?: string
-      poolOffchainData?: {
-        name: string
-        ticker: string
-        homepage?: string
-        description?: string
-      }
-    }>>(query)
-
-    // API returns array directly
-    if (Array.isArray(data) && data.length > 0) {
-      return {
-        found: true,
-        value: data[0].auraPublicKey,
-        count: data.length,
-        results: data
-      }
-    }
-
-    return { found: false }
-  } catch (error) {
-    console.error('❌ Pool search error:', error)
-    return { found: false }
-  }
+  // Pools are not supported in Mainnet Lite
+  return { found: false }
 }
 
 /**

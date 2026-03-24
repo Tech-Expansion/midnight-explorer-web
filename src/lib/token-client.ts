@@ -7,7 +7,7 @@ export const startTokenRefresh = async () => {}
 export const stopTokenRefresh = () => {}
 export const waitForToken = async () => true
 export const isTokenReady = () => true
-export const setTurnstileToken = (_token: string) => {}
+export const setTurnstileToken = () => {}
 
 export async function fetchWithTokenRetry(
   url: string,

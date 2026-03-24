@@ -44,7 +44,7 @@ async function main() {
         if (!res.ok) {
             throw new Error(`HTTP error! status: ${res.status}`);
         }
-        const data: JsonRpcResponse = await res.json();
+        await res.json();
         //console.log('Sidechain Status:', data.result.sidechain);
     } catch (error) {
         console.error('Error fetching sidechain status:', error);

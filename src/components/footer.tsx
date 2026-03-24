@@ -24,7 +24,10 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* About Section */}
           <div className="space-y-4">
-            <Link href="/" className="flex items-center gap-2 group relative flex-shrink-0">
+            <Link
+              href="/"
+              className="flex items-center gap-2 group relative flex-shrink-0"
+            >
               <div className="relative min-w-[180px] flex-shrink-0">
                 <Image
                   src="/images/midnightexplorer-logo.png"
@@ -33,7 +36,7 @@ export function Footer() {
                   height={40}
                   className="h-6 w-auto brightness-200 flex-shrink-0"
                 />
-                {/* Twinkling stars around logo */}   
+                {/* Twinkling stars around logo */}
                 <Sparkles
                   className="h-3 w-3 text-cyan-400 absolute -top-1 -right-2 animate-pulse"
                   style={{ animationDuration: "2s" }}
@@ -49,11 +52,10 @@ export function Footer() {
               </div>
             </Link>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              The most comprehensive blockchain explorer for Midnight Network. Track transactions, blocks, and contracts, pools
-              in real-time.
+              The most comprehensive blockchain explorer for Midnight Network.
+              Track transactions, blocks, and contracts, pools in real-time.
             </p>
             <div className="flex items-center gap-3">
-              
               <Link
                 href="https://github.com/Tech-Expansion"
                 target="_blank"
@@ -102,7 +104,7 @@ export function Footer() {
           <div className="space-y-4">
             <h4 className="font-semibold text-foreground">Explorer</h4>
             <ul className="space-y-2">
-              <li>
+              {/* <li>
                 <Link href="/blocks" className="text-sm text-muted-foreground hover:text-blue-400 transition-colors">
                   Blocks
                 </Link>
@@ -119,12 +121,12 @@ export function Footer() {
                 <Link href="/contracts" className="text-sm text-muted-foreground hover:text-blue-400 transition-colors">
                   Contracts
                 </Link>
-              </li>
-              <li>
+              </li> */}
+              {/* <li>
                 <Link href="/pool" className="text-sm text-muted-foreground hover:text-blue-400 transition-colors">
                   Pools
                 </Link>
-              </li>
+              </li> */}
             </ul>
           </div>
 
@@ -133,22 +135,34 @@ export function Footer() {
             <h4 className="font-semibold text-foreground">Resources</h4>
             <ul className="space-y-2">
               <li>
-                <Link href="/" className="text-sm text-muted-foreground hover:text-blue-400 transition-colors">
+                <Link
+                  href="/"
+                  className="text-sm text-muted-foreground hover:text-blue-400 transition-colors"
+                >
                   API Documentation
                 </Link>
               </li>
               <li>
-                <Link href="https://x.com/midnightexplr" className="text-sm text-muted-foreground hover:text-blue-400 transition-colors">
+                <Link
+                  href="https://x.com/midnightexplr"
+                  className="text-sm text-muted-foreground hover:text-blue-400 transition-colors"
+                >
                   Developer Docs
                 </Link>
               </li>
               <li>
-                <Link href="https://x.com/midnightexplr" className="text-sm text-muted-foreground hover:text-blue-400 transition-colors">
+                <Link
+                  href="https://x.com/midnightexplr"
+                  className="text-sm text-muted-foreground hover:text-blue-400 transition-colors"
+                >
                   FAQ
                 </Link>
               </li>
               <li>
-                <Link href="https://x.com/midnightexplr" className="text-sm text-muted-foreground hover:text-blue-400 transition-colors">
+                <Link
+                  href="https://x.com/midnightexplr"
+                  className="text-sm text-muted-foreground hover:text-blue-400 transition-colors"
+                >
                   Support
                 </Link>
               </li>
@@ -161,13 +175,21 @@ export function Footer() {
             <div className="space-y-3">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Network</span>
-                <span className={`flex items-center gap-1 ${
-                  stats.status === 'online' ? 'text-green-400' : 'text-green-400'
-                }`}>
-                  <span className={`h-2 w-2 rounded-full ${
-                    stats.status === 'online' ? 'bg-green-400 animate-pulse' : 'bg-green-400 animate-pulse'
-                  }`} />
-                  {stats.status === 'online' ? 'Online' : 'Online'}
+                <span
+                  className={`flex items-center gap-1 ${
+                    stats.status === "online"
+                      ? "text-green-400"
+                      : "text-green-400"
+                  }`}
+                >
+                  <span
+                    className={`h-2 w-2 rounded-full ${
+                      stats.status === "online"
+                        ? "bg-green-400 animate-pulse"
+                        : "bg-green-400 animate-pulse"
+                    }`}
+                  />
+                  {stats.status === "online" ? "Online" : "Online"}
                 </span>
               </div>
               <div className="flex items-center justify-between text-sm">
@@ -183,14 +205,21 @@ export function Footer() {
         {/* Bottom Bar */}
         <div className="mt-12 pt-8 border-t border-border flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-sm text-muted-foreground">
-            Unofficial Midnight Explorer. Built for the Midnight Blockchain community.<br />
-            © 2025 midnightexplorer.com
+            Unofficial Midnight Explorer. Built for the Midnight Blockchain
+            community.
+            <br />© 2025 midnightexplorer.com
           </p>
           <div className="flex items-center gap-6">
-            <Link href="/privacy-policy" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+            <Link
+              href="/privacy-policy"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
               Privacy Policy
             </Link>
-            <Link href="/terms-of-service" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+            <Link
+              href="/terms-of-service"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
               Terms of Service
             </Link>
             {/* <Link href="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
@@ -200,5 +229,5 @@ export function Footer() {
         </div>
       </div>
     </footer>
-  )
+  );
 }

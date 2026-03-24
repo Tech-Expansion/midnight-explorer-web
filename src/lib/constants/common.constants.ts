@@ -42,7 +42,6 @@ export const NETWORKS = {
     label: "Preprod",
     domain: "preprod.midnightexplorer.com",
     domains: [
-      "midnightexplorer.com",
       "preprod.midnightexplorer.com",
       "preprod.dev.midnightexplorer.com",
       "preprod.test.midnightexplorer.com",
@@ -53,17 +52,17 @@ export const NETWORKS = {
     message: undefined,
   },
   [NetworkType.MAINNET]: {
-    label: "Mainnet",
+    label: "Mainnet - Lite UI",
     domain: "midnightexplorer.com",
     domains: [
-      // "midnightexplorer.com",
+      "midnightexplorer.com",
       "mainnet.dev.midnightexplorer.com",
       "mainnet.test.midnightexplorer.com",
     ],
     color: "text-green-400",
     iconColor: "text-green-400",
-    enabled: false,
-    message: "Upcoming",
+    enabled: true,
+    message: undefined,
   },
 } as const;
 
