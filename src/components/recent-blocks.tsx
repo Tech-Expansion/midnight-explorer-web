@@ -76,34 +76,34 @@ export function RecentBlocks({ blocks, isLive }: RecentBlocksProps) {
             href={`/block/${block.height}`}
             className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 h-full"
           >
-            <div className="flex items-center gap-4 w-full lg:w-auto">
+            <div className="flex items-center gap-4 w-full lg:flex-1 min-w-0">
               <Badge
                 variant="outline"
                 className="font-mono flex-shrink-0 text-sm py-0.5 px-2 bg-background/50"
               >
                 #{block.height}
               </Badge>
-              <div className="flex items-center gap-2 min-w-0 group/hash">
-                <p
-                  className="text-sm font-mono text-muted-foreground truncate"
-                  title={block.hash}
-                >
-                  {block.hash
-                    ? `${block.hash.slice(0, 8)}...${block.hash.slice(-8)}`
-                    : "Unknown"}
-                </p>
+              <div className="flex items-center gap-2 min-w-0 group/hash w-full mr-2">
+                {block.hash ? (
+                  <div className="flex text-sm font-mono text-muted-foreground min-w-0 w-max" title={block.hash}>
+                    <span className="truncate min-w-0">{block.hash.slice(0, -8)}</span>
+                    <span className="flex-shrink-0">{block.hash.slice(-8)}</span>
+                  </div>
+                ) : (
+                  <span className="text-sm font-mono text-muted-foreground">Unknown</span>
+                )}
                 <div
                   onClick={(e) => e.preventDefault()}
-                  className="opacity-0 group-hover/hash:opacity-100 transition-opacity"
+                  className="opacity-50 hover:opacity-100 transition-opacity flex-shrink-0"
                 >
                   <CopyButton text={block.hash || ""} className="h-4 w-4" />
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center gap-4 w-full lg:w-auto justify-between lg:justify-end">
+            <div className="flex items-center gap-4 w-full lg:w-[450px] justify-between lg:justify-end flex-shrink-0">
               <div
-                className="flex items-center gap-2 min-w-0"
+                className="flex items-center gap-2 min-w-0 lg:max-w-[200px]"
                 title={block.author}
               >
                 <Image
@@ -111,13 +111,16 @@ export function RecentBlocks({ blocks, isLive }: RecentBlocksProps) {
                   alt="Author"
                   width={14}
                   height={14}
-                  className="opacity-50"
+                  className="opacity-50 flex-shrink-0"
                 />
-                <span className="text-sm text-muted-foreground truncate max-w-[100px] sm:max-w-[150px]">
-                  {block.author
-                    ? `${block.author.slice(0, 8)}...${block.author.slice(-8)}`
-                    : "Unknown"}
-                </span>
+                {block.author ? (
+                  <div className="flex text-sm text-muted-foreground min-w-0">
+                    <span className="truncate min-w-0">{block.author.slice(0, -8)}</span>
+                    <span className="flex-shrink-0">{block.author.slice(-8)}</span>
+                  </div>
+                ) : (
+                  <span className="text-sm text-muted-foreground">Unknown</span>
+                )}
                 <div
                   onClick={(e) => e.preventDefault()}
                   className="opacity-50 hover:opacity-100 transition-opacity flex-shrink-0"
