@@ -13,11 +13,6 @@ interface MainchainStatus {
   slot: number;
   nextEpochTimestamp: number;
 }
-interface JsonRpcResponse {
-  id: number;
-  jsonrpc: string;
-  result: StatusResponse;
-}
 
 interface JsonRpcRequest {
   jsonrpc: string;

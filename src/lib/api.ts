@@ -8,6 +8,7 @@
  * const block = await blockAPI.getBlock(12345)
  * const transactions = await transactionAPI.getRecentTransactions()
  */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 
 const BACKEND_API_URL = process.env.API_URL || 'http://localhost:3002'
 const API_VERSION = 'v1'

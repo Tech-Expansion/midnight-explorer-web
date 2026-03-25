@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { CopyButton } from "@/components/ui/copy-button"
-import { Blocks, ArrowRight } from "lucide-react"
+import { Blocks } from "lucide-react"
 import Link from "next/link"
 import { formatDateTimeWithRelative } from '@/lib/utils'
 import { Block } from '@/lib/types'
@@ -30,7 +30,7 @@ export function RecentBlocks({ blocks, isLive }: RecentBlocksProps) {
     prevScrollTopRef.current = scrollContainerRef.current?.scrollTop || 0
 
     return blocks.map((block) => {
-      const txns = block.txCount ?? (block as any).transactionsCount ?? 0;
+      const txns = block.txCount ?? (block as unknown as Record<string, unknown>).transactionsCount ?? 0;
       return (
         <div
           key={block.height}
