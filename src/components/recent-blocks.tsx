@@ -123,15 +123,8 @@ export function RecentBlocks({ blocks, isLive }: RecentBlocksProps) {
             <h3 className="text-lg font-semibold">Recent Blocks</h3>
           </div>
         </div>
-        <div className="flex-1 overflow-y-auto space-y-3">
-          {[...Array(10)].map((_, i) => (
-            <div
-              key={i}
-              className="p-4 rounded-lg bg-secondary/50 animate-pulse min-h-[60px]"
-            >
-              <div className="h-full bg-muted rounded" />
-            </div>
-          ))}
+        <div className="flex-1 flex items-center justify-center text-muted-foreground">
+          Waiting for new blocks...
         </div>
       </Card>
     );

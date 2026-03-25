@@ -65,11 +65,11 @@ export const blockAPI = {
     apiFetch<T>(`/lite/blocks/${heightOrHash}`),
 
   getRecentBlocks: <T = unknown>() =>
-    apiFetch<T>('/lite/blocks/recent'),
+    Promise.resolve({ blocks: [] } as unknown as T),
 
-  getBlocks: async <T = unknown>(_cursor?: string) => {
-    const res = await apiFetch<{ blocks?: unknown[] }>(`/lite/blocks/recent`)
-    return { items: res.blocks || [] } as unknown as T
+  getBlocks: async <T = unknown>(cursor?: string) => {
+    const query = cursor ? `?cursor=${cursor}` : ''
+    return apiFetch<T>(`/blocks${query}`)
   },
 
   getBlockTransactions: <T = unknown>(height: string | number, _limit?: number, _offset?: number) => {
@@ -102,11 +102,11 @@ export const transactionAPI = {
     apiFetch<T>(`/lite/transactions/${id}`),
 
   getRecentTransactions: <T = unknown>() =>
-    apiFetch<T>('/lite/transactions/recent'),
+    apiFetch<T>('/transactions/recent'),
 
-  getTransactions: async <T = unknown>(_cursor?: string) => {
-    const res = await apiFetch<{ transactions?: unknown[] }>(`/lite/transactions/recent`)
-    return { items: res.transactions || [] } as unknown as T
+  getTransactions: async <T = unknown>(cursor?: string) => {
+    const query = cursor ? `?cursor=${cursor}` : ''
+    return apiFetch<T>(`/transactions${query}`)
   },
 }
 
@@ -136,13 +136,13 @@ export const contractAPI = {
  */
 export const networkAPI = {
   getChart: <T = unknown>(range: '1D' | '7D' | '1M' = '1D') =>
-    apiFetch<T>(`/lite/network/overview`),
+    apiFetch<T>(`/networks/chart?range=${range}`),
 
   getSidechainStatus: <T = unknown>() =>
-    apiFetch<T>('/lite/network/overview'),
+    apiFetch<T>('/networks/sidechainStatus'),
 
   getOverview: <T = unknown>() =>
-    apiFetch<T>('/lite/network/overview'),
+    Promise.resolve({ latestBlock: null, totalTransactions: 0 } as unknown as T),
 }
 
 /**

@@ -357,7 +357,7 @@ export function SearchBar() {
                             className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
                         <Input
                             type="text"
-                            placeholder="Search by Hash / Height / Contract Address / Pool Name / AuraPubkey"
+                            placeholder="Search by Hash / Height / Contract Address"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value.replace(/,/g, ''))}
                             className="pl-10 bg-card border-border"
