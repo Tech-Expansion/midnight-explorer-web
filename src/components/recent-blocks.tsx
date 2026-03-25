@@ -11,14 +11,34 @@ import { formatDateTimeWithRelative } from '@/lib/utils'
 import { Block } from '@/lib/types'
 
 
+const timeSubscribers = new Set<() => void>()
+let globalTimer: NodeJS.Timeout | null = null
 
-function LiveTime({ timestamp }: { timestamp: string | number | Date }) {
+function useGlobalTick() {
   const [, setTick] = useState(0)
 
   useEffect(() => {
-    const timer = setInterval(() => setTick((t) => t + 1), 1000)
-    return () => clearInterval(timer)
+    const callback = () => setTick(t => t + 1)
+    timeSubscribers.add(callback)
+
+    if (!globalTimer) {
+      globalTimer = setInterval(() => {
+        timeSubscribers.forEach(cb => cb())
+      }, 1000)
+    }
+
+    return () => {
+      timeSubscribers.delete(callback)
+      if (timeSubscribers.size === 0 && globalTimer) {
+        clearInterval(globalTimer)
+        globalTimer = null
+      }
+    }
   }, [])
+}
+
+function LiveTime({ timestamp }: { timestamp: string | number | Date }) {
+  useGlobalTick()
 
   return (
     <span suppressHydrationWarning>
