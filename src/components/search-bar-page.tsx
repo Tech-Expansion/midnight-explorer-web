@@ -34,8 +34,8 @@ export function SearchBarPage({ searchType = "all" }: SearchBarProps) {
         return "Search by address..."
       case "contract":
         return "Search by contract address..."
-      case "pool":
-        return "Search by pool hash, ticker, or name..."
+      // case "pool":
+      //   return "Search by pool hash, ticker, or name..."
       default:
         return "Search by Hash / Height / Contract Address / Pool"
     }
@@ -160,7 +160,7 @@ export function SearchBarPage({ searchType = "all" }: SearchBarProps) {
                   <SelectItem value="transaction">Transaction</SelectItem>
                   <SelectItem value="block">Block</SelectItem>
                   <SelectItem value="contract">Contract</SelectItem>
-                  <SelectItem value="pool">Pool</SelectItem>
+               
                 </SelectContent>
               </Select>
             )}

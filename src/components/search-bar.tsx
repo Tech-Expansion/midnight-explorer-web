@@ -76,23 +76,23 @@ export function SearchBar() {
             const results: SearchResult[] = []
 
             // If user selected Pool (not supported by lite/search directly)
-            if (searchType === SEARCH_TYPE_POOL) {
-                const poolResult = await searchPool(cleanQuery)
-                if (poolResult.found && poolResult.results) {
-                    const displayPools = poolResult.results.slice(0, 5)
-                    displayPools.forEach(pool => {
-                        results.push({ type: RESULT_TYPE_POOL, pool })
-                    })
-                }
-                if (results.length > 0) {
-                    setSearchResults(results)
-                    setShowDropdown(true)
-                } else {
-                    setSearchError('Pool not found')
-                }
-                setIsSearching(false)
-                return
-            }
+            // if (searchType === SEARCH_TYPE_POOL) {
+            //     const poolResult = await searchPool(cleanQuery)
+            //     if (poolResult.found && poolResult.results) {
+            //         const displayPools = poolResult.results.slice(0, 5)
+            //         displayPools.forEach(pool => {
+            //             results.push({ type: RESULT_TYPE_POOL, pool })
+            //         })
+            //     }
+            //     if (results.length > 0) {
+            //         setSearchResults(results)
+            //         setShowDropdown(true)
+            //     } else {
+            //         setSearchError('Pool not found')
+            //     }
+            //     setIsSearching(false)
+            //     return
+            // }
 
             // For all other types (All, Block, Transaction, Contract), use the unified lite/search API
             try {
@@ -348,7 +348,7 @@ export function SearchBar() {
                             <SelectItem value={SEARCH_TYPE_TRANSACTION}>Transaction</SelectItem>
                             <SelectItem value={SEARCH_TYPE_BLOCK}>Block</SelectItem>
                             <SelectItem value={SEARCH_TYPE_CONTRACT}>Contract</SelectItem>
-                            <SelectItem value={SEARCH_TYPE_POOL}>Pool</SelectItem>
+                      
                         </SelectContent>
                     </Select>
 
