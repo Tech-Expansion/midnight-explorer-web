@@ -1,27 +1,11 @@
 'use client'
 
-import { useQuery } from '@tanstack/react-query'
 import { SearchBar } from "@/components/search-bar"
-import { NetworkStats } from "@/components/network-stats"
 import { RecentBlocks } from "@/components/recent-blocks"
-import { RecentTransactions } from "@/components/recent-transactions"
-import { NetworkCharts } from "@/components/network-charts"
-import { MidnightTokenInfo } from "@/components/midnight-token-info"
-import { ErrorBoundary } from "@/components/error-boundary"
-import { blockAPI } from "@/lib/api"
-import { Block } from "@/lib/types"
+import { useBlockSubscription } from "@/hooks/useBlockSubscription"
 
 function HomePageContent() {
-  // Query cho blocks
-  const { data: blocksData } = useQuery({
-    queryKey: ['recent-blocks'],
-    queryFn: async () => {
-      const data = await blockAPI.getRecentBlocks<{ blocks: Block[] }>()
-      return data.blocks || []
-    },
-  })
-
-  const blocks = blocksData || []
+  const { blocks, isLive } = useBlockSubscription()
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-8">
@@ -36,35 +20,10 @@ function HomePageContent() {
         <SearchBar />
       </section>
 
-      {/* Network Statistics */}
-      <NetworkStats />
-
-      {/* Charts & Token Info Grid */}
-      <div className="grid xl:grid-cols-[3fr_1fr] gap-6">
-        <ErrorBoundary>
-          <NetworkCharts />
-        </ErrorBoundary>
-
-        <ErrorBoundary>
-          <MidnightTokenInfo />
-        </ErrorBoundary>
+      {/* Recent Blocks Centered */}
+      <div className="w-full max-w-4xl mx-auto mt-8">
+        <RecentBlocks blocks={blocks} isLive={isLive} />
       </div>
-
-      {/* Recent Activity Grid */}
-      <div className="grid lg:grid-cols-2 gap-6">
-        <RecentBlocks blocks={blocks} />
-        {/* FIXED: RecentTransactions doesn't need props - it fetches internally */}
-        <RecentTransactions />
-      </div>
-
-      {/* Validator Statistics */}
-      {/* <ValidatorStats /> 
-
-        {/* Token Statistics */}
-      {/*} <TokenStats />  */}
-
-      {/* Network Health */}
-      {/*}  <NetworkHealth />  */}
     </div>
   )
 }

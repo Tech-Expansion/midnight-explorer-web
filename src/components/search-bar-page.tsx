@@ -9,16 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useRouter } from "next/navigation"
 import { Card } from "@/components/ui/card"
 import {
-  checkBlock,
-  checkTransaction,
-  checkContract,
   searchPool,
-  isContractAddress,
   isHexHash,
-  isBlockHeight,
 } from "@/lib/search-utils"
-import { contractAPI } from "@/lib/api"
-import { Contract } from "@/lib/types"
 
 interface SearchBarProps {
   searchType?: "all" | "transaction" | "block" | "address" | "contract" | "pool"
@@ -41,8 +34,8 @@ export function SearchBarPage({ searchType = "all" }: SearchBarProps) {
         return "Search by address..."
       case "contract":
         return "Search by contract address..."
-      case "pool":
-        return "Search by pool hash, ticker, or name..."
+      // case "pool":
+      //   return "Search by pool hash, ticker, or name..."
       default:
         return "Search by Hash / Height / Contract Address / Pool"
     }
@@ -56,178 +49,80 @@ export function SearchBarPage({ searchType = "all" }: SearchBarProps) {
     setSearchError(null)
 
     try {
-      // If user selected Transaction
-      if (selectedType === "transaction") {
-        await verifyAndNavigate(cleanQuery, 'tx')
+      // Pool is handled separately since it's not in lite/search
+      if (selectedType === "pool") {
+        await searchAndNavigateToPool(cleanQuery)
         return
       }
-
-      // If user selected Block
-      if (selectedType === "block") {
-        await verifyAndNavigate(cleanQuery, 'block')
-        return
-      }
-
-      // If user selected Address
+      
+      // If user selected Address explicitly
       if (selectedType === "address") {
         router.push(`/address/${cleanQuery}`)
         setIsSearching(false)
         return
       }
 
-      // If user selected Contract
-      if (selectedType === "contract") { 
-        if (isContractAddress(cleanQuery)) {
-          try {
-            const response = await contractAPI.searchContractsByAddress(cleanQuery)
+      // For All, Transaction, Block, Contract
+      try {
+        const typeParam = selectedType === "all" ? "all" : selectedType;
+        const searchResponse = await fetch(`/api/lite/search?hash=${encodeURIComponent(cleanQuery)}&type=${typeParam}`);
         
-            const contracts = (response as Record<string, Contract[]>).contracts || []
-            
-            if (contracts && contracts.length > 0) {
-              router.push(`/contracts?search=${encodeURIComponent(cleanQuery)}`)
-            } else {
-              setSearchError('No contracts found for this address')
-            }
-          } catch (error) {
-            console.error('Contract search error:', error)
-            setSearchError('Contract search failed')
-          }
-        } else {
-          setSearchError('Please enter a valid contract address')
+        if (searchResponse.ok) {
+           const json = await searchResponse.json();
+           const resData = (json && typeof json === 'object' && 'isSuccess' in json && 'data' in json) ? json.data : json;
+           
+           if (!resData.error) {
+              if (resData.type === 'transaction') {
+                 router.push(`/transactions?hash=${cleanQuery}`)
+                 setIsSearching(false)
+                 return
+              }
+              if (resData.type === 'block') {
+                 const blockHeight = resData.data.block?.height || resData.data.height;
+                 if (blockHeight !== undefined) {
+                    router.push(`/block/${blockHeight}`)
+                    setIsSearching(false)
+                    return
+                 }
+              }
+              if (resData.type === 'contract') {
+                 const cData = resData.data.contract || resData.data;
+                 const address = cData.address || cleanQuery;
+                 router.push(`/contracts/${address}`)
+                 setIsSearching(false)
+                 return
+              }
+           }
         }
-        setIsSearching(false)
-        return
+      } catch (error) {
+         console.error('Unified search API error in page:', error);
       }
 
-      // If user selected Pool
-      if (selectedType === "pool") {
-        await searchAndNavigateToPool(cleanQuery)
-        return
-      }
-
-      // If "all" is selected, smart detection
+      // Fallback for Pool if "all"
       if (selectedType === "all") {
-        // Check if it looks like a tx/block hash (64 hex chars)
-        if (isHexHash(cleanQuery)) {
-          // Check TRANSACTION first
-          const txResult = await checkTransaction(cleanQuery)
-          if (txResult.found) {
-            router.push(`/transactions?hash=${cleanQuery}`)
-            setIsSearching(false)
-            return
-          }
-
-          // Check CONTRACT second
-          const contractResult = await checkContract(cleanQuery)
-          if (contractResult.found) {
-            router.push(`/contracts/${cleanQuery}`)
-            setIsSearching(false)
-            return
-          }
-
-          // Check BLOCK third
-          const blockResult = await checkBlock(cleanQuery)
-          if (blockResult.found && blockResult.height) {
-            router.push(`/block/${blockResult.height}`)
-            setIsSearching(false)
-            return
-          }
-
-          // Try pool search as fallback
-          const poolResult = await searchPool(cleanQuery)
-          if (poolResult.found && poolResult.value) {
-            router.push(`/pool/${poolResult.value}`)
-            setIsSearching(false)
-            return
-          }
-
-          setSearchError('Hash not found in transactions, contracts, blocks, or pools')
-          setIsSearching(false)
-          return
-        }
-
-        // Check if it's a contract address (64 chars without 0x, or 66 chars with 0x)
-        if (isContractAddress(cleanQuery)) {
-          //console.log('[All Mode] Detected contract address:', cleanQuery)
-          try {
-            const response = await contractAPI.searchContractsByAddress(cleanQuery)
-            //console.log('[All Mode] Contract API response:', response)
-            const contracts = (response as Record<string, Contract[]>).contracts || []
-            
-            if (contracts && contracts.length > 0) {
-              router.push(`/contracts?search=${encodeURIComponent(cleanQuery)}`)
-              setIsSearching(false)
-              return
-            }
-          } catch (error) {
-            console.error('Contract search error in all mode:', error)
-          }
-          setSearchError('No contracts found for this address')
-          setIsSearching(false)
-          return
-        }
-
-        // Check if it's a number (block height)
-        if (isBlockHeight(cleanQuery)) {
-          const result = await checkBlock(cleanQuery)
-          if (result.found) {
-            router.push(`/block/${result.height || cleanQuery}`)
-            setIsSearching(false)
-            return
-          }
-          setSearchError('Block not found')
-          setIsSearching(false)
-          return
-        }
-
-        // If not a hex hash, try pool search (for ticker/name)
         const poolResult = await searchPool(cleanQuery)
         if (poolResult.found) {
-          if (poolResult.count === 1 && poolResult.value) {
-            router.push(`/pool/${poolResult.value}`)
-          } else {
-            router.push(`/pool?q=${encodeURIComponent(cleanQuery)}`)
-          }
-          setIsSearching(false)
-          return
+            if (poolResult.count === 1 && poolResult.value) {
+                router.push(`/pool/${poolResult.value}`)
+            } else {
+                router.push(`/pool?q=${encodeURIComponent(cleanQuery)}`)
+            }
+            setIsSearching(false)
+            return
         }
-
-        setSearchError('No results found. Please enter a valid block height, transaction hash, contract address, or pool name/ticker')
-        setIsSearching(false)
       }
+
+      setSearchError(
+        selectedType === "all" 
+          ? 'No results found. Please enter a valid block height, transaction hash, contract address, or pool name/ticker' 
+          : `${selectedType.charAt(0).toUpperCase() + selectedType.slice(1)} not found`
+      )
+      setIsSearching(false)
     } catch (error) {
       console.error('Search error:', error)
       setSearchError('Search failed. Please try again.')
       setIsSearching(false)
     }
-  }
-
-  const verifyAndNavigate = async (query: string, type: 'tx' | 'block' | 'contract') => {
-    if (type === 'block') {
-      const result = await checkBlock(query)
-      if (result.found && result.height) {
-        router.push(`/block/${result.height}`)
-      } else {
-        setSearchError('Block not found')
-      }
-    } else if (type === 'contract') {
-      const result = await checkContract(query)
-      if (result.found) {
-        router.push(`/contracts/${query}`)
-      } else {
-        setSearchError('Contract not found')
-      }
-    } else {
-      const result = await checkTransaction(query)
-      if (result.found) {
-        // Always navigate to transactions page to show all matching transactions
-        router.push(`/transactions?hash=${query}`)
-      } else {
-        setSearchError('Transaction not found')
-      }
-    }
-    
-    setIsSearching(false)
   }
 
   const searchAndNavigateToPool = async (query: string) => {
@@ -265,7 +160,7 @@ export function SearchBarPage({ searchType = "all" }: SearchBarProps) {
                   <SelectItem value="transaction">Transaction</SelectItem>
                   <SelectItem value="block">Block</SelectItem>
                   <SelectItem value="contract">Contract</SelectItem>
-                  <SelectItem value="pool">Pool</SelectItem>
+               
                 </SelectContent>
               </Select>
             )}

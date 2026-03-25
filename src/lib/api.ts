@@ -8,6 +8,7 @@
  * const block = await blockAPI.getBlock(12345)
  * const transactions = await transactionAPI.getRecentTransactions()
  */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 
 const BACKEND_API_URL = process.env.API_URL || 'http://localhost:3002'
 const API_VERSION = 'v1'
@@ -61,20 +62,18 @@ async function apiFetch<T>(endpoint: string, options?: RequestInit): Promise<T> 
  */
 export const blockAPI = {
   getBlock: <T = unknown>(heightOrHash: string | number) =>
-    apiFetch<T>(`/blocks/${heightOrHash}`),
+    apiFetch<T>(`/lite/blocks/${heightOrHash}`),
 
   getRecentBlocks: <T = unknown>() =>
-    apiFetch<T>('/blocks/recent'),
+    apiFetch<T>('/lite/blocks/recent'),
 
-  getBlocks: <T = unknown>(cursor?: string) =>
-    apiFetch<T>(`/blocks${cursor ? `?cursor=${cursor}` : ''}`),
+  getBlocks: async <T = unknown>(_cursor?: string) => {
+    const res = await apiFetch<{ blocks?: unknown[] }>(`/lite/blocks/recent`)
+    return { items: res.blocks || [] } as unknown as T
+  },
 
-  getBlockTransactions: <T = unknown>(height: string | number, limit?: number, offset?: number) => {
-    const queryParams = new URLSearchParams()
-    if (limit) queryParams.append('limit', limit.toString())
-    if (offset !== undefined) queryParams.append('offset', offset.toString())
-    const query = queryParams.toString()
-    return apiFetch<T>(`/blocks/${height}/transactions${query ? `?${query}` : ''}`)
+  getBlockTransactions: <T = unknown>(height: string | number, _limit?: number, _offset?: number) => {
+    return apiFetch<T>(`/lite/blocks/${height}`)
   },
 }
 
@@ -83,27 +82,32 @@ export const blockAPI = {
  */
 export const transactionAPI = {
   getTransaction: <T = unknown>(hash: string) =>
-    apiFetch<T>(`/transactions/${hash}`),
+    apiFetch<T>(`/lite/transactions/${hash}`),
 
   verifyTransaction: <T = unknown>(hash: string) =>
-    apiFetch<T>(`/transactions/verify?hash=${encodeURIComponent(hash)}`),
+    apiFetch<T>(`/lite/transactions/${hash}`),
 
-  searchTransactions: <T = unknown>(hash: string, page?: number, pageSize?: number) => {
-    const queryParams = new URLSearchParams()
-    queryParams.append('hash', hash)
-    if (page) queryParams.append('page', page.toString())
-    if (pageSize) queryParams.append('pageSize', pageSize.toString())
-    return apiFetch<T>(`/transactions/search?${queryParams.toString()}`)
+  searchTransactions: async <T = unknown>(hash: string, page?: number, pageSize?: number) => {
+    const res = await apiFetch<{ type?: string; data?: unknown }>(`/lite/search?hash=${encodeURIComponent(hash)}`)
+    if (res.type === 'transaction' && res.data) {
+      return { 
+        data: [res.data], 
+        pagination: { page: page || 1, pageSize: pageSize || 20, totalCount: 1, totalPages: 1 } 
+      } as unknown as T
+    }
+    return { data: [], pagination: null } as unknown as T
   },
 
   getTransactionById: <T = unknown>(id: string) =>
-    apiFetch<T>(`/transactions/id/${id}`),
+    apiFetch<T>(`/lite/transactions/${id}`),
 
   getRecentTransactions: <T = unknown>() =>
-    apiFetch<T>('/transactions/recent'),
+    apiFetch<T>('/lite/transactions/recent'),
 
-  getTransactions: <T = unknown>(cursor?: string) =>
-    apiFetch<T>(`/transactions${cursor ? `?cursor=${cursor}` : ''}`),
+  getTransactions: async <T = unknown>(_cursor?: string) => {
+    const res = await apiFetch<{ transactions?: unknown[] }>(`/lite/transactions/recent`)
+    return { items: res.transactions || [] } as unknown as T
+  },
 }
 
 /**
@@ -111,13 +115,20 @@ export const transactionAPI = {
  */
 export const contractAPI = {
   getContract: <T = unknown>(id: string | number) =>
-    apiFetch<T>(`/contracts/${id}?Id=${id}`),
+    apiFetch<T>(`/lite/contracts/${id}`),
 
-  getContracts: <T = unknown>(cursor?: string) =>
-    apiFetch<T>(`/contracts${cursor ? `?cursor=${cursor}` : ''}`),
+  getContracts: async <T = unknown>(_cursor?: string) => {
+    return { items: [] } as unknown as T
+  },
 
-  searchContractsByAddress: <T = unknown>(address: string) =>
-    apiFetch<T>(`/contracts/contract_actions?address=${encodeURIComponent(address)}`),
+  searchContractsByAddress: async <T = unknown>(address: string) => {
+    try {
+      const res = await apiFetch<{ contract?: unknown }>(`/lite/contracts/${encodeURIComponent(address)}`)
+      return { contracts: res.contract ? [res.contract] : [] } as unknown as T
+    } catch {
+      return { contracts: [] } as unknown as T
+    }
+  },
 }
 
 /**
@@ -125,13 +136,13 @@ export const contractAPI = {
  */
 export const networkAPI = {
   getChart: <T = unknown>(range: '1D' | '7D' | '1M' = '1D') =>
-    apiFetch<T>(`/network/chart?range=${range}`),
+    apiFetch<T>(`/lite/network/overview`),
 
   getSidechainStatus: <T = unknown>() =>
-    apiFetch<T>('/network/sidechainStatus'),
+    apiFetch<T>('/lite/network/overview'),
 
   getOverview: <T = unknown>() =>
-    apiFetch<T>('/network/overview'),
+    apiFetch<T>('/lite/network/overview'),
 }
 
 /**

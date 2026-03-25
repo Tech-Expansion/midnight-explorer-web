@@ -192,7 +192,7 @@ export function ContractsList({ initialCursor, page = 1, searchAddress }: Contra
                 ) : (
                   <tr>
                     <td colSpan={4} className="p-8 text-center text-muted-foreground">
-                      No contracts found
+                      {!currentSearch ? "Enter a contract address in the search bar to view details" : "No contracts found"}
                     </td>
                   </tr>
                 )}
@@ -259,7 +259,9 @@ export function ContractsList({ initialCursor, page = 1, searchAddress }: Contra
           ))
         ) : (
           <Card className="bg-card/50 border-border p-8">
-            <p className="text-center text-muted-foreground">No contracts found</p>
+            <p className="text-center text-muted-foreground">
+                {!currentSearch ? "Enter a contract address in the search bar to view details" : "No contracts found"}
+            </p>
           </Card>
         )}
       </div>
