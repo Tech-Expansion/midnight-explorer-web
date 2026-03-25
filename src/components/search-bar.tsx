@@ -193,7 +193,7 @@ export function SearchBar() {
                 break
             case RESULT_TYPE_CONTRACT:
                 if (result.contract) {
-                    router.push(`/contracts/${result.contract.id}`)
+                    router.push(`/contracts/${encodeURIComponent(result.contract.address || result.contract.id)}`)
                 }
                 break
             case RESULT_TYPE_POOL:
