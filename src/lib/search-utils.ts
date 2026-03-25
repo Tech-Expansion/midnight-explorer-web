@@ -41,22 +41,44 @@ export async function checkBlock(query: string): Promise<{
   data?: BlockResult
 }> {
   try {
-    const { blockAPI } = await import('@/lib/api')
-    const { block } = await blockAPI.getBlock<{block: BlockResult}>(query)
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS)
+
+    const response = await fetch(`/api/blocks/verify?hash=${encodeURIComponent(query)}`, {
+      signal: controller.signal,
+      cache: 'no-store'
+    })
+
+    clearTimeout(timeoutId)
+
+    if (!response.ok) {
+      return { found: false }
+    }
+
+    const json = await response.json()
+    // Unwrap ResultDto if present
+    const data = (json && typeof json === 'object' && 'isSuccess' in json && 'data' in json) 
+      ? json.data 
+      : json
     
-    if (block) {
-      return {
-        found: true,
-        height: String(block.height),
-        data: {
-          hash: block.hash || query,
-          height: Number(block.height),
-          timestamp: block.timestamp,
-        }
+    if (!data || !data.found) {
+      return { found: false }
+    }
+
+    return {
+      found: true,
+      height: String(data.value),
+      data: {
+        hash: data.hash || query,
+        height: Number(data.value),
+        timestamp: undefined,
+        txCount: undefined
       }
     }
-    return { found: false }
-  } catch {
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      //console.log('⏱️ Block check timeout')
+    }
     return { found: false }
   }
 }
@@ -74,19 +96,25 @@ export async function verifyTransaction(query: string): Promise<{
   try {
     const { transactionAPI } = await import('@/lib/api')
     
-    const { transaction } = await transactionAPI.getTransactionById<{transaction: TransactionResult}>(query)
+    const data = await transactionAPI.verifyTransaction<{
+      found: boolean
+      type?: string
+      txHash?: string
+      txId?: string
+    }>(query)
 
-    if (transaction) {
+    if (data.found) {
       return {
         found: true,
-        type: 'Transaction',
-        txHash: transaction.hash,
-        txId: transaction.hash
+        type: data.type,
+        txHash: data.txHash,
+        txId: data.txId
       }
     }
 
     return { found: false }
-  } catch {
+  } catch (error) {
+    console.error('❌ Transaction verify error:', error)
     return { found: false }
   }
 }
@@ -102,27 +130,53 @@ export async function checkTransaction(query: string): Promise<{
   results?: TransactionResult[]
 }> {
   try {
-    const { transactionAPI } = await import('@/lib/api')
-    
-    const { transaction } = await transactionAPI.getTransactionById<{transaction: TransactionResult}>(query)
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS)
 
-    if (transaction) {
-      const tx = {
-        hash: transaction.hash || query,
-        blockHeight: transaction.blockHeight,
-        status: transaction.status ?? 'success'
+    const response = await fetch(
+      `/api/transactions/search?hash=${encodeURIComponent(query)}&page=1&pageSize=20`,
+      {
+        signal: controller.signal,
+        cache: 'no-store'
       }
+    )
+
+    clearTimeout(timeoutId)
+
+    if (!response.ok) {
+      return { found: false }
+    }
+
+    const json = await response.json()
+    // Unwrap ResultDto if present
+    const responseData = (json && typeof json === 'object' && 'isSuccess' in json && 'data' in json)
+      ? json.data
+      : json
+
+    if (responseData && responseData.data && Array.isArray(responseData.data) && responseData.data.length > 0) {
+      const transactions = responseData.data.map(
+        (tx: { hash: string; blockHeight?: number; status?: string }) => ({
+          hash: tx.hash || query,
+          blockHeight: tx.blockHeight,
+          status: tx.status ?? 'success'
+        })
+      )
+
+      const totalCount = responseData.pagination?.totalCount || transactions.length
 
       return {
         found: true,
-        data: tx,
-        count: 1,
-        results: [tx]
+        data: transactions[0],
+        count: totalCount,
+        results: transactions
       }
     }
 
     return { found: false }
-  } catch {
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      //console.log('⏱️ Transaction check timeout')
+    }
     return { found: false }
   }
 }
@@ -131,7 +185,7 @@ export async function checkTransaction(query: string): Promise<{
  * Search for pools by query (hash, ticker, or name)
  * Returns pools matching the query
  */
-export async function searchPool(_query: string): Promise<{
+export async function searchPool(query: string): Promise<{
   found: boolean
   value?: string
   count?: number
@@ -147,8 +201,36 @@ export async function searchPool(_query: string): Promise<{
     }
   }>
 }> {
-  // Pools are not supported in Mainnet Lite
-  return { found: false }
+  try {
+    const { poolAPI } = await import('@/lib/api')
+    
+    const data = await poolAPI.searchPools<Array<{
+      auraPublicKey: string
+      blocksMinted: number
+      mainchainPubKey?: string
+      poolOffchainData?: {
+        name: string
+        ticker: string
+        homepage?: string
+        description?: string
+      }
+    }>>(query)
+
+    // API returns array directly
+    if (Array.isArray(data) && data.length > 0) {
+      return {
+        found: true,
+        value: data[0].auraPublicKey,
+        count: data.length,
+        results: data
+      }
+    }
+
+    return { found: false }
+  } catch (error) {
+    console.error('❌ Pool search error:', error)
+    return { found: false }
+  }
 }
 
 /**
@@ -173,15 +255,19 @@ export async function checkContract(query: string): Promise<{
       return { found: false }
     }
 
-    const data = await response.json()
+    const json = await response.json()
+    // Unwrap ResultDto if present
+    const data = (json && typeof json === 'object' && 'isSuccess' in json && 'data' in json)
+      ? json.data
+      : json
 
-    if (data.contract || data.address) {
+    if (data && (data.contract || data.address)) {
       return {
         found: true,
         data: {
           address: data.contract?.address ?? data.address ?? query,
           variant: data.contract?.variant ?? data.variant,
-          id: data.contract?.id ??data.id??null
+          id: data.contract?.id ?? data.id ?? null
         }
       }
     }
@@ -196,11 +282,14 @@ export async function checkContract(query: string): Promise<{
 }
 
 /**
- * Helper function to determine if a string is a contract address (64 hex chars without 0x, or 66 with 0x)
+ * Helper function to determine if a string is a contract address
+ * Midnight contract addresses can be 64, 66, or 70 hex characters
  */
 export function isContractAddress(query: string): boolean {
   const cleanHash = query.startsWith("0x") ? query.slice(2) : query
-  return /^[a-fA-F0-9]{64}$/.test(cleanHash)
+  return /^[a-fA-F0-9]{64}$/.test(cleanHash) || 
+         /^[a-fA-F0-9]{66}$/.test(cleanHash) || 
+         /^[a-fA-F0-9]{70}$/.test(cleanHash)
 }
 
 /**
@@ -209,8 +298,16 @@ export function isContractAddress(query: string): boolean {
  * Block/Pool hash: 64 hex chars
  */
 export function isHexHash(query: string): boolean {
-  const cleanQuery = query.startsWith("0x") || query.startsWith("0X") ? query.slice(2) : query;
-  return /^[a-fA-F0-9]{32,128}$/.test(cleanQuery);
+  // With 0x prefix: total length should be 66, 68, or 72 chars
+  if (query.startsWith("0x") || query.startsWith("0X")) {
+    return /^0[xX][a-fA-F0-9]{64}$/.test(query) || 
+           /^0[xX][a-fA-F0-9]{66}$/.test(query) ||
+           /^0[xX][a-fA-F0-9]{70}$/.test(query)
+  }
+  // Without prefix: should be 64, 66, or 70 chars
+  return /^[a-fA-F0-9]{64}$/.test(query) || 
+         /^[a-fA-F0-9]{66}$/.test(query) ||
+         /^[a-fA-F0-9]{70}$/.test(query)
 }
 
 /**
