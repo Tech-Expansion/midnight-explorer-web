@@ -4,7 +4,7 @@ import { useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { Github, Sparkles } from "lucide-react"
-import { useNetworkOverview } from "@/hooks/useNetworkStats"
+import { useBlockSubscription } from "@/hooks/useBlockSubscription"
 interface NetworkStats {
   blockHeight: number
   status: 'online' | 'offline'
@@ -15,8 +15,8 @@ export function Footer() {
     blockHeight: 0,
     status: 'online'
   })
-  const { data } = useNetworkOverview()
-  const latestBlock = data?.latestBlock
+  const { blocks } = useBlockSubscription()
+  const latestBlock = blocks[0]
 
   return (
     <footer className="border-t border-border bg-card/30 backdrop-blur-sm mt-16">
