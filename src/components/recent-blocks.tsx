@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useRef, useLayoutEffect } from 'react'
+import { useMemo, useRef, useLayoutEffect, useState, useEffect } from 'react'
 import Image from 'next/image'
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -10,6 +10,42 @@ import Link from "next/link"
 import { formatDateTimeWithRelative } from '@/lib/utils'
 import { Block } from '@/lib/types'
 
+
+const timeSubscribers = new Set<() => void>()
+let globalTimer: NodeJS.Timeout | null = null
+
+function useGlobalTick() {
+  const [, setTick] = useState(0)
+
+  useEffect(() => {
+    const callback = () => setTick(t => t + 1)
+    timeSubscribers.add(callback)
+
+    if (!globalTimer) {
+      globalTimer = setInterval(() => {
+        timeSubscribers.forEach(cb => cb())
+      }, 1000)
+    }
+
+    return () => {
+      timeSubscribers.delete(callback)
+      if (timeSubscribers.size === 0 && globalTimer) {
+        clearInterval(globalTimer)
+        globalTimer = null
+      }
+    }
+  }, [])
+}
+
+function LiveTime({ timestamp }: { timestamp: string | number | Date }) {
+  useGlobalTick()
+
+  return (
+    <span suppressHydrationWarning>
+      {formatDateTimeWithRelative(new Date(timestamp))}
+    </span>
+  )
+}
 
 interface RecentBlocksProps {
   blocks: Block[]
@@ -101,7 +137,7 @@ export function RecentBlocks({ blocks, isLive }: RecentBlocksProps) {
                 className="text-sm text-muted-foreground whitespace-nowrap min-w-[110px] text-right"
                 suppressHydrationWarning
               >
-                {formatDateTimeWithRelative(new Date(block.timestamp))}
+                <LiveTime timestamp={block.timestamp} />
               </span>
             </div>
           </Link>
