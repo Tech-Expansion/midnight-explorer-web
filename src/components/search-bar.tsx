@@ -195,75 +195,64 @@ export function SearchBar() {
             if (searchType === SEARCH_TYPE_ALL) {
                 // Check if it looks like a tx/block/contract hash (64 or 66 chars)
                 if (isHexHash(cleanQuery)) {
-                    // Check TRANSACTION first using search API (same as transaction mode)
-                    const txResult = await checkTransaction(cleanQuery)
-                    if (txResult.found && txResult.results && txResult.results.length > 0) {
-                        const totalCount = txResult.count || txResult.results.length
-
-                        // Show up to 5 in dropdown
-                        const displayResults = txResult
-                            .results
-                            .slice(0, 5)
-                        displayResults.forEach(tx => {
-                            results.push({ type: RESULT_TYPE_TRANSACTION, transaction: tx })
+                    try {
+                        const controller = new AbortController()
+                        const timeoutId = setTimeout(() => controller.abort(), 15000)
+                        const searchResponse = await fetch(`/api/lite/search?hash=${encodeURIComponent(cleanQuery)}`, {
+                            signal: controller.signal,
+                            cache: 'no-store'
                         })
+                        clearTimeout(timeoutId)
 
-                        // Add "View All" option if more than 5 results available
-                        if (totalCount > 5) {
-                            results.push({ type: RESULT_TYPE_VIEW_ALL, count: totalCount, searchHash: cleanQuery })
-                        }
-
-                        setSearchResults(results)
-                        setShowDropdown(true)
-                        setIsSearching(false)
-                        return
-                    }
-
-                    // Check CONTRACT second
-                    if (isContractAddress(cleanQuery)) {
-                        try {
-                            const response = await contractAPI.searchContractsByAddress(cleanQuery)
-                            const contracts = (response as Record<string, Contract[]>).contracts || (response as Contract[]) || []
-                            
-                            if (Array.isArray(contracts) && contracts.length > 0) {
-                                const displayContracts = contracts.slice(0, 5)
-                                displayContracts.forEach((contract: Contract) => {
-                                    results.push({ 
-                                        type: RESULT_TYPE_CONTRACT, 
-                                        contract: {
-                                            id: contract.id,
-                                            address: contract.address,
-                                            variant: contract.variant
-                                        }
-                                    })
+                        if (searchResponse.ok) {
+                            const resData = await searchResponse.json()
+                            if (resData.type === 'transaction') {
+                                results.push({ 
+                                    type: RESULT_TYPE_TRANSACTION, 
+                                    transaction: {
+                                        hash: resData.data.hash,
+                                        blockHeight: resData.data.block?.height,
+                                        status: resData.data.transactionResult?.status ?? 'success'
+                                    } 
                                 })
+                            } else if (resData.type === 'block') {
+                                results.push({ 
+                                    type: RESULT_TYPE_BLOCK, 
+                                    block: {
+                                        hash: resData.data.block.hash,
+                                        height: resData.data.block.height,
+                                        timestamp: resData.data.block.timestamp
+                                    }
+                                })
+                            } else if (resData.type === 'contract') {
+                                results.push({ 
+                                    type: RESULT_TYPE_CONTRACT, 
+                                    contract: {
+                                        id: resData.data.contract.id,
+                                        address: resData.data.contract.address,
+                                        variant: resData.data.contract.variant
+                                    }
+                                })
+                            }
+
+                            if (results.length > 0) {
                                 setSearchResults(results)
                                 setShowDropdown(true)
                                 setIsSearching(false)
                                 return
                             }
-                        } catch (error) {
-                            console.error('Contract search error:', error)
                         }
+                    } catch (error) {
+                        console.error('Global search error:', error)
                     }
 
-                    // Check POOL third
+                    // POOLS are not supported in lite/search, so fallback to local pool search
                     const poolResult = await searchPool(cleanQuery)
                     if (poolResult.found && poolResult.results) {
                         const displayPools = poolResult.results.slice(0, 5)
                         displayPools.forEach(pool => {
                             results.push({ type: RESULT_TYPE_POOL, pool })
                         })
-                        setSearchResults(results)
-                        setShowDropdown(true)
-                        setIsSearching(false)
-                        return
-                    }
-
-                    // Check BLOCK fourth
-                    const blockResult = await checkBlock(cleanQuery)
-                    if (blockResult.found && blockResult.data) {
-                        results.push({ type: RESULT_TYPE_BLOCK, block: blockResult.data })
                         setSearchResults(results)
                         setShowDropdown(true)
                         setIsSearching(false)

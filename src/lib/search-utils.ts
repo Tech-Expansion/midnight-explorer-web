@@ -209,12 +209,8 @@ export function isContractAddress(query: string): boolean {
  * Block/Pool hash: 64 hex chars
  */
 export function isHexHash(query: string): boolean {
-  // With 0x prefix: total length should be 66 (block) or 68 (tx identifier)
-  if (query.startsWith("0x") || query.startsWith("0X")) {
-    return /^0[xX][a-fA-F0-9]{64}$/.test(query) || /^0[xX][a-fA-F0-9]{66}$/.test(query)
-  }
-  // Without prefix: should be 64 chars (block/pool) or 66 chars (tx identifier)
-  return /^[a-fA-F0-9]{64}$/.test(query) || /^[a-fA-F0-9]{66}$/.test(query)
+  const cleanQuery = query.startsWith("0x") || query.startsWith("0X") ? query.slice(2) : query;
+  return /^[a-fA-F0-9]{32,128}$/.test(cleanQuery);
 }
 
 /**

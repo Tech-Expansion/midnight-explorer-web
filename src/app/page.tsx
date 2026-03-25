@@ -1,22 +1,11 @@
 'use client'
 
-import { useQuery } from '@tanstack/react-query'
 import { SearchBar } from "@/components/search-bar"
 import { RecentBlocks } from "@/components/recent-blocks"
-import { blockAPI } from "@/lib/api"
-import { Block } from "@/lib/types"
+import { useBlockSubscription } from "@/hooks/useBlockSubscription"
 
 function HomePageContent() {
-  // Query cho blocks
-  const { data: blocksData } = useQuery({
-    queryKey: ['recent-blocks'],
-    queryFn: async () => {
-      const data = await blockAPI.getRecentBlocks<{ blocks: Block[] }>()
-      return data.blocks || []
-    },
-  })
-
-  const blocks = blocksData || []
+  const { blocks, isLive } = useBlockSubscription()
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-8">
@@ -33,7 +22,7 @@ function HomePageContent() {
 
       {/* Recent Blocks Centered */}
       <div className="w-full max-w-4xl mx-auto mt-8">
-        <RecentBlocks blocks={blocks} />
+        <RecentBlocks blocks={blocks} isLive={isLive} />
       </div>
     </div>
   )
