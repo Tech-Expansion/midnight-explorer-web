@@ -1,4 +1,4 @@
-import { BlocksListSkeleton } from "@/components/skeletons/blocks-list-skeleton"
+import { ContractsListSkeleton } from "@/components/skeletons/contracts-list-skeleton"
 import { SearchBarPage } from "@/components/search-bar-page"
 
 export default function Loading() {
@@ -7,16 +7,17 @@ export default function Loading() {
       {/* Header */}
       <div className="space-y-2">
         <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-          Blocks
+          Smart Contracts
         </h1>
         <p className="text-muted-foreground text-lg">
-          Explore all blocks on the Midnight network
+          Explore deployed and called contracts on Midnight
         </p>
       </div>
 
-      <SearchBarPage searchType="block" />
+      <SearchBarPage searchType="contract" />
 
-      <BlocksListSkeleton />
+      {/* Contracts List */}
+      <ContractsListSkeleton />
     </div>
   )
 }

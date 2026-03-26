@@ -31,10 +31,10 @@ export const getMenu = (): MenuItem[] => {
       href: "https://docs.google.com/forms/d/e/1FAIpQLSfBguf59QpRRgVVFZCWt8S2D6W9aGlB8QEpxIfVJrrwH3fjUw/viewform?usp=publish-editor",
       external: true,
     },
-    {
-      title: "Project Catalyst",
-      href: "https://projectcatalyst.io/funds/15/cardano-use-cases-prototype-and-launch/midnight-explorer-a-privacy-preserving-blockchain-explorer",
-      external: true,
-    },
+    // {
+    //   title: "Project Catalyst",
+    //   href: "https://projectcatalyst.io/funds/15/cardano-use-cases-prototype-and-launch/midnight-explorer-a-privacy-preserving-blockchain-explorer",
+    //   external: true,
+    // },
   ];
 };

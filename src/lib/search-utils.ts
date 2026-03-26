@@ -55,9 +55,13 @@ export async function checkBlock(query: string): Promise<{
       return { found: false }
     }
 
-    const data = await response.json()
+    const json = await response.json()
+    // Unwrap ResultDto if present
+    const data = (json && typeof json === 'object' && 'isSuccess' in json && 'data' in json) 
+      ? json.data 
+      : json
     
-    if (!data.found) {
+    if (!data || !data.found) {
       return { found: false }
     }
 
@@ -143,9 +147,13 @@ export async function checkTransaction(query: string): Promise<{
       return { found: false }
     }
 
-    const responseData = await response.json()
+    const json = await response.json()
+    // Unwrap ResultDto if present
+    const responseData = (json && typeof json === 'object' && 'isSuccess' in json && 'data' in json)
+      ? json.data
+      : json
 
-    if (responseData.data && Array.isArray(responseData.data) && responseData.data.length > 0) {
+    if (responseData && responseData.data && Array.isArray(responseData.data) && responseData.data.length > 0) {
       const transactions = responseData.data.map(
         (tx: { hash: string; blockHeight?: number; status?: string }) => ({
           hash: tx.hash || query,
@@ -247,15 +255,19 @@ export async function checkContract(query: string): Promise<{
       return { found: false }
     }
 
-    const data = await response.json()
+    const json = await response.json()
+    // Unwrap ResultDto if present
+    const data = (json && typeof json === 'object' && 'isSuccess' in json && 'data' in json)
+      ? json.data
+      : json
 
-    if (data.contract || data.address) {
+    if (data && (data.contract || data.address)) {
       return {
         found: true,
         data: {
           address: data.contract?.address ?? data.address ?? query,
           variant: data.contract?.variant ?? data.variant,
-          id: data.contract?.id ??data.id??null
+          id: data.contract?.id ?? data.id ?? null
         }
       }
     }
@@ -270,11 +282,14 @@ export async function checkContract(query: string): Promise<{
 }
 
 /**
- * Helper function to determine if a string is a contract address (64 hex chars without 0x, or 66 with 0x)
+ * Helper function to determine if a string is a contract address
+ * Midnight contract addresses can be 64, 66, or 70 hex characters
  */
 export function isContractAddress(query: string): boolean {
   const cleanHash = query.startsWith("0x") ? query.slice(2) : query
-  return /^[a-fA-F0-9]{64}$/.test(cleanHash)
+  return /^[a-fA-F0-9]{64}$/.test(cleanHash) || 
+         /^[a-fA-F0-9]{66}$/.test(cleanHash) || 
+         /^[a-fA-F0-9]{70}$/.test(cleanHash)
 }
 
 /**
@@ -283,12 +298,16 @@ export function isContractAddress(query: string): boolean {
  * Block/Pool hash: 64 hex chars
  */
 export function isHexHash(query: string): boolean {
-  // With 0x prefix: total length should be 66 (block) or 68 (tx identifier)
+  // With 0x prefix: total length should be 66, 68, or 72 chars
   if (query.startsWith("0x") || query.startsWith("0X")) {
-    return /^0[xX][a-fA-F0-9]{64}$/.test(query) || /^0[xX][a-fA-F0-9]{66}$/.test(query)
+    return /^0[xX][a-fA-F0-9]{64}$/.test(query) || 
+           /^0[xX][a-fA-F0-9]{66}$/.test(query) ||
+           /^0[xX][a-fA-F0-9]{70}$/.test(query)
   }
-  // Without prefix: should be 64 chars (block/pool) or 66 chars (tx identifier)
-  return /^[a-fA-F0-9]{64}$/.test(query) || /^[a-fA-F0-9]{66}$/.test(query)
+  // Without prefix: should be 64, 66, or 70 chars
+  return /^[a-fA-F0-9]{64}$/.test(query) || 
+         /^[a-fA-F0-9]{66}$/.test(query) ||
+         /^[a-fA-F0-9]{70}$/.test(query)
 }
 
 /**
