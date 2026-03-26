@@ -1,6 +1,7 @@
 "use client"
 
-import { useEffect, useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
+import { useQuery } from "@tanstack/react-query"
 import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { Card } from "@/components/ui/card"
@@ -9,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { ExternalLink } from "lucide-react"
 import { contractAPI } from "@/lib/api"
 import { Pagination } from "@/components/pagination"
+import { ContractsListSkeleton } from "@/components/skeletons/contracts-list-skeleton"
 
 interface Contract {
   id: number
@@ -27,81 +29,74 @@ interface ContractsListProps {
 
 export function ContractsList({ initialCursor, page = 1, searchAddress }: ContractsListProps) {
   const searchParams = useSearchParams()
-  const [contracts, setContracts] = useState<Contract[]>([])
-  const [loading, setLoading] = useState(true)
   const [totalContracts, setTotalContracts] = useState<number>(0)
-  const [displayedContracts, setDisplayedContracts] = useState<Contract[]>([])
   const cursorMapRef = useRef<Record<number, string | undefined>>({ 1: initialCursor })
 
   const pageSize = 20
   const currentPage = searchParams.get('page') ? parseInt(searchParams.get('page')!) : page
   const currentSearch = searchParams.get('search') || searchAddress
 
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        setLoading(true)
+  const { data: queryData, isLoading: loading } = useQuery({
+    queryKey: ['contracts', currentPage, currentSearch],
+    queryFn: async () => {
+      if (currentSearch) {
+        // Search by address
+        const response: { contracts?: Contract[] } = await contractAPI.searchContractsByAddress(currentSearch)
+        const contractsData = response.contracts || []
+        return { contractsData, total: contractsData.length, nextCursorValue: undefined }
+      } else {
+        // Fetch contracts with cursor-based pagination
+        const currentCursor = cursorMapRef.current[currentPage]
+        const response: { items?: Contract[]; nextCursor?: string } = await contractAPI.getContracts(currentCursor)
+        const contractsData = response.items || []
+        const nextCursorValue = response.nextCursor
         
-        let contractsData: Contract[] = []
-        
-        if (currentSearch) {
-          // Search by address
-          const response: { contracts?: Contract[] } = await contractAPI.searchContractsByAddress(currentSearch)
-          contractsData = response.contracts || []
-          setTotalContracts(contractsData.length)
-        } else {
-          // Fetch contracts with cursor-based pagination
-          const currentCursor = cursorMapRef.current[currentPage]
-          const response: { items?: Contract[]; nextCursor?: string } = await contractAPI.getContracts(currentCursor)
-          contractsData = response.items || []
-          const nextCursorValue = response.nextCursor
-          
-          // Save nextCursor for next page (using ref, doesn't trigger re-render)
-          if (nextCursorValue && currentPage + 1 > Object.keys(cursorMapRef.current).length) {
-            cursorMapRef.current[currentPage + 1] = nextCursorValue
-          }
-          
-          // Estimate total contracts from the first contract ID
-          if (contractsData.length > 0 && currentPage === 1) {
-            const firstId = contractsData[0].id
-            setTotalContracts(firstId)
-          }
+        let total = 0
+        // Estimate total contracts from the first contract ID
+        if (contractsData.length > 0 && currentPage === 1) {
+          total = contractsData[0].id
         }
         
-        // Map transactionhash to transactionHash for consistency
-        const contractsWithHashes = contractsData.map((contract: Contract): Contract => ({
-          ...contract,
-          transactionHash: contract.transactionhash || contract.transactionHash
-        }))
-        
-        setContracts(contractsWithHashes)
-        
-        // For search results, apply pagination
-        if (currentSearch) {
-          const startIdx = (currentPage - 1) * pageSize
-          const endIdx = startIdx + pageSize
-          setDisplayedContracts(contractsWithHashes.slice(startIdx, endIdx))
-        } else {
-          setDisplayedContracts(contractsWithHashes)
-        }
-      } catch (error) {
-        console.error('Failed to fetch contracts:', error)
-      } finally {
-        setLoading(false)
+        return { contractsData, nextCursorValue, total }
       }
     }
+  })
 
-    fetchData()
-  }, [currentPage, currentSearch])
+  // Synchronize cursor and totalContracts
+  useEffect(() => {
+    if (queryData) {
+      if (queryData.nextCursorValue && currentPage + 1 > Object.keys(cursorMapRef.current).length) {
+        cursorMapRef.current[currentPage + 1] = queryData.nextCursorValue
+      }
+      
+      if (currentSearch) {
+        setTotalContracts(queryData.total)
+      } else if (queryData.total > 0 && currentPage === 1) {
+        setTotalContracts(queryData.total)
+      }
+    }
+  }, [queryData, currentPage, currentSearch])
+
+  const contractsData = queryData?.contractsData || []
+  
+  // Map transactionhash to transactionHash for consistency
+  const contractsWithHashes = contractsData.map((contract: Contract): Contract => ({
+    ...contract,
+    transactionHash: contract.transactionhash || contract.transactionHash
+  }))
+  
+  // For search results, apply pagination
+  let displayedContracts = contractsWithHashes
+  if (currentSearch) {
+    const startIdx = (currentPage - 1) * pageSize
+    const endIdx = startIdx + pageSize
+    displayedContracts = contractsWithHashes.slice(startIdx, endIdx)
+  }
 
   const totalPages = totalContracts > 0 ? Math.ceil(totalContracts / pageSize) : 0
 
   if (loading) {
-    return (
-      <Card className="bg-card/50 border-border p-8">
-        <p className="text-center text-muted-foreground">Loading contracts...</p>
-      </Card>
-    )
+    return <ContractsListSkeleton />
   }
 
   return (
@@ -110,77 +105,97 @@ export function ContractsList({ initialCursor, page = 1, searchAddress }: Contra
       <div className="hidden md:block">
         <Card className="bg-card/50 border-border">
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full" style={{ tableLayout: 'fixed' }}>
+              <colgroup>
+                <col style={{ width: '40%' }} />
+                <col style={{ width: '15%' }} />
+                <col style={{ width: '30%' }} />
+                <col style={{ width: '15%' }} />
+              </colgroup>
               <thead>
                 <tr className="border-b border-border">
                   <th className="text-left p-4 text-sm font-semibold text-muted-foreground">
                     Contract Address
                   </th>
-                  <th className="text-left p-4 text-sm font-semibold text-muted-foreground">
+                  <th className="text-center p-4 text-sm font-semibold text-muted-foreground">
                     Type
                   </th>
                   <th className="text-left p-4 text-sm font-semibold text-muted-foreground">
                     Transaction
                   </th>
-                  <th className="text-left p-4 text-sm font-semibold text-muted-foreground">
+                  <th className="text-center p-4 text-sm font-semibold text-muted-foreground">
                     Actions
                   </th>
                 </tr>
               </thead>
               <tbody>
-                {displayedContracts.map((contract: Contract) => (
-                  <tr
-                    key={contract.id}
-                    className="border-b border-border/50 hover:bg-accent/5 transition-colors"
-                  >
-                    <td className="p-4">
-                      <Link
-                        href={`/contracts/${contract.id}`}
-                        className="font-mono text-sm text-blue-400 hover:text-blue-300 transition-colors break-all"
-                      >
-                        {contract.address}
-                      </Link>
-                    </td>
-                    <td className="p-4">
-                      <Badge
-                        variant="outline"
-                        className={
-                          contract.variant === 'Deploy'
-                            ? 'bg-green-500/10 text-green-400 border-green-500/20'
-                            : 'bg-purple-500/10 text-purple-400 border-purple-500/20'
-                        }
-                      >
-                        {contract.variant}
-                      </Badge>
-                    </td>
-                    <td className="p-4">
-                      {contract.transactionHash ? (
+                {displayedContracts.length > 0 ? (
+                  displayedContracts.map((contract: Contract) => (
+                    <tr
+                      key={contract.id}
+                      className="border-b border-border/50 hover:bg-accent/5 transition-colors"
+                    >
+                      <td className="p-4 truncate">
                         <Link
-                          href={`/tx/${contract.transactionHash}`}
-                          className="text-sm text-muted-foreground hover:text-foreground transition-colors font-mono"
+                          href={`/contracts/${contract.id}`}
+                          className="font-mono text-sm text-blue-400 hover:text-blue-300 transition-colors truncate block"
+                          title={contract.address}
                         >
-                          {contract.transactionHash.slice(0, 16)}...
+                          {contract.address}
                         </Link>
-                      ) : (
-                        <span className="text-sm text-muted-foreground font-mono">
-                          TX #{contract.transactionId}
-                        </span>
-                      )}
-                    </td>
-                    <td className="p-4">
-                      <Link href={`/contracts/${contract.id}`}>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="border-border hover:bg-accent/50"
-                        >
-                          <ExternalLink className="h-3 w-3 mr-1" />
-                          View
-                        </Button>
-                      </Link>
+                      </td>
+                      <td className="p-4 truncate">
+                        <div className="flex justify-center">
+                          <Badge
+                            variant="outline"
+                            className={
+                              contract.variant === 'Deploy'
+                                ? 'bg-green-500/10 text-green-400 border-green-500/20'
+                                : 'bg-purple-500/10 text-purple-400 border-purple-500/20'
+                            }
+                          >
+                            {contract.variant}
+                          </Badge>
+                        </div>
+                      </td>
+                      <td className="p-4 truncate">
+                        {contract.transactionHash ? (
+                          <Link
+                            href={`/tx/${contract.transactionHash}`}
+                            className="text-sm text-muted-foreground hover:text-foreground transition-colors font-mono truncate block"
+                            title={contract.transactionHash}
+                          >
+                            {contract.transactionHash.slice(0, 16)}...
+                          </Link>
+                        ) : (
+                          <span className="text-sm text-muted-foreground font-mono">
+                            TX #{contract.transactionId}
+                          </span>
+                        )}
+                      </td>
+                      <td className="p-4 truncate">
+                        <div className="flex justify-center">
+                          <Link href={`/contracts/${contract.id}`}>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="border-border hover:bg-accent/50"
+                            >
+                              <ExternalLink className="h-3 w-3 mr-1" />
+                              View
+                            </Button>
+                          </Link>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={4} className="p-8 text-center text-muted-foreground">
+                      No contracts found
                     </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>
@@ -189,7 +204,8 @@ export function ContractsList({ initialCursor, page = 1, searchAddress }: Contra
 
       {/* Contracts Grid - Mobile */}
       <div className="md:hidden space-y-3">
-        {displayedContracts.map((contract: Contract) => (
+        {displayedContracts.length > 0 ? (
+          displayedContracts.map((contract: Contract) => (
           <Card key={contract.id} className="bg-card/50 border-border p-4">
             <div className="space-y-3">
               <Link
@@ -240,7 +256,12 @@ export function ContractsList({ initialCursor, page = 1, searchAddress }: Contra
               </Link>
             </div>
           </Card>
-        ))}
+          ))
+        ) : (
+          <Card className="bg-card/50 border-border p-8">
+            <p className="text-center text-muted-foreground">No contracts found</p>
+          </Card>
+        )}
       </div>
 
       {/* Pagination */}

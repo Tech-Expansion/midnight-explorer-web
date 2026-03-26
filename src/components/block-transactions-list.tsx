@@ -1,6 +1,7 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
+import { useQuery } from "@tanstack/react-query"
 import { blockAPI } from "@/lib/api"
 import Link from "next/link"
 import { CopyButton } from "@/components/ui/copy-button"
@@ -21,38 +22,26 @@ interface BlockTransactionsListProps {
 const ITEMS_PER_PAGE = 5
 
 export function BlockTransactionsList({ height, txCount }: BlockTransactionsListProps) {
-  const [transactions, setTransactions] = useState<Transaction[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState(1) // 1-based for easier UI
 
   const offset = (currentPage - 1) * ITEMS_PER_PAGE
 
-  useEffect(() => {
-    const fetchTransactions = async () => {
-      try {
-        setLoading(true)
-        const response = await blockAPI.getBlockTransactions(height, ITEMS_PER_PAGE, offset)
-        setTransactions((response as { transactions: Transaction[] }).transactions || [])
-      } catch (err) {
-        console.error("Error fetching block transactions:", err)
-        setError("Failed to load transactions")
-      } finally {
-        setLoading(false)
-      }
+  const { data: transactions = [], isLoading: loading, isError } = useQuery({
+    queryKey: ['block-transactions', height, offset],
+    queryFn: async () => {
+      const response = await blockAPI.getBlockTransactions(height, ITEMS_PER_PAGE, offset)
+      return (response as { transactions: Transaction[] }).transactions || []
     }
-
-    fetchTransactions()
-  }, [height, offset])
+  })
 
   if (loading) {
     return <LoadingFallback />
   }
 
-  if (error) {
+  if (isError) {
     return (
       <div className="text-center py-8 text-red-400">
-        <p>{error}</p>
+        <p>Failed to load transactions</p>
       </div>
     )
   }

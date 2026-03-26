@@ -12,6 +12,8 @@ export enum Environment {
   PRODUCTION = 'production',
 }
 
+export const MIDNIGHT_NETWORK = process.env.MIDNIGHT_NETWORK || "";
+
 /**
  * Current application environment
  * Set via NEXT_PUBLIC_ENVIRONMENT environment variable
