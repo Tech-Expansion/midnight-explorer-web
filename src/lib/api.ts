@@ -48,7 +48,12 @@ async function apiFetch<T>(endpoint: string, options?: RequestInit): Promise<T> 
     throw new Error(`API Error: ${response.status} ${response.statusText}`)
   }
 
-  return response.json()
+  const result = await response.json()
+  // Unwrap ResultDto: if response has the { data, isSuccess, license } envelope, return data.
+  // Falls back to the raw response for any endpoint not yet wrapped (defensive).
+  return (result !== null && typeof result === 'object' && 'isSuccess' in result && 'data' in result
+    ? result.data
+    : result) as T
 }
 
 /**
@@ -124,6 +129,9 @@ export const networkAPI = {
 
   getSidechainStatus: <T = unknown>() =>
     apiFetch<T>('/network/sidechainStatus'),
+
+  getOverview: <T = unknown>() =>
+    apiFetch<T>('/network/overview'),
 }
 
 /**

@@ -7,5 +7,7 @@ export async function GET(request: NextRequest) {
 
   const endpoint = `/networks/chart?range=${range}`
 
-  return proxyToExternalAPI(request, endpoint)
+  // Chart data is aggregated – safe to cache 60s
+  return proxyToExternalAPI(request, endpoint, { revalidate: 60 })
 }
+
