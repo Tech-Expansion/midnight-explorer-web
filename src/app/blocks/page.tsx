@@ -1,4 +1,4 @@
-﻿
+
 import { SearchBarPage } from "@/components/search-bar-page"
 import { BlocksList } from "@/components/blocks-list"
 
@@ -17,7 +17,7 @@ export default async function BlocksPage({ searchParams }: PageProps) {
   const page = resolvedSearchParams?.page ? parseInt(resolvedSearchParams.page) : 1
 
   return (
-    <div className="container mx-auto px-4 py-8 space-y-4">
+    <div className="container mx-auto px-4 py-8 space-y-6">
       {/* Header */}
       <div className="space-y-2">
         <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">

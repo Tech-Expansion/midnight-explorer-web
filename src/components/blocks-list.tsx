@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useQuery } from "@tanstack/react-query"
 import Link from "next/link"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -8,7 +8,8 @@ import { Box, Clock } from "lucide-react"
 import { formatDateTime } from "@/lib/utils"
 import { blockAPI } from "@/lib/api"
 import { Pagination, SimplePagination } from "@/components/pagination"
-import { useNetworkStats } from "@/hooks/useNetworkStats"
+import { useNetworkOverview } from "@/hooks/useNetworkStats"
+import { BlocksListSkeleton } from "./skeletons/blocks-list-skeleton"
 
 interface Block {
   hash: string
@@ -26,11 +27,8 @@ interface BlocksListProps {
 }
 
 export function BlocksList({ initialCursor, page = 1 }: BlocksListProps) {
-  const [blocks, setBlocks] = useState<Block[]>([])
-  const [nextCursor, setNextCursor] = useState<string | undefined>()
-  const [loading, setLoading] = useState(true)
-  const { data } = useNetworkStats()
-  const latestBlock = data?.latestBlock
+  const { data: stats } = useNetworkOverview()
+  const latestBlock = stats?.latestBlock
 
   const pageSize = 20
   // Calculate total pages from latest block height
@@ -39,30 +37,16 @@ export function BlocksList({ initialCursor, page = 1 }: BlocksListProps) {
   // Calculate cursor from page number
   const cursor = page > 1 && latestBlock ? latestBlock.height - (page - 1) * pageSize : initialCursor
 
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        setLoading(true)
-        const response: { items: Block[]; nextCursor?: string } = await blockAPI.getBlocks(cursor ? String(cursor) : undefined)
-        setBlocks(response.items)
-        setNextCursor(response.nextCursor)
-      } catch (error) {
-        console.error('Failed to fetch blocks:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
+  const { data: queryData, isLoading: loading } = useQuery({
+    queryKey: ['blocks', cursor],
+    queryFn: async () => {
+      const response: { items: Block[]; nextCursor?: string } = await blockAPI.getBlocks(cursor ? String(cursor) : undefined)
+      return response
+    },
+  })
 
-    fetchData()
-  }, [cursor])
-
-  if (loading) {
-    return (
-      <Card className="bg-card/50 border-border p-8">
-        <p className="text-center text-muted-foreground">Loading blocks...</p>
-      </Card>
-    )
-  }
+  const blocks = queryData?.items || []
+  const nextCursor = queryData?.nextCursor
 
   // Pagination helpers
   const limit = 20
@@ -72,74 +56,93 @@ export function BlocksList({ initialCursor, page = 1 }: BlocksListProps) {
     prevHref = `/blocks?cursor=${prevCursor}`
   }
 
+  if (loading) {
+    return <BlocksListSkeleton />
+  }
+
   return (
     <>
       {/* Blocks Table - Desktop */}
       <div className="hidden md:block">
         <Card className="bg-card/50 border-border">
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full" style={{ tableLayout: 'fixed' }}>
+              <colgroup>
+                <col style={{ width: '55%' }} />
+                <col style={{ width: '35%' }} />
+                <col style={{ width: '10%' }} />
+              </colgroup>
               <thead>
                 <tr className="border-b border-border">
                   <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Block</th>
-                  <th className="text-center p-4 text-sm font-semibold text-muted-foreground">
-                    <span className="inline-block -translate-x-28">Age</span>
-                  </th>
-                  <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Txns</th>
+                  <th className="text-center p-4 text-sm font-semibold text-muted-foreground">Age</th>
+                  <th className="text-right p-4 text-sm font-semibold text-muted-foreground">Txns</th>
                 </tr>
               </thead>
               <tbody>
-                {blocks.map((block: Block) => (
-                  <tr key={block.hash} className="border-b border-border/50 hover:bg-accent/5 transition-colors">
-                    <td className="p-4">
-                      <div className="space-y-1">
-                        <Link
-                          href={`/block/${block.height}`}
-                          className="flex items-center gap-2 text-blue-400 hover:text-blue-300 transition-colors font-mono"
-                        >
-                          <Box className="h-4 w-4" />
-                          {block.height.toLocaleString()}
-                        </Link>
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground font-mono">
-                          {block.hash}
-                        </div>
-                        {block.parent_hash && block.author && (
-                          <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
-                            <span className="font-mono text-xs truncate max-w-[220px]">
-                              Parent: {block.parent_hash.slice(0, 12)}...{block.parent_hash.slice(-8)}
-                            </span>
-                            <span className="truncate max-w-[160px]">
-                              Author: {block.author.length > 24 ? `${block.author.slice(0, 12)}...${block.author.slice(-8)}` : block.author}
-                            </span>
-                            {block.protocol_version && (
-                              <span className="text-muted-foreground">Protocol: v{block.protocol_version}</span>
-                            )}
+                {blocks.length > 0 ? (
+                  blocks.map((block: Block) => (
+                    <tr key={block.hash} className="border-b border-border/50 hover:bg-accent/5 transition-colors">
+                      <td className="p-4 truncate">
+                        <div className="space-y-1">
+                          <Link
+                            href={`/block/${block.height}`}
+                            className="flex items-center gap-2 text-blue-400 hover:text-blue-300 transition-colors font-mono truncate"
+                          >
+                            <Box className="h-4 w-4 flex-shrink-0" />
+                            <span className="truncate">{block.height.toLocaleString()}</span>
+                          </Link>
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground font-mono truncate">
+                            {block.hash}
                           </div>
-                        )}
-                      </div>
-                    </td>
-                    <td className="p-4">
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Clock className="h-4 w-4" />
-                        {formatDateTime(new Date(Number(block.timestamp)))}
-                      </div>
-                    </td>
-                    <td className="p-4">
-                      <Badge variant="outline" className="bg-cyan-500/10 text-cyan-400 border-cyan-500/20">
-                        {block.txCount}
-                      </Badge>
+                          {block.parent_hash && block.author && (
+                            <div className="flex flex-col gap-1 text-xs text-muted-foreground mt-1">
+                              <span className="font-mono text-xs truncate">
+                                Parent: {block.parent_hash.slice(0, 12)}...{block.parent_hash.slice(-8)}
+                              </span>
+                              <span className="truncate">
+                                Author: {block.author.length > 24 ? `${block.author.slice(0, 12)}...${block.author.slice(-8)}` : block.author}
+                              </span>
+                              {block.protocol_version && (
+                                <span className="text-muted-foreground">Protocol: v{block.protocol_version}</span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                      <td className="p-4 truncate">
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground truncate justify-center">
+                          <Clock className="h-4 w-4 flex-shrink-0" />
+                          <span className="truncate">{formatDateTime(new Date(Number(block.timestamp)))}</span>
+                        </div>
+                      </td>
+                      <td className="p-4 truncate">
+                        <div className="flex justify-end">
+                          <Badge variant="outline" className="bg-cyan-500/10 text-cyan-400 border-cyan-500/20">
+                            {block.txCount}
+                          </Badge>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={3} className="p-8 text-center text-muted-foreground">
+                      No blocks found
                     </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
+
           </div>
         </Card>
       </div>
 
       {/* Blocks Grid - Mobile */}
       <div className="md:hidden space-y-3">
-        {blocks.map((block: Block) => (
+        {blocks.length > 0 ? (
+          blocks.map((block: Block) => (
           <Card key={block.hash} className="bg-card/50 border-border p-4">
             <div className="space-y-3">
               <Link
@@ -182,7 +185,12 @@ export function BlocksList({ initialCursor, page = 1 }: BlocksListProps) {
               )}
             </div>
           </Card>
-        ))}
+          ))
+        ) : (
+          <Card className="bg-card/50 border-border p-8">
+            <p className="text-center text-muted-foreground">No blocks found</p>
+          </Card>
+        )}
       </div>
 
       {/* Pagination */}

@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect, useMemo, useRef, useLayoutEffect } from 'react'
+import { useMemo, useRef, useLayoutEffect } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { CopyButton } from "@/components/ui/copy-button"
@@ -11,43 +12,33 @@ import { transactionAPI } from '@/lib/api'
 import { RawTransaction, BufferData } from '@/lib/transaction-types'
 
 export function RecentTransactions() {
-  const [txs, setTxs] = useState<RawTransaction[]>([])
-  const [loading, setLoading] = useState(true)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const prevScrollTopRef = useRef(0)
 
-  useEffect(() => {
-    const fetchTransactions = async () => {
-      try {
-        const data: RawTransaction[] = await transactionAPI.getRecentTransactions<RawTransaction[]>()
-        const normalizedData: RawTransaction[] = data.map((tx) => {
-          let hashStr: string = ''
-          if (typeof tx.hash === 'string') {
-            hashStr = tx.hash.startsWith('0x') ? tx.hash : `0x${tx.hash}`
-          } else if (tx.hash && typeof tx.hash === 'object' && 'data' in tx.hash && Array.isArray((tx.hash as BufferData).data)) {
-            hashStr = '0x' + Buffer.from((tx.hash as BufferData).data).toString('hex')
-          }
+  const { data: txs = [], isLoading: loading } = useQuery({
+    queryKey: ['recent-transactions'],
+    queryFn: async () => {
+      const data: RawTransaction[] = await transactionAPI.getRecentTransactions<RawTransaction[]>()
+      return data.map((tx) => {
+        let hashStr: string = ''
+        if (typeof tx.hash === 'string') {
+          hashStr = tx.hash.startsWith('0x') ? tx.hash : `0x${tx.hash}`
+        } else if (tx.hash && typeof tx.hash === 'object' && 'data' in tx.hash && Array.isArray((tx.hash as BufferData).data)) {
+          hashStr = '0x' + Buffer.from((tx.hash as BufferData).data).toString('hex')
+        }
 
-          return {
-            hash: hashStr,
-            variant: tx.variant || 'Regular',
-            blockHeight: tx.blockHeight,
-            timestamp: tx.timestamp ? Number(tx.timestamp) : undefined,
-            protocolVersion: tx.protocolVersion ? Number(tx.protocolVersion) : undefined,
-            size: tx.size ? Number(tx.size) : undefined,
-          } as RawTransaction
-        })
-        setTxs(normalizedData)
-      } catch (error) {
-        console.error('Error fetching recent transactions:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchTransactions()
-
-  }, [])
+        return {
+          hash: hashStr,
+          variant: tx.variant || 'Regular',
+          blockHeight: tx.blockHeight,
+          timestamp: tx.timestamp ? Number(tx.timestamp) : undefined,
+          protocolVersion: tx.protocolVersion ? Number(tx.protocolVersion) : undefined,
+          size: tx.size ? Number(tx.size) : undefined,
+        } as RawTransaction
+      })
+    },
+    refetchInterval: 5000, // Poll every 5s if needed, or leave to default
+  })
 
   useLayoutEffect(() => {
     if (scrollContainerRef.current) {
