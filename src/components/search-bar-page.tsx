@@ -78,7 +78,7 @@ export function SearchBarPage({ searchType = "all" }: SearchBarProps) {
                  return
               }
               if (resData.type === 'block') {
-                 const blockHeight = resData.data.block?.height || resData.data.height;
+                 const blockHeight = resData.data.block?.height ?? resData.data.height;
                  if (blockHeight !== undefined) {
                     router.push(`/block/${blockHeight}`)
                     setIsSearching(false)

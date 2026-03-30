@@ -124,8 +124,8 @@ export function SearchBar() {
                                 type: RESULT_TYPE_BLOCK, 
                                 block: {
                                     hash: resData.data.block?.hash || resData.data.hash,
-                                    height: resData.data.block?.height || resData.data.height,
-                                    timestamp: resData.data.block?.timestamp || resData.data.timestamp
+                                    height: resData.data.block?.height ?? resData.data.height,
+                                    timestamp: resData.data.block?.timestamp ?? resData.data.timestamp
                                 }
                             })
                         } else if (resData.type === 'contract') {
