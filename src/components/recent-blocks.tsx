@@ -54,13 +54,13 @@ export function RecentBlocks({ blocks }: RecentBlocksProps) {
               <div className="flex items-center gap-2 flex-1 min-w-0">
                 
                 <p className="text-sm font-mono text-muted-foreground truncate">
-                  {`${block.hash.slice(0, 15)}...${block.hash.slice(-15)}`}
+                  {block.hash ? `${block.hash.slice(0, 15)}...${block.hash.slice(-15)}` : 'Unknown'}
                 </p>
                 <div
                   onClick={(e) => e.preventDefault()}
                   className="opacity-50 hover:opacity-100 transition-opacity flex-shrink-0"
                 >
-                  <CopyButton text={block.hash} className="h-5 w-5" />
+                  <CopyButton text={block.hash || ''} className="h-5 w-5" />
                 </div>
               </div>
 
@@ -68,13 +68,13 @@ export function RecentBlocks({ blocks }: RecentBlocksProps) {
               <div className="flex items-center justify-end gap-2 flex-1 min-w-0">
                 <Image src="/images/author.svg" alt="Author" width={25} height={25} />
                 <span className="text-sm text-muted-foreground truncate">
-                  {`${block.author.slice(0, 12)}...${block.author.slice(-12)}`}
+                  {block.author ? `${block.author.slice(0, 12)}...${block.author.slice(-12)}` : 'Unknown'}
                 </span>
                 <div
                   onClick={(e) => e.preventDefault()}
                   className="opacity-50 hover:opacity-100 transition-opacity flex-shrink-0"
                 >
-                  <CopyButton text={block.author} className="h-6 w-6" />
+                  <CopyButton text={block.author || ''} className="h-6 w-6" />
                 </div>
               </div>
             </div>
