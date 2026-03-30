@@ -14,16 +14,16 @@ import { NetworkType, NETWORKS } from "@/lib/constants/common.constants"
 // Helper function to detect network from domain
 function getNetworkFromDomain(): NetworkType {
   if (typeof window === "undefined") return NetworkType.PREPROD
-  
+
   const hostname = window.location.hostname
-  
+
   // Check each network's domains array
   for (const [networkType, config] of Object.entries(NETWORKS)) {
     if (config.domains.some(domain => hostname.includes(domain))) {
       return networkType as NetworkType
     }
   }
-  
+
   // Default for localhost and other unknown domains
   // - localhost:8080 -> PREPROD
   // - midnightexplorer.com -> PREPROD (configured in domains)
@@ -32,7 +32,7 @@ function getNetworkFromDomain(): NetworkType {
 
 export function NetworkToggle() {
   const [network, setNetwork] = useState<NetworkType>(NetworkType.PREPROD)
-  
+
   // Detect network on mount based on domain
   useEffect(() => {
     setNetwork(getNetworkFromDomain())
@@ -59,7 +59,7 @@ export function NetworkToggle() {
       </DropdownMenuTrigger>
 
       {/* Menu xổ xuống */}
-      <DropdownMenuContent align="end" className="w-[210px]">
+      <DropdownMenuContent align="end" className="w-[240px]">
         {networks.map((networkType) => {
           const config = NETWORKS[networkType]
           const isCurrentNetwork = network === networkType

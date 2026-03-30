@@ -51,19 +51,19 @@ export const NETWORKS = {
     iconColor: "text-purple-400",
     enabled: true,
     message: undefined,
-  },
+  },  
   [NetworkType.MAINNET]: {
-    label: "Mainnet",
-    domain: "midnightexplorer.com",
+    label: "Mainnet Lite",
+    domain: "mainnet-lite.midnightexplorer.com",
     domains: [
-      // "midnightexplorer.com",
-      "mainnet.dev.midnightexplorer.com",
-      "mainnet.test.midnightexplorer.com",
+      "mainnet-lite.midnightexplorer.com",
+      "mainnet-lite.dev.midnightexplorer.com",
+      "mainnet-lite.test.midnightexplorer.com",
     ],
     color: "text-green-400",
     iconColor: "text-green-400",
-    enabled: false,
-    message: "Upcoming",
+    enabled: true,
+    message: undefined,
   },
 } as const;
 
