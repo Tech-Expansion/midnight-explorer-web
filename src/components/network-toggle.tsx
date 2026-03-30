@@ -59,7 +59,7 @@ export function NetworkToggle() {
       </DropdownMenuTrigger>
 
       {/* Menu xổ xuống */}
-      <DropdownMenuContent align="end" className="w-[210px]">
+      <DropdownMenuContent align="end" className="w-[240px]">
         {networks.map((networkType) => {
           const config = NETWORKS[networkType];
           const isCurrentNetwork = network === networkType;

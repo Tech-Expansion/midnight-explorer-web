@@ -53,11 +53,11 @@ export const NETWORKS = {
   },
   [NetworkType.MAINNET]: {
     label: "Mainnet - Lite UI",
-    domain: "midnightexplorer.com",
+    domain: "mainnet-lite.midnightexplorer.com",
     domains: [
-      "midnightexplorer.com",
-      "mainnet.dev.midnightexplorer.com",
-      "mainnet.test.midnightexplorer.com",
+      "mainnet-lite.midnightexplorer.com",
+      "mainnet-lite.dev.midnightexplorer.com",
+      "mainnet-lite.test.midnightexplorer.com",
     ],
     color: "text-green-400",
     iconColor: "text-green-400",
